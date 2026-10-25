@@ -49,3 +49,6 @@ why it is a beta.
   SHA-256. `Bagel.exe` is built deterministically from `tools/launcher/Bagel.cs`.
 - The release checklist (`tools/release_check.py`) and the privacy check (`tools/privacy_check.py`)
   run at the end of every build.
+- The privacy check accepts its options between the paths (the first workflow run stopped there); it
+  says how many private words it got and whether a mapping file was given (never the words), and
+  marks each check PASS, FAIL or SKIPPED.

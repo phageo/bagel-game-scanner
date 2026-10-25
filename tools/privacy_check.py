@@ -331,9 +331,14 @@ def main(argv: Optional[List[str]] = None) -> int:
     ap.add_argument("--names", help="the code -> real name mapping file (outside the repository)")
     ap.add_argument("--word", action="append", default=[], help="a private word (repeatable; never printed)")
     ap.add_argument("--tracked", action="store_true", help="of a folder, only the files git tracks")
-    args = ap.parse_args(argv)
-    words = list(args.word) + [w.strip() for w in re.split(r"[,\r\n]+", os.environ.get("BAGEL_PRIVACY_WORDS", ""))
-                               if w.strip()]
+    # flags may stand between the paths (the workflow's ". --tracked <zip> <setup> <exe>")
+    args = ap.parse_intermixed_args(argv)
+    from_env = [w.strip() for w in re.split(r"[,\r\n]+", os.environ.get("BAGEL_PRIVACY_WORDS", "")) if w.strip()]
+    words = list(args.word) + from_env
+    # where the words and the mapping came from - never the words themselves
+    print("%-22s %s" % ("private words", "%d from --word, %d from BAGEL_PRIVACY_WORDS" % (len(args.word), len(from_env))
+                        if words else "none (--word / BAGEL_PRIVACY_WORDS empty)"))
+    print("%-22s %s" % ("mapping file", "given" if args.names else "none (--names not given)"))
     result = run(args.paths, words, args.names, only_tracked=args.tracked)
     failed = 0
     for check, entry in result.items():

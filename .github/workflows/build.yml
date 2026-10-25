@@ -114,7 +114,8 @@ jobs:
           $setup = Get-ChildItem "$env:DIST\Bagel-*-setup.exe" | Select-Object -First 1
           $names = @()
           if ((Get-Item $env:NAMES).Length -gt 0) { $names = @("--names", $env:NAMES) }
-          python tools/privacy_check.py . --tracked $zip.FullName $setup.FullName tools/launcher/Bagel.exe @names
+          # prints where its words and mapping came from (counts only) and, per check, PASS / FAIL / SKIPPED
+          python tools/privacy_check.py --tracked . $zip.FullName $setup.FullName tools/launcher/Bagel.exe @names
           if ($LASTEXITCODE -ne 0) { exit 1 }
 
       - name: SHA-256 of the files

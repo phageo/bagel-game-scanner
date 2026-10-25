@@ -25024,5 +25024,75 @@ class BagelInstallerTests(unittest.TestCase):
             self.i.build(os.path.join(ROOT, "x.zip"), os.path.join(ROOT, "docs"), say=lambda *a: None)
 
 
+class WorkflowCommandTests(unittest.TestCase):
+    """The tools the CI workflow calls accept its command lines as written (first GitHub run,
+    2026-10-25: the privacy step failed on "unrecognized arguments" - a flag between the paths)."""
+
+    def setUp(self):
+        sys.path.insert(0, os.path.join(ROOT, "tools"))
+        self.addCleanup(sys.path.remove, os.path.join(ROOT, "tools"))
+
+    def commands(self):
+        with open(os.path.join(ROOT, ".github", "workflows", "build.yml"), encoding="utf-8") as fh:
+            text = fh.read()
+        return re.findall(r"^\s*(?:run:\s*)?python tools/([a-z_]+)\.py(.*)$", text, re.MULTILINE)
+
+    def test_every_workflow_command_line_parses(self):
+        import argparse
+        import importlib
+        import shlex
+        from unittest import mock
+
+        class Parsed(Exception):
+            pass
+
+        real = {name: getattr(argparse.ArgumentParser, name) for name in ("parse_args", "parse_intermixed_args")}
+
+        def stop(name):
+            def parse(parser, args=None, namespace=None):
+                real[name](parser, args, namespace)
+                raise Parsed()
+            return parse
+        found = self.commands()
+        self.assertGreaterEqual(len(found), 6, found)
+        for module, rest in found:
+            # the workflow's values: ${{ env.X }}, $zip.FullName, @names -> plain words
+            rest = re.sub(r"\$\{\{[^}]*\}\}|\$[A-Za-z]+(?:\.FullName)?", "VALUE", rest)
+            args = [a for a in shlex.split(rest) if a != "@names"] + ["--names", "VALUE"] * ("@names" in rest)
+            tool = importlib.import_module(module)
+            with contextlib.ExitStack() as stack:
+                for name in real:
+                    stack.enter_context(mock.patch.object(argparse.ArgumentParser, name, stop(name)))
+                stack.enter_context(contextlib.redirect_stderr(io.StringIO()))
+                stack.enter_context(contextlib.redirect_stdout(io.StringIO()))
+                with self.assertRaises(Parsed, msg="%s.py%s" % (module, rest)):
+                    tool.main(args)
+
+    def test_privacy_check_takes_flags_between_paths_and_says_what_ran(self):
+        import privacy_check as P
+        from unittest import mock
+        with tempfile.TemporaryDirectory() as tmp:
+            folder, single = os.path.join(tmp, "repo"), os.path.join(tmp, "one.txt")
+            os.makedirs(folder)
+            with open(os.path.join(folder, "a.txt"), "w", encoding="utf-8") as fh:
+                fh.write("nothing private\n")
+            with open(single, "w", encoding="utf-8") as fh:
+                fh.write("Zorbleq was here\n")
+            for env, want, from_env in (({"BAGEL_PRIVACY_WORDS": "Qwxplm, Vrtnok"}, 0, 2),
+                                        ({"BAGEL_PRIVACY_WORDS": "Qwxplm,Zorbleq"}, 1, 2),
+                                        ({"BAGEL_PRIVACY_WORDS": ""}, 0, 0)):
+                out = io.StringIO()
+                with mock.patch.dict(os.environ, env), contextlib.redirect_stdout(out):
+                    code = P.main([folder, "--word", "Plmqwx", single])     # a flag between the paths
+                text = out.getvalue()
+                self.assertEqual(code, want, text)
+                self.assertIn("1 from --word, %d from BAGEL_PRIVACY_WORDS" % from_env, text)
+                self.assertIn("mapping file           none", text)
+                self.assertRegex(text, r"game names\s+SKIPPED")
+                self.assertRegex(text, r"words\s+(PASS|FAIL) \d+ of 2 files")
+                for word in ("Qwxplm", "Vrtnok", "Zorbleq", "Plmqwx"):
+                    self.assertNotIn(word, text)          # the words are never printed
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
