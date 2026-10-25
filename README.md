@@ -1,5 +1,7 @@
 # Bagel (Game Safety Scanner)
 
+[![Build](https://github.com/phageo/bagel-game-scanner/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/phageo/bagel-game-scanner/actions/workflows/build.yml?query=branch%3Amain)
+
 <!-- user-section-start -->
 ## For users (English)
 
@@ -78,6 +80,12 @@ LIKELY SAFE: the verdict is at least REVIEW, because nobody knows what is inside
 - Closing the window during a scan stops it at the next file (up to 5 seconds); a large file
   being read may leave temporary files in `%TEMP%`.
 - Tested only on Windows with Python 3.13 64-bit.
+
+### How it is made
+
+Bagel is developed by phageo with AI assistance (Claude by Anthropic, through Claude Code). Every
+change is checked by an automated test suite and by benchmarks against clean games and real
+malware samples before release.
 
 ### Licence
 
@@ -168,6 +176,12 @@ MUHTEMELEN GÜVENLİ vermez: içinde ne olduğunu kimse bilmediği için sonuç 
 - Tarama sırasında pencereyi kapatmak taramayı bir sonraki dosyada durdurur (en çok 5 saniye);
   okunmakta olan büyük bir dosya `%TEMP%` içinde geçici dosya bırakabilir.
 - Yalnızca Windows'ta, 64-bit Python 3.13 ile test edildi.
+
+### Nasıl geliştiriliyor
+
+Bagel, phageo tarafından yapay zekâ desteğiyle (Anthropic'in Claude modeli, Claude Code üzerinden)
+geliştirilmektedir. Her değişiklik, yayından önce otomatik testlerle ve temiz oyunlar ile gerçek
+zararlı örnekler üzerinde yapılan karşılaştırmalı ölçümlerle denetlenir.
 
 ### Lisans
 
