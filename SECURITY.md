@@ -23,7 +23,7 @@ size, depth and step limits (rule 3). A way to break one of these promises is a 
   `.github/workflows/build.yml` builds from this repository.
 
 A **missed detection or a false alarm is not a security bug**: Bagel is a second opinion next to
-Windows Security, not a replacement, and its documented limits are in the README ("Limits").
+Windows Security, not a replacement, and its documented limits are in `docs/LIMITS.md`.
 Please report those as ordinary issues - with a SHA-256, never with the file itself.
 
 ## How to report
