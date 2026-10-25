@@ -1,0 +1,32 @@
+{
+ "about": "The two python.org files the 0.9-beta user package is built from (tools/build_package.py; backlog, item 19 (d)): the 64-bit embeddable Python 3.13.16, and the full 64-bit package of the same version, of which only tkinter and Tcl/Tk are taken. SHA-256 as python.org states it in windows-3.13.16.json. Used with: python tools/fetch.py --manifest tools/manifest_package.json --to <folder outside the project>",
+ "licence_notes": "Checked 2026-10-24 (packaging session 2) against the licence texts inside these two files: LICENSE.txt (PSF License Version 2; Microsoft Distributable Code terms for vcruntime140*.dll; bzip2, libffi (MIT), OpenSSL 3 (Apache 2.0), Tcl and Tk (BSD-style)), tcl/tk8.6/license.terms, and Doc/html/license.html (expat, zlib, libmpdec, mimalloc and the other incorporated code). SQLite is public domain; liblzma public domain or 0BSD. All permissive - compatible with shipping them beside the MIT-licensed app; the package carries LICENSE.txt, license.terms and THIRD-PARTY-NOTICES.txt (tools/build_package.py).",
+ "files": [
+  {
+   "file": "python-3.13.16-embeddable-amd64.zip",
+   "what": "Python 3.13.16, 64-bit, embeddable package (python.org)",
+   "url": "https://www.python.org/ftp/python/3.13.16/python-3.13.16-embeddable-amd64.zip",
+   "sha256": "589dc1e9d02549ca5f680710307ff9b77f6e3ffc4aa3efccd7fa54eeeafac94b",
+   "size": 11439788,
+   "listing": "https://www.python.org/ftp/python/3.13.16/windows-3.13.16.json",
+   "licence": "PSF License Version 2 (Python) - see licence_notes; shipped in the user package",
+   "used_by": "tools/build_package.py (the package's python folder)",
+   "groups": [
+    "package"
+   ]
+  },
+  {
+   "file": "python-3.13.16-amd64.zip",
+   "what": "Python 3.13.16, 64-bit, full package (python.org) - only tkinter and Tcl/Tk are taken",
+   "url": "https://www.python.org/ftp/python/3.13.16/python-3.13.16-amd64.zip",
+   "sha256": "bbf675bb5e763c1efbb09a3a461b259d81598a63c30c4b0d7ea11b9f063df159",
+   "size": 31153407,
+   "listing": "https://www.python.org/ftp/python/3.13.16/windows-3.13.16.json",
+   "licence": "PSF License Version 2 (Python), Tcl/Tk licence (BSD-style) - see licence_notes; tkinter and Tcl/Tk shipped in the user package",
+   "used_by": "tools/build_package.py (tkinter, _tkinter.pyd, the Tcl/Tk libraries and their tcl folder)",
+   "groups": [
+    "package"
+   ]
+  }
+ ]
+}

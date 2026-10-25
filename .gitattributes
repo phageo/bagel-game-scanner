@@ -1,0 +1,4 @@
+# Every file byte for byte as committed - no line-end conversion on any PC or runner.
+# The code's fingerprint (gamescan/known_findings.py), Bagel.cs's SHA-256 (tools/launcher/launcher.json)
+# and the tests' pinned files depend on the exact bytes.
+* -text

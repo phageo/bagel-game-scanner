@@ -1,0 +1,1574 @@
+{
+ "about": "Every file this project takes from outside: the official archives its hash tables are built from and the compilers its installer tests use. Fetched and compared by tools/fetch.py; none of them is part of the project or of what is shipped (CLAUDE.md, open item 19).",
+ "licence_notes": "Licence notes are short reminders written from memory on 2026-10-12, not legal texts: read the licence file of the package before passing anything on.",
+ "files": [
+  {
+   "file": "nwjs-v0.29.0-win-ia32.zip",
+   "what": "NW.js 0.29.0 (normal, win-ia32)",
+   "url": "https://dl.nwjs.io/v0.29.0/nwjs-v0.29.0-win-ia32.zip",
+   "sha256": "2f5db70c61fba63066f55a04061a095a4a09fbe245c88d920bec0230b590d1ca",
+   "size": 64746416,
+   "licence": "NW.js: MIT licence; it bundles Chromium and Node.js with their own open-source licences (credits.html in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py",
+   "listing": "https://dl.nwjs.io/v0.29.0/SHASUMS256.txt",
+   "note": "The publisher lists no SHA-256 for this file; the value is that of the first download."
+  },
+  {
+   "file": "nwjs-v0.29.0-win-x64.zip",
+   "what": "NW.js 0.29.0 (normal, win-x64)",
+   "url": "https://dl.nwjs.io/v0.29.0/nwjs-v0.29.0-win-x64.zip",
+   "sha256": "588fee041c6d2a6e67b96386a1c3c07add9c9afddc4213d4850a466d1b3ece87",
+   "size": 68086920,
+   "licence": "NW.js: MIT licence; it bundles Chromium and Node.js with their own open-source licences (credits.html in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py",
+   "listing": "https://dl.nwjs.io/v0.29.0/SHASUMS256.txt",
+   "note": "The publisher lists no SHA-256 for this file; the value is that of the first download."
+  },
+  {
+   "file": "nwjs-sdk-v0.29.0-win-ia32.zip",
+   "what": "NW.js 0.29.0 (sdk, win-ia32)",
+   "url": "https://dl.nwjs.io/v0.29.0/nwjs-sdk-v0.29.0-win-ia32.zip",
+   "sha256": "e786ed09b158b0f7e3a9725b0a396d4b430a9b6fb4537a1fd2dd5c860e2c1b10",
+   "size": 91697030,
+   "licence": "NW.js: MIT licence; it bundles Chromium and Node.js with their own open-source licences (credits.html in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py",
+   "listing": "https://dl.nwjs.io/v0.29.0/SHASUMS256.txt",
+   "note": "The publisher lists no SHA-256 for this file; the value is that of the first download."
+  },
+  {
+   "file": "nwjs-sdk-v0.29.0-win-x64.zip",
+   "what": "NW.js 0.29.0 (sdk, win-x64)",
+   "url": "https://dl.nwjs.io/v0.29.0/nwjs-sdk-v0.29.0-win-x64.zip",
+   "sha256": "f760ec50f50f361c47c5e7d761cc70c9c9697a6a843c717e021a962f9753dd9c",
+   "size": 93752752,
+   "licence": "NW.js: MIT licence; it bundles Chromium and Node.js with their own open-source licences (credits.html in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py",
+   "listing": "https://dl.nwjs.io/v0.29.0/SHASUMS256.txt",
+   "note": "The publisher lists no SHA-256 for this file; the value is that of the first download."
+  },
+  {
+   "file": "nwjs-v0.48.4-win-ia32.zip",
+   "what": "NW.js 0.48.4 (normal, win-ia32)",
+   "url": "https://dl.nwjs.io/v0.48.4/nwjs-v0.48.4-win-ia32.zip",
+   "sha256": "80dfea837dba57e8e821db06aa102c8ad9a3a6c88d0cea8b1b9e360116f54719",
+   "size": 89711056,
+   "licence": "NW.js: MIT licence; it bundles Chromium and Node.js with their own open-source licences (credits.html in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py",
+   "listing": "https://dl.nwjs.io/v0.48.4/SHASUMS256.txt"
+  },
+  {
+   "file": "nwjs-v0.48.4-win-x64.zip",
+   "what": "NW.js 0.48.4 (normal, win-x64)",
+   "url": "https://dl.nwjs.io/v0.48.4/nwjs-v0.48.4-win-x64.zip",
+   "sha256": "1731a5ed81139a63a5d1d7e7c521b5f08add023ffe4b719d06796a1ba77dc8a3",
+   "size": 94821458,
+   "licence": "NW.js: MIT licence; it bundles Chromium and Node.js with their own open-source licences (credits.html in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py",
+   "listing": "https://dl.nwjs.io/v0.48.4/SHASUMS256.txt"
+  },
+  {
+   "file": "nwjs-sdk-v0.48.4-win-ia32.zip",
+   "what": "NW.js 0.48.4 (sdk, win-ia32)",
+   "url": "https://dl.nwjs.io/v0.48.4/nwjs-sdk-v0.48.4-win-ia32.zip",
+   "sha256": "c62663067fdee1daeef18ec3b678bcf31c44adc56aa6cc0053a8423131baeda4",
+   "size": 121176465,
+   "licence": "NW.js: MIT licence; it bundles Chromium and Node.js with their own open-source licences (credits.html in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py",
+   "listing": "https://dl.nwjs.io/v0.48.4/SHASUMS256.txt"
+  },
+  {
+   "file": "nwjs-sdk-v0.48.4-win-x64.zip",
+   "what": "NW.js 0.48.4 (sdk, win-x64)",
+   "url": "https://dl.nwjs.io/v0.48.4/nwjs-sdk-v0.48.4-win-x64.zip",
+   "sha256": "7e56bf5aa7012eb948887960e01273e3a8dd0af3ffd609d82315802d5473c68b",
+   "size": 125214764,
+   "licence": "NW.js: MIT licence; it bundles Chromium and Node.js with their own open-source licences (credits.html in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py",
+   "listing": "https://dl.nwjs.io/v0.48.4/SHASUMS256.txt"
+  },
+  {
+   "file": "renpy-6.99.12.4-sdk.zip",
+   "what": "Ren'Py 6.99.12.4 (SDK)",
+   "url": "https://www.renpy.org/dl/6.99.12.4/renpy-6.99.12.4-sdk.zip",
+   "sha256": "51c89ab4b13bbe32bf6200b21255c6c8995a71ab3573891c004879a55f2becb0",
+   "size": 62094386,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/6.99.12.4/checksums.txt"
+  },
+  {
+   "file": "renpy-7.3.5-sdk.zip",
+   "what": "Ren'Py 7.3.5 (SDK)",
+   "url": "https://www.renpy.org/dl/7.3.5/renpy-7.3.5-sdk.zip",
+   "sha256": "3d6a46450be9bde378b9df43dc734550a511356081969f464af7a190f60761f9",
+   "size": 101028457,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/7.3.5/checksums.txt"
+  },
+  {
+   "file": "renpy-7.4.11-sdk.zip",
+   "what": "Ren'Py 7.4.11 (SDK)",
+   "url": "https://www.renpy.org/dl/7.4.11/renpy-7.4.11-sdk.zip",
+   "sha256": "3e158ac5856e9ff7f1d4462f18e16e053fc9f8a59f94340316435bbf2fce10d9",
+   "size": 117767561,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/7.4.11/checksums.txt"
+  },
+  {
+   "file": "renpy-7.5.3-sdk.zip",
+   "what": "Ren'Py 7.5.3 (SDK)",
+   "url": "https://www.renpy.org/dl/7.5.3/renpy-7.5.3-sdk.zip",
+   "sha256": "a8568bed86c75c2c9aa5d915ef28a5f039e20ac7299cb072bf962a779f2893a3",
+   "size": 120040873,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/7.5.3/checksums.txt"
+  },
+  {
+   "file": "renpy-7.6.3-sdk.zip",
+   "what": "Ren'Py 7.6.3 (SDK)",
+   "url": "https://www.renpy.org/dl/7.6.3/renpy-7.6.3-sdk.zip",
+   "sha256": "2e5652fada3c16fcee2442e648deb67a53eb902d8b97dd90ed5096d598eef37c",
+   "size": 148042978,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/7.6.3/checksums.txt"
+  },
+  {
+   "file": "renpy-8.0.3-sdk.zip",
+   "what": "Ren'Py 8.0.3 (SDK)",
+   "url": "https://www.renpy.org/dl/8.0.3/renpy-8.0.3-sdk.zip",
+   "sha256": "29a4fb79f37fdb68ac889ed3939788a715130c451b969d9dbc06d276e79f7d8f",
+   "size": 105200146,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/8.0.3/checksums.txt"
+  },
+  {
+   "file": "renpy-8.1.3-sdk.zip",
+   "what": "Ren'Py 8.1.3 (SDK)",
+   "url": "https://www.renpy.org/dl/8.1.3/renpy-8.1.3-sdk.zip",
+   "sha256": "9e5a0763dd15ebc24c4a08d9766bc826676d1dd35a727610f5746ba6c6e568ec",
+   "size": 136589334,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/8.1.3/checksums.txt"
+  },
+  {
+   "file": "renpy-8.2.3-sdk.zip",
+   "what": "Ren'Py 8.2.3 (SDK)",
+   "url": "https://www.renpy.org/dl/8.2.3/renpy-8.2.3-sdk.zip",
+   "sha256": "2a19fae720ea356aee3bd7e8cc169d1e86ad5872a83135b4797f93ab0e7939b4",
+   "size": 145716863,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/8.2.3/checksums.txt"
+  },
+  {
+   "file": "renpy-8.3.7-sdk.zip",
+   "what": "Ren'Py 8.3.7 (SDK)",
+   "url": "https://www.renpy.org/dl/8.3.7/renpy-8.3.7-sdk.zip",
+   "sha256": "7722e17aed8c174307c1e69d087d74ef009bc164a4de4830149794f8da3f7ecf",
+   "size": 151432024,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/8.3.7/checksums.txt"
+  },
+  {
+   "file": "renpy-8.4.1-sdk.zip",
+   "what": "Ren'Py 8.4.1 (SDK)",
+   "url": "https://www.renpy.org/dl/8.4.1/renpy-8.4.1-sdk.zip",
+   "sha256": "b542062465b6a253f4286b0fd48b83dd578bd7b6282a52d4c1eaecbfe21f002d",
+   "size": 159546864,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/8.4.1/checksums.txt"
+  },
+  {
+   "file": "renpy-7.7.3-sdk.zip",
+   "what": "Ren'Py 7.7.3 (SDK)",
+   "url": "https://www.renpy.org/dl/7.7.3/renpy-7.7.3-sdk.zip",
+   "sha256": "bae6948d06974d50345f793aef0f4c94273aa299bd4ce94cd253f447c04fda68",
+   "size": 158208956,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/7.7.3/checksums.txt"
+  },
+  {
+   "file": "renpy-7.8.7-sdk.zip",
+   "what": "Ren'Py 7.8.7 (SDK)",
+   "url": "https://www.renpy.org/dl/7.8.7/renpy-7.8.7-sdk.zip",
+   "sha256": "51d5936c61d1d57626fa79f8b4839b0f4cc41c5e27f0632ae8e3fa6cbb0c5853",
+   "size": 164677000,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/7.8.7/checksums.txt"
+  },
+  {
+   "file": "renpy-8.5.3-sdk.zip",
+   "what": "Ren'Py 8.5.3 (SDK)",
+   "url": "https://www.renpy.org/dl/8.5.3/renpy-8.5.3-sdk.zip",
+   "sha256": "ff57648f9c04f27e381c48af6d8e3ee3cdec296bed4d3831f47f09b0a71b505e",
+   "size": 163008121,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/8.5.3/checksums.txt"
+  },
+  {
+   "file": "UnitySetup-Windows-Mono-Support-for-Editor-2019.3.6f1.pkg",
+   "what": "Unity 2019.3.6f1 (Windows Mono player support)",
+   "url": "https://download.unity3d.com/download_unity/5c3fb0a11183/MacEditorTargetInstaller/UnitySetup-Windows-Mono-Support-for-Editor-2019.3.6f1.pkg",
+   "sha256": "1fb4f0ba2ec2a9ab660e48744289c81d042ab009d2e757d432bc5c6e2f060406",
+   "size": 110581793,
+   "licence": "Unity: proprietary, under Unity's terms of service - not to be passed on; fetched from Unity's own server only.",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py",
+   "listing": "https://download.unity3d.com/download_unity/5c3fb0a11183/unity-2019.3.6f1-osx.ini",
+   "md5": "50fd9e65e091f925a5afa024349dc734",
+   "note": "Unity publishes an MD5 only; the SHA-256 is the value of the file that matched that MD5."
+  },
+  {
+   "file": "UnitySetup-Windows-Mono-Support-for-Editor-2019.2.6f1.pkg",
+   "what": "Unity 2019.2.6f1 (Windows Mono player support)",
+   "url": "https://download.unity3d.com/download_unity/fe82a0e88406/MacEditorTargetInstaller/UnitySetup-Windows-Mono-Support-for-Editor-2019.2.6f1.pkg",
+   "sha256": "6785cc016c998f734e7a0d69fcef3b45c0b0f6799a978df4136bb1d400d36315",
+   "size": 110975003,
+   "licence": "Unity: proprietary, under Unity's terms of service - not to be passed on; fetched from Unity's own server only.",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py",
+   "listing": "https://download.unity3d.com/download_unity/fe82a0e88406/unity-2019.2.6f1-osx.ini",
+   "md5": "922bbb85e179cfa6f771f5bb91b05b45",
+   "note": "Unity publishes an MD5 only; the SHA-256 is the value of the file that matched that MD5."
+  },
+  {
+   "file": "EffekseerForWebGL170b.zip",
+   "what": "Effekseer for WebGL 1.70b",
+   "url": "https://github.com/effekseer/EffekseerForWebGL/releases/download/170b/EffekseerForWebGL170b.zip",
+   "sha256": "131e6a86842d95c133aef88dc396c3ba8def0d7435707ebe62e8ab59dc37aa4e",
+   "size": 2817478,
+   "licence": "Effekseer: MIT licence.",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "note": "The project publishes no checksum; the value is that of the first download."
+  },
+  {
+   "file": "greenworks-0.15.0-source.zip",
+   "what": "Greenworks 0.15.0",
+   "url": "https://github.com/greenheartgames/greenworks/archive/refs/tags/v0.15.0.zip",
+   "sha256": "1fe3fb9a987f6753b6007ca7f1427c565252bce7b5bcbc1db6d1f5f21941bb72",
+   "size": 421936,
+   "licence": "Greenworks: MIT licence (the Steamworks SDK it wraps is not in this archive).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "note": "The project publishes no checksum; the value is that of the first download."
+  },
+  {
+   "file": "greenworks-0.16.0-source.zip",
+   "what": "Greenworks 0.16.0",
+   "url": "https://github.com/greenheartgames/greenworks/archive/refs/tags/v0.16.0.zip",
+   "sha256": "e1c016c8ca59733d1f5f035c4baa66c35e75f91cf68fb507013a84c9a8b48b63",
+   "size": 422727,
+   "licence": "Greenworks: MIT licence (the Steamworks SDK it wraps is not in this archive).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "note": "The project publishes no checksum; the value is that of the first download."
+  },
+  {
+   "file": "greenworks-0.17.0-source.zip",
+   "what": "Greenworks 0.17.0",
+   "url": "https://github.com/greenheartgames/greenworks/archive/refs/tags/v0.17.0.zip",
+   "sha256": "ebb4424f69d3a10306d02d72d6732fcb965c748695bbb4b30c8548adc60579b0",
+   "size": 424175,
+   "licence": "Greenworks: MIT licence (the Steamworks SDK it wraps is not in this archive).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "note": "The project publishes no checksum; the value is that of the first download."
+  },
+  {
+   "file": "greenworks-0.18.0-source.zip",
+   "what": "Greenworks 0.18.0",
+   "url": "https://github.com/greenheartgames/greenworks/archive/refs/tags/v0.18.0.zip",
+   "sha256": "6ed3ad0e5b757798818197e58a17616cacbd27887fd7e36f8715f93d94e328f3",
+   "size": 424185,
+   "licence": "Greenworks: MIT licence (the Steamworks SDK it wraps is not in this archive).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "note": "The project publishes no checksum; the value is that of the first download."
+  },
+  {
+   "file": "greenworks-0.19.0-source.zip",
+   "what": "Greenworks 0.19.0",
+   "url": "https://github.com/greenheartgames/greenworks/archive/refs/tags/v0.19.0.zip",
+   "sha256": "e14426e829a4dfd08fe8fb1475e1cea47e862e6c950962ad028aa779c534b913",
+   "size": 429744,
+   "licence": "Greenworks: MIT licence (the Steamworks SDK it wraps is not in this archive).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "note": "The project publishes no checksum; the value is that of the first download."
+  },
+  {
+   "file": "greenworks-0.20.0-source.zip",
+   "what": "Greenworks 0.20.0",
+   "url": "https://github.com/greenheartgames/greenworks/archive/refs/tags/v0.20.0.zip",
+   "sha256": "ccad217b7c6eb44316772dc9e5bfc026613d4a995b6150b280629f7a137b7a80",
+   "size": 429833,
+   "licence": "Greenworks: MIT licence (the Steamworks SDK it wraps is not in this archive).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "note": "The project publishes no checksum; the value is that of the first download."
+  },
+  {
+   "file": "greenworks-0.21.0-source.zip",
+   "what": "Greenworks 0.21.0",
+   "url": "https://github.com/greenheartgames/greenworks/archive/refs/tags/v0.21.0.zip",
+   "sha256": "07bbd4cdd68cc69ceb519e9e1d0971290aafa2aca2fea2a62e01ed13b181f13a",
+   "size": 429845,
+   "licence": "Greenworks: MIT licence (the Steamworks SDK it wraps is not in this archive).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "note": "The project publishes no checksum; the value is that of the first download."
+  },
+  {
+   "file": "greenworks-0.22.0-source.zip",
+   "what": "Greenworks 0.22.0",
+   "url": "https://github.com/greenheartgames/greenworks/archive/refs/tags/v0.22.0.zip",
+   "sha256": "88db75000edc0196dfd192d923a8054b2d9670076d8153b1334d3024375f49a9",
+   "size": 432261,
+   "licence": "Greenworks: MIT licence (the Steamworks SDK it wraps is not in this archive).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "note": "The project publishes no checksum; the value is that of the first download."
+  },
+  {
+   "file": "innosetup-5.5.9-unicode.exe",
+   "what": "Inno Setup 5.5.9 (the compiler's installer)",
+   "url": "https://files.jrsoftware.org/is/5/innosetup-5.5.9-unicode.exe",
+   "sha256": "5b51ae6977bebba937ac18e0e80c1899e37dfaa12f51ccd817978ef07ae19cb3",
+   "size": 2380880,
+   "licence": "Inno Setup: the Inno Setup License (free to use, also commercially; redistribution under its terms - license.txt inside).",
+   "groups": [
+    "archives",
+    "test-tools"
+   ],
+   "used_by": "tools/build_inno_tables.py -> gamescan/inno_official.py; tests/build_installers.py -> tests/_tools/innosetup-5.5.9",
+   "note": "Nothing is published for this file; the SHA-256 is that of the first download (2026-10-11)."
+  },
+  {
+   "file": "innosetup-5.6.1-unicode.exe",
+   "what": "Inno Setup 5.6.1 (the compiler's installer)",
+   "url": "https://files.jrsoftware.org/is/5/innosetup-5.6.1-unicode.exe",
+   "sha256": "27d49e9bc769e9d1b214c153011978db90dc01c2acd1ddcd9ed7b3fe3b96b538",
+   "size": 2359768,
+   "licence": "Inno Setup: the Inno Setup License (free to use, also commercially; redistribution under its terms - license.txt inside).",
+   "groups": [
+    "archives",
+    "test-tools"
+   ],
+   "used_by": "tools/build_inno_tables.py -> gamescan/inno_official.py; tests/build_installers.py -> tests/_tools/innosetup-5.6.1",
+   "note": "Nothing is published for this file; the SHA-256 is that of the first download (2026-10-11)."
+  },
+  {
+   "file": "innosetup-6.0.5.exe",
+   "what": "Inno Setup 6.0.5 (the compiler's installer)",
+   "url": "https://github.com/jrsoftware/issrc/releases/download/is-6_0_5/innosetup-6.0.5.exe",
+   "sha256": "ae6823b523df87e9441789e51845434e4e0e70aac0b88afe80f94f20f4b98acb",
+   "size": 4218712,
+   "licence": "Inno Setup: the Inno Setup License (free to use, also commercially; redistribution under its terms - license.txt inside).",
+   "groups": [
+    "archives",
+    "test-tools"
+   ],
+   "used_by": "tools/build_inno_tables.py -> gamescan/inno_official.py; tests/build_installers.py -> tests/_tools/innosetup-6.0.5"
+  },
+  {
+   "file": "innosetup-6.2.2.exe",
+   "what": "Inno Setup 6.2.2 (the compiler's installer)",
+   "url": "https://github.com/jrsoftware/issrc/releases/download/is-6_2_2/innosetup-6.2.2.exe",
+   "sha256": "8117d10d00a2ad33a1390978ea3872861c330e087914410a6377b22c4c5b8563",
+   "size": 4722512,
+   "licence": "Inno Setup: the Inno Setup License (free to use, also commercially; redistribution under its terms - license.txt inside).",
+   "groups": [
+    "archives",
+    "test-tools"
+   ],
+   "used_by": "tools/build_inno_tables.py -> gamescan/inno_official.py; tests/build_installers.py -> tests/_tools/innosetup-6.2.2"
+  },
+  {
+   "file": "innosetup-6.4.3.exe",
+   "what": "Inno Setup 6.4.3 (the compiler's installer)",
+   "url": "https://github.com/jrsoftware/issrc/releases/download/is-6_4_3/innosetup-6.4.3.exe",
+   "sha256": "f3c42116542c4cc57263c5ba6c4feabfc49fe771f2f98a79d2f7628b8762723b",
+   "size": 6454616,
+   "licence": "Inno Setup: the Inno Setup License (free to use, also commercially; redistribution under its terms - license.txt inside).",
+   "groups": [
+    "archives",
+    "test-tools"
+   ],
+   "used_by": "tools/build_inno_tables.py -> gamescan/inno_official.py; tests/build_installers.py -> tests/_tools/innosetup-6.4.3"
+  },
+  {
+   "file": "innosetup-6.7.3.exe",
+   "what": "Inno Setup 6.7.3 (the compiler's installer)",
+   "url": "https://github.com/jrsoftware/issrc/releases/download/is-6_7_3/innosetup-6.7.3.exe",
+   "sha256": "9c73c3bae7ed48d44112a0f48e66742c00090bdb5bef71d9d3c056c66e97b732",
+   "size": 10592232,
+   "licence": "Inno Setup: the Inno Setup License (free to use, also commercially; redistribution under its terms - license.txt inside).",
+   "groups": [
+    "archives",
+    "test-tools"
+   ],
+   "used_by": "tools/build_inno_tables.py -> gamescan/inno_official.py; tests/build_installers.py -> tests/_tools/innosetup"
+  },
+  {
+   "file": "nsis-3.13.zip",
+   "what": "NSIS 3.13 (portable zip of the compiler)",
+   "url": "https://downloads.sourceforge.net/project/nsis/NSIS%203/3.13/nsis-3.13.zip",
+   "sha256": "ba63dffc4410ee89193e1cb5a41989991bd77c61068da17e3156d136b7b0b3d8",
+   "size": 2363925,
+   "licence": "NSIS: zlib/libpng licence for most of it; some parts under bzip2 and Common Public License 1.0 (COPYING inside).",
+   "groups": [
+    "archives",
+    "test-tools"
+   ],
+   "used_by": "tools/build_nsis_tables.py -> gamescan/nsis_official.py; tests/build_installers.py -> tests/_tools/nsis",
+   "note": "The NSIS project publishes no SHA-256; the value is the one pinned in tests/build_installers.py when the compiler was first downloaded, and the download of 2026-10-12 had it again."
+  },
+  {
+   "file": "electron-v41.4.0-win32-x64.zip",
+   "what": "Electron 41.4.0 (win32-x64), the official release zip",
+   "url": "https://github.com/electron/electron/releases/download/v41.4.0/electron-v41.4.0-win32-x64.zip",
+   "sha256": "a49241fcc6849f90708a33dda1fd717ed024285a01330d3d3da80be12fa9fe50",
+   "size": 142690012,
+   "licence": "Electron: MIT licence; it bundles Chromium, Node.js and their parts with their own open-source licences (LICENSES.chromium.html in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_electron_tables.py -> gamescan/electron_official.py",
+   "note": "SHA-256 from the Electron project's own SHASUMS256.txt of the release, read on 2026-10-13.",
+   "listing": "https://github.com/electron/electron/releases/download/v41.4.0/SHASUMS256.txt"
+  },
+  {
+   "file": "electron-v40.1.0-win32-x64.zip",
+   "what": "Electron 40.1.0 (win32-x64), the official release zip",
+   "url": "https://github.com/electron/electron/releases/download/v40.1.0/electron-v40.1.0-win32-x64.zip",
+   "sha256": "1a7acfd64ac2d4240ba7f71475625e2c9b8b04fdfa647bb91d48b7b1a02b9266",
+   "size": 137811926,
+   "licence": "Electron: MIT licence; it bundles Chromium, Node.js and their parts with their own open-source licences (LICENSES.chromium.html in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_electron_tables.py -> gamescan/electron_official.py",
+   "note": "SHA-256 from the Electron project's own SHASUMS256.txt of the release, read on 2026-10-13.",
+   "listing": "https://github.com/electron/electron/releases/download/v40.1.0/SHASUMS256.txt"
+  },
+  {
+   "file": "electron-v29.4.6-win32-x64.zip",
+   "what": "Electron 29.4.6 (win32-x64), the official release zip",
+   "url": "https://github.com/electron/electron/releases/download/v29.4.6/electron-v29.4.6-win32-x64.zip",
+   "sha256": "76793445ba1ab72fa94b8f1e1fc6c123898c5763977d385fdb9dc5d2189b9d02",
+   "size": 108179999,
+   "licence": "Electron: MIT licence; it bundles Chromium, Node.js and their parts with their own open-source licences (LICENSES.chromium.html in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_electron_tables.py -> gamescan/electron_official.py",
+   "note": "SHA-256 from the Electron project's own SHASUMS256.txt of the release, read on 2026-10-13.",
+   "listing": "https://github.com/electron/electron/releases/download/v29.4.6/SHASUMS256.txt"
+  },
+  {
+   "file": "electron-v29.1.0-win32-x64.zip",
+   "what": "Electron 29.1.0 (win32-x64), the official release zip",
+   "url": "https://github.com/electron/electron/releases/download/v29.1.0/electron-v29.1.0-win32-x64.zip",
+   "sha256": "2785358d5940142f00351425122bcaceebaf1d47ba5dac982c2a093a673d3908",
+   "size": 108203843,
+   "licence": "Electron: MIT licence; it bundles Chromium, Node.js and their parts with their own open-source licences (LICENSES.chromium.html in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_electron_tables.py -> gamescan/electron_official.py",
+   "note": "SHA-256 from the Electron project's own SHASUMS256.txt of the release, read on 2026-10-13.",
+   "listing": "https://github.com/electron/electron/releases/download/v29.1.0/SHASUMS256.txt"
+  },
+  {
+   "file": "electron-v27.3.11-win32-x64.zip",
+   "what": "Electron 27.3.11 (win32-x64), the official release zip",
+   "url": "https://github.com/electron/electron/releases/download/v27.3.11/electron-v27.3.11-win32-x64.zip",
+   "sha256": "96f8cf4245b8c103bd1228be2aef56eb8e3a0f7e8f3992359c36772a378e137b",
+   "size": 105322342,
+   "licence": "Electron: MIT licence; it bundles Chromium, Node.js and their parts with their own open-source licences (LICENSES.chromium.html in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_electron_tables.py -> gamescan/electron_official.py",
+   "note": "SHA-256 from the Electron project's own SHASUMS256.txt of the release, read on 2026-10-13.",
+   "listing": "https://github.com/electron/electron/releases/download/v27.3.11/SHASUMS256.txt"
+  },
+  {
+   "file": "electron-v21.4.1-win32-x64.zip",
+   "what": "Electron 21.4.1 (win32-x64), the official release zip",
+   "url": "https://github.com/electron/electron/releases/download/v21.4.1/electron-v21.4.1-win32-x64.zip",
+   "sha256": "12538e68e7b185c0c57fdca7145689eb19e00e08a860447441ed0fbbdae4f673",
+   "size": 95461520,
+   "licence": "Electron: MIT licence; it bundles Chromium, Node.js and their parts with their own open-source licences (LICENSES.chromium.html in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_electron_tables.py -> gamescan/electron_official.py",
+   "note": "SHA-256 from the Electron project's own SHASUMS256.txt of the release, read on 2026-10-13.",
+   "listing": "https://github.com/electron/electron/releases/download/v21.4.1/SHASUMS256.txt"
+  },
+  {
+   "file": "electron-v18.3.15-win32-x64.zip",
+   "what": "Electron 18.3.15 (win32-x64), the official release zip",
+   "url": "https://github.com/electron/electron/releases/download/v18.3.15/electron-v18.3.15-win32-x64.zip",
+   "sha256": "2e7f829de89bc0773ae44c6e780f3bcb196dd102b6b9e574d0fd95836bbbfad5",
+   "size": 88746698,
+   "licence": "Electron: MIT licence; it bundles Chromium, Node.js and their parts with their own open-source licences (LICENSES.chromium.html in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_electron_tables.py -> gamescan/electron_official.py",
+   "note": "SHA-256 from the Electron project's own SHASUMS256.txt of the release, read on 2026-10-13.",
+   "listing": "https://github.com/electron/electron/releases/download/v18.3.15/SHASUMS256.txt"
+  },
+  {
+   "file": "electron-v37.3.1-win32-x64.zip",
+   "what": "Electron 37.3.1 (win32-x64), the official release zip",
+   "url": "https://github.com/electron/electron/releases/download/v37.3.1/electron-v37.3.1-win32-x64.zip",
+   "sha256": "32ad7124107ffef2aa92abb03175c4a8a60133d50cda338c2ab2917c5efc8c32",
+   "size": 123819872,
+   "licence": "Electron: MIT licence; it bundles Chromium, Node.js and their parts with their own open-source licences (LICENSES.chromium.html in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_electron_tables.py -> gamescan/electron_official.py",
+   "note": "SHA-256 from the Electron project's own SHASUMS256.txt of the release, read on 2026-10-13 (the version of a clean benchmark sample).",
+   "listing": "https://github.com/electron/electron/releases/download/v37.3.1/SHASUMS256.txt"
+  },
+  {
+   "file": "electron-v21.3.1-win32-ia32.zip",
+   "what": "Electron 21.3.1 (win32-ia32), the official release zip",
+   "url": "https://github.com/electron/electron/releases/download/v21.3.1/electron-v21.3.1-win32-ia32.zip",
+   "sha256": "63c4c772be05eca7dfc4170decd7d12a35bc1031ab659480c005f65835ad0379",
+   "size": 89633158,
+   "licence": "Electron: MIT licence; it bundles Chromium, Node.js and their parts with their own open-source licences (LICENSES.chromium.html in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_electron_tables.py -> gamescan/electron_official.py",
+   "note": "SHA-256 from the Electron project's own SHASUMS256.txt of the release, read on 2026-10-13 (the version of a clean benchmark sample).",
+   "listing": "https://github.com/electron/electron/releases/download/v21.3.1/SHASUMS256.txt"
+  },
+  {
+   "file": "electron-v43.1.1-win32-x64.zip",
+   "what": "Electron 43.1.1 (win32-x64), the official release zip",
+   "url": "https://github.com/electron/electron/releases/download/v43.1.1/electron-v43.1.1-win32-x64.zip",
+   "sha256": "b4e9995cd3f65785eb8818276aa9020f3165ab11da41b3c762616d4a0ad8c7ad",
+   "size": 144265219,
+   "licence": "Electron: MIT licence; it bundles Chromium, Node.js and their parts with their own open-source licences (LICENSES.chromium.html in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_electron_tables.py -> gamescan/electron_official.py",
+   "note": "SHA-256 from the Electron project's own SHASUMS256.txt of the release, read on 2026-10-13 (the version of a clean benchmark sample).",
+   "listing": "https://github.com/electron/electron/releases/download/v43.1.1/SHASUMS256.txt"
+  },
+  {
+   "file": "directx_Jun2010_redist.exe",
+   "what": "DirectX End-User Runtimes (June 2010), redistributable package, version 9.29.1974.1",
+   "url": "https://download.microsoft.com/download/8/4/a/84a35bf1-dafe-4ae8-82af-ad2ae20b6b14/directx_Jun2010_redist.exe",
+   "sha256": "053f76dcbb28802e23341b6a787e3b0791c0fa5c8d4d011b1044172dbf89c73b",
+   "size": 100275120,
+   "licence": "Microsoft DirectX End-User Runtime: Microsoft's redistribution terms (DirectX SDK EULA); used here only to build a hash table, never shipped.",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_directx_table.py -> gamescan/directx_official.py",
+   "note": "Address as Microsoft's download page states it (microsoft.com/en-us/download/details.aspx?id=8109, read 2026-10-17: 95.6 MB, version 9.29.1974.1). Microsoft publishes no SHA-256: the value is the first download's, with Microsoft's own signature on the package and on every library in it as the proof (checked by the builder)."
+  },
+  {
+   "file": "renpy-6.99.12-sdk.zip",
+   "what": "Ren'Py 6.99.12 (SDK)",
+   "url": "https://www.renpy.org/dl/6.99.12/renpy-6.99.12-sdk.zip",
+   "sha256": "1fe36c1dfb793826c7a07fb9d74932bb6468685e25b99235c093e2c7a22c00d0",
+   "size": 61907790,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/6.99.12/checksums.txt"
+  },
+  {
+   "file": "renpy-6.99.12.1-sdk.zip",
+   "what": "Ren'Py 6.99.12.1 (SDK)",
+   "url": "https://www.renpy.org/dl/6.99.12.1/renpy-6.99.12.1-sdk.zip",
+   "sha256": "a996fe6f314ce95a8dcaf40d3e7645d648d3e88a2be3713bc01deb163d8f83e0",
+   "size": 61919412,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/6.99.12.1/checksums.txt"
+  },
+  {
+   "file": "renpy-6.99.12.2-sdk.zip",
+   "what": "Ren'Py 6.99.12.2 (SDK)",
+   "url": "https://www.renpy.org/dl/6.99.12.2/renpy-6.99.12.2-sdk.zip",
+   "sha256": "5e984799f3b178c516b414b5f6751158576d2e9773a29df1db547687465170cb",
+   "size": 61991385,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/6.99.12.2/checksums.txt"
+  },
+  {
+   "file": "renpy-6.99.12.3-sdk.zip",
+   "what": "Ren'Py 6.99.12.3 (SDK)",
+   "url": "https://www.renpy.org/dl/6.99.12.3/renpy-6.99.12.3-sdk.zip",
+   "sha256": "c7450594d2b5eddad727881ff0f86fb62ad6410540a9bb25af7061f8bf65d773",
+   "size": 62086772,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/6.99.12.3/checksums.txt"
+  },
+  {
+   "file": "renpy-6.99.13-sdk.zip",
+   "what": "Ren'Py 6.99.13 (SDK)",
+   "url": "https://www.renpy.org/dl/6.99.13/renpy-6.99.13-sdk.zip",
+   "sha256": "cfa195192dbbf18d01c5093ca1fe92962eb5997a4178e97ab3bd655525095f4d",
+   "size": 98093390,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/6.99.13/checksums.txt"
+  },
+  {
+   "file": "renpy-6.99.14-sdk.zip",
+   "what": "Ren'Py 6.99.14 (SDK)",
+   "url": "https://www.renpy.org/dl/6.99.14/renpy-6.99.14-sdk.zip",
+   "sha256": "495d66b461c79d833c55da24d2c043ee2e6f99d3b78d863bf84c1a109278b9f6",
+   "size": 106337020,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/6.99.14/checksums.txt"
+  },
+  {
+   "file": "renpy-6.99.14.1-sdk.zip",
+   "what": "Ren'Py 6.99.14.1 (SDK)",
+   "url": "https://www.renpy.org/dl/6.99.14.1/renpy-6.99.14.1-sdk.zip",
+   "sha256": "0d49f22b9d222bbff205003444bf210f627d1de8993976dd6d91af02e96c9ecd",
+   "size": 106467753,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/6.99.14.1/checksums.txt"
+  },
+  {
+   "file": "renpy-6.99.14.2-sdk.zip",
+   "what": "Ren'Py 6.99.14.2 (SDK)",
+   "url": "https://www.renpy.org/dl/6.99.14.2/renpy-6.99.14.2-sdk.zip",
+   "sha256": "d5a4545023506969b31984bb69c76813805ec14a0e8a9d81777d6202d96e2e5e",
+   "size": 106830757,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/6.99.14.2/checksums.txt"
+  },
+  {
+   "file": "renpy-6.99.14.3-sdk.zip",
+   "what": "Ren'Py 6.99.14.3 (SDK)",
+   "url": "https://www.renpy.org/dl/6.99.14.3/renpy-6.99.14.3-sdk.zip",
+   "sha256": "32920de7afbf1ce9373ff3628daefe9c68a4404971ae58ae523e6d888fc7de8c",
+   "size": 106912398,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/6.99.14.3/checksums.txt"
+  },
+  {
+   "file": "renpy-7.0.0-sdk.zip",
+   "what": "Ren'Py 7.0.0 (SDK)",
+   "url": "https://www.renpy.org/dl/7.0.0/renpy-7.0.0-sdk.zip",
+   "sha256": "90cbc8e79c76cafc929a101aeb5b85d47068f47d3e57ad8943e42e23ecb50fdd",
+   "size": 97753094,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/7.0.0/checksums.txt"
+  },
+  {
+   "file": "renpy-7.1.0-sdk.zip",
+   "what": "Ren'Py 7.1.0 (SDK)",
+   "url": "https://www.renpy.org/dl/7.1.0/renpy-7.1.0-sdk.zip",
+   "sha256": "0c1e01ebbede19372e3f19e02314c486e2260025b8239010180e406d51e0b279",
+   "size": 97899293,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/7.1.0/checksums.txt"
+  },
+  {
+   "file": "renpy-7.1.1-sdk.zip",
+   "what": "Ren'Py 7.1.1 (SDK)",
+   "url": "https://www.renpy.org/dl/7.1.1/renpy-7.1.1-sdk.zip",
+   "sha256": "67e066c31845294f2089fddabef9e4527fdbeb2fd571395e8b316742c6784bd5",
+   "size": 98475214,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/7.1.1/checksums.txt"
+  },
+  {
+   "file": "renpy-7.1.2-sdk.zip",
+   "what": "Ren'Py 7.1.2 (SDK)",
+   "url": "https://www.renpy.org/dl/7.1.2/renpy-7.1.2-sdk.zip",
+   "sha256": "2307adac22fd95d542771c92a0905c4d5239d26da179e013d8fa49a9a272242d",
+   "size": 97839804,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/7.1.2/checksums.txt"
+  },
+  {
+   "file": "renpy-7.1.3-sdk.zip",
+   "what": "Ren'Py 7.1.3 (SDK)",
+   "url": "https://www.renpy.org/dl/7.1.3/renpy-7.1.3-sdk.zip",
+   "sha256": "ce5f95f825658d088a0612bb9a28aa5a694f7264b1f25ebde4ebd4cbcc94c116",
+   "size": 98367501,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/7.1.3/checksums.txt"
+  },
+  {
+   "file": "renpy-7.2.0-sdk.zip",
+   "what": "Ren'Py 7.2.0 (SDK)",
+   "url": "https://www.renpy.org/dl/7.2.0/renpy-7.2.0-sdk.zip",
+   "sha256": "85b06320f74e20fcf16ec6b263150c1d4fc40087731510a3cbf9f1cc921ddb8e",
+   "size": 99121839,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/7.2.0/checksums.txt"
+  },
+  {
+   "file": "renpy-7.2.1-sdk.zip",
+   "what": "Ren'Py 7.2.1 (SDK)",
+   "url": "https://www.renpy.org/dl/7.2.1/renpy-7.2.1-sdk.zip",
+   "sha256": "8b3bc11f22a590d159877f5adad9e5be0c51d8d2c822950587bbde877f3fb605",
+   "size": 99565368,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/7.2.1/checksums.txt"
+  },
+  {
+   "file": "renpy-7.2.2-sdk.zip",
+   "what": "Ren'Py 7.2.2 (SDK)",
+   "url": "https://www.renpy.org/dl/7.2.2/renpy-7.2.2-sdk.zip",
+   "sha256": "ecea56c40b8a2ea96c533a689e3fffb16c184677835bc1e5e42f0ef5657ce392",
+   "size": 99642401,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/7.2.2/checksums.txt"
+  },
+  {
+   "file": "renpy-7.3.0-sdk.zip",
+   "what": "Ren'Py 7.3.0 (SDK)",
+   "url": "https://www.renpy.org/dl/7.3.0/renpy-7.3.0-sdk.zip",
+   "sha256": "f40b0269ea614ef0292c974b9e03a05c5c9d71a10f31693c2e037921f815cb50",
+   "size": 100567782,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/7.3.0/checksums.txt"
+  },
+  {
+   "file": "renpy-7.3.1-sdk.zip",
+   "what": "Ren'Py 7.3.1 (SDK)",
+   "url": "https://www.renpy.org/dl/7.3.1/renpy-7.3.1-sdk.zip",
+   "sha256": "486c660b624ddc9077637fa5f6f86c379396a34e55ddb1c60dd0f2cfd64e7ce4",
+   "size": 100623843,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/7.3.1/checksums.txt"
+  },
+  {
+   "file": "renpy-7.3.2-sdk.zip",
+   "what": "Ren'Py 7.3.2 (SDK)",
+   "url": "https://www.renpy.org/dl/7.3.2/renpy-7.3.2-sdk.zip",
+   "sha256": "129dd7cce3a1e99982f07b4f4c5571111d52dca9c80f2167badadec045101abf",
+   "size": 100685831,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/7.3.2/checksums.txt"
+  },
+  {
+   "file": "renpy-7.3.3-sdk.zip",
+   "what": "Ren'Py 7.3.3 (SDK)",
+   "url": "https://www.renpy.org/dl/7.3.3/renpy-7.3.3-sdk.zip",
+   "sha256": "439e1f093665283b86f75ed2a5dee42c8467c4fa8e44317c6143a77878e90374",
+   "size": 101219894,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/7.3.3/checksums.txt"
+  },
+  {
+   "file": "renpy-7.3.4-sdk.zip",
+   "what": "Ren'Py 7.3.4 (SDK)",
+   "url": "https://www.renpy.org/dl/7.3.4/renpy-7.3.4-sdk.zip",
+   "sha256": "bb0c212dd1e419812872385f87e472dada7122c5f391bf6473767629d7a5c0b8",
+   "size": 101226813,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/7.3.4/checksums.txt"
+  },
+  {
+   "file": "renpy-7.4.0-sdk.zip",
+   "what": "Ren'Py 7.4.0 (SDK)",
+   "url": "https://www.renpy.org/dl/7.4.0/renpy-7.4.0-sdk.zip",
+   "sha256": "9242f80460455794ae9c2a332b6af0db676257d793296c892e14a2bcfd8b0ba1",
+   "size": 130914668,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/7.4.0/checksums.txt"
+  },
+  {
+   "file": "renpy-7.4.1-sdk.zip",
+   "what": "Ren'Py 7.4.1 (SDK)",
+   "url": "https://www.renpy.org/dl/7.4.1/renpy-7.4.1-sdk.zip",
+   "sha256": "7987e14c5b6ac14ef2644f426a7cda1abfc7f63885073affd39a7289d4beac4d",
+   "size": 111369442,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/7.4.1/checksums.txt"
+  },
+  {
+   "file": "renpy-7.4.2-sdk.zip",
+   "what": "Ren'Py 7.4.2 (SDK)",
+   "url": "https://www.renpy.org/dl/7.4.2/renpy-7.4.2-sdk.zip",
+   "sha256": "d0b3c4e15afc489a0d263bf1c7fa99a01b6f9a36c6b47f1c0c4b8976beada5fa",
+   "size": 120070149,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/7.4.2/checksums.txt"
+  },
+  {
+   "file": "renpy-7.4.3-sdk.zip",
+   "what": "Ren'Py 7.4.3 (SDK)",
+   "url": "https://www.renpy.org/dl/7.4.3/renpy-7.4.3-sdk.zip",
+   "sha256": "8f2c0b0f545b36e9e44973b9df6b7241cdbca2237e37ef7aeaee5f17dbf3d5c6",
+   "size": 119353876,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/7.4.3/checksums.txt"
+  },
+  {
+   "file": "renpy-7.4.4-sdk.zip",
+   "what": "Ren'Py 7.4.4 (SDK)",
+   "url": "https://www.renpy.org/dl/7.4.4/renpy-7.4.4-sdk.zip",
+   "sha256": "b06491573cb59d2fd0c511c550ddb82b22a78a0ef34680370f280d47ff9683a6",
+   "size": 119692429,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/7.4.4/checksums.txt"
+  },
+  {
+   "file": "renpy-7.4.5-sdk.zip",
+   "what": "Ren'Py 7.4.5 (SDK)",
+   "url": "https://www.renpy.org/dl/7.4.5/renpy-7.4.5-sdk.zip",
+   "sha256": "9dd8c6cdef02283c73d742ae8daf7244506c42f06da99d9b27b1e68799f54cf5",
+   "size": 119889595,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/7.4.5/checksums.txt"
+  },
+  {
+   "file": "renpy-7.4.6-sdk.zip",
+   "what": "Ren'Py 7.4.6 (SDK)",
+   "url": "https://www.renpy.org/dl/7.4.6/renpy-7.4.6-sdk.zip",
+   "sha256": "3a3b8608f8150be8e50ab5f27d371fc0f828554874c96c31b1cf77e300953cb3",
+   "size": 120250534,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/7.4.6/checksums.txt"
+  },
+  {
+   "file": "renpy-7.4.7-sdk.zip",
+   "what": "Ren'Py 7.4.7 (SDK)",
+   "url": "https://www.renpy.org/dl/7.4.7/renpy-7.4.7-sdk.zip",
+   "sha256": "032a8c6a0a3e7b2a5c48a1c77640ca614c94e6c1e4980812fb742c107fe773d8",
+   "size": 119991357,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/7.4.7/checksums.txt"
+  },
+  {
+   "file": "renpy-7.4.8-sdk.zip",
+   "what": "Ren'Py 7.4.8 (SDK)",
+   "url": "https://www.renpy.org/dl/7.4.8/renpy-7.4.8-sdk.zip",
+   "sha256": "d60c699ef9b51efb134622856b85c9dec669e2ae7805867028fcb3ac198b830e",
+   "size": 120099655,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/7.4.8/checksums.txt"
+  },
+  {
+   "file": "renpy-7.4.9-sdk.zip",
+   "what": "Ren'Py 7.4.9 (SDK)",
+   "url": "https://www.renpy.org/dl/7.4.9/renpy-7.4.9-sdk.zip",
+   "sha256": "acb69895cde9b080ead084922e05165d7903bfc67de16244b1d53fb00c2af133",
+   "size": 120868827,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/7.4.9/checksums.txt"
+  },
+  {
+   "file": "renpy-7.4.10-sdk.zip",
+   "what": "Ren'Py 7.4.10 (SDK)",
+   "url": "https://www.renpy.org/dl/7.4.10/renpy-7.4.10-sdk.zip",
+   "sha256": "3b618753be5e22da6195d1d414cfaf4e639313cc46eb1ef85d5cc7a7914efd11",
+   "size": 117870564,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/7.4.10/checksums.txt"
+  },
+  {
+   "file": "renpy-7.5.0-sdk.zip",
+   "what": "Ren'Py 7.5.0 (SDK)",
+   "url": "https://www.renpy.org/dl/7.5.0/renpy-7.5.0-sdk.zip",
+   "sha256": "a15c174b422ddc790566c0bb8252de92cd6e34e8948e5297fc6efba332ff2883",
+   "size": 119176653,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/7.5.0/checksums.txt"
+  },
+  {
+   "file": "renpy-7.5.1-sdk.zip",
+   "what": "Ren'Py 7.5.1 (SDK)",
+   "url": "https://www.renpy.org/dl/7.5.1/renpy-7.5.1-sdk.zip",
+   "sha256": "6f01e5c2b78cdf2830ef53dd59934fa3d9240f42d7df7e43c809c4575f25adc0",
+   "size": 119507018,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/7.5.1/checksums.txt"
+  },
+  {
+   "file": "renpy-7.5.2-sdk.zip",
+   "what": "Ren'Py 7.5.2 (SDK)",
+   "url": "https://www.renpy.org/dl/7.5.2/renpy-7.5.2-sdk.zip",
+   "sha256": "ed052c17819f97d8b0612d8f31fa64b0d3a91e4e141482d1400a21588084f0c1",
+   "size": 119535555,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/7.5.2/checksums.txt"
+  },
+  {
+   "file": "renpy-7.6.0-sdk.zip",
+   "what": "Ren'Py 7.6.0 (SDK)",
+   "url": "https://www.renpy.org/dl/7.6.0/renpy-7.6.0-sdk.zip",
+   "sha256": "3926b15a9e89c27b6bf6f360d5948cb088a01603d13df76db4acd5995e232162",
+   "size": 147218632,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/7.6.0/checksums.txt"
+  },
+  {
+   "file": "renpy-7.6.1-sdk.zip",
+   "what": "Ren'Py 7.6.1 (SDK)",
+   "url": "https://www.renpy.org/dl/7.6.1/renpy-7.6.1-sdk.zip",
+   "sha256": "7de347170dddc0a6359066df69813c44ab4007debccd55022336eb74edaa3db3",
+   "size": 147202968,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/7.6.1/checksums.txt"
+  },
+  {
+   "file": "renpy-7.6.2-sdk.zip",
+   "what": "Ren'Py 7.6.2 (SDK)",
+   "url": "https://www.renpy.org/dl/7.6.2/renpy-7.6.2-sdk.zip",
+   "sha256": "4f2403ab84120d36d9ad6b8d32a3c725f8d2d12edeab65f1d4733dde056eae99",
+   "size": 147082904,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/7.6.2/checksums.txt"
+  },
+  {
+   "file": "renpy-7.7.0-sdk.zip",
+   "what": "Ren'Py 7.7.0 (SDK)",
+   "url": "https://www.renpy.org/dl/7.7.0/renpy-7.7.0-sdk.zip",
+   "sha256": "275292404a03ff8a59e6547ddd609bfc9fcc0f395e6e6f5c43f9fe2e4766070b",
+   "size": 157913111,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/7.7.0/checksums.txt"
+  },
+  {
+   "file": "renpy-7.7.1-sdk.zip",
+   "what": "Ren'Py 7.7.1 (SDK)",
+   "url": "https://www.renpy.org/dl/7.7.1/renpy-7.7.1-sdk.zip",
+   "sha256": "767fb21aed2e689bfba04e2a7db0e30003f0b6825538cca5ab66a1ab4dbb8d2e",
+   "size": 157929815,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/7.7.1/checksums.txt"
+  },
+  {
+   "file": "renpy-7.7.2-sdk.zip",
+   "what": "Ren'Py 7.7.2 (SDK)",
+   "url": "https://www.renpy.org/dl/7.7.2/renpy-7.7.2-sdk.zip",
+   "sha256": "d2c7061e475aab6e7214809c60f959eeb59795174dc317fe2c7816ec403e86f8",
+   "size": 158205771,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/7.7.2/checksums.txt"
+  },
+  {
+   "file": "renpy-7.8.0-sdk.zip",
+   "what": "Ren'Py 7.8.0 (SDK)",
+   "url": "https://www.renpy.org/dl/7.8.0/renpy-7.8.0-sdk.zip",
+   "sha256": "46d1d65cbc2ff12e473081ad444c0ca89b2112383dfc6b90a0ae664cfa7d4588",
+   "size": 161412554,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/7.8.0/checksums.txt"
+  },
+  {
+   "file": "renpy-7.8.1-sdk.zip",
+   "what": "Ren'Py 7.8.1 (SDK)",
+   "url": "https://www.renpy.org/dl/7.8.1/renpy-7.8.1-sdk.zip",
+   "sha256": "9c045f0994a1458c79c14282e7f7c6fb9ab3dd14033765b084cb7aced75b57e5",
+   "size": 161504449,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/7.8.1/checksums.txt"
+  },
+  {
+   "file": "renpy-7.8.2-sdk.zip",
+   "what": "Ren'Py 7.8.2 (SDK)",
+   "url": "https://www.renpy.org/dl/7.8.2/renpy-7.8.2-sdk.zip",
+   "sha256": "1dc37b3966ab625e189fba8adba2507bbc03496515ab17e11d3678b6c0d82d15",
+   "size": 161494298,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/7.8.2/checksums.txt"
+  },
+  {
+   "file": "renpy-7.8.3-sdk.zip",
+   "what": "Ren'Py 7.8.3 (SDK)",
+   "url": "https://www.renpy.org/dl/7.8.3/renpy-7.8.3-sdk.zip",
+   "sha256": "f6f8d48f460120693b48d0895b6eb3818204b48823547a8e9534967a34d856fc",
+   "size": 161537003,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/7.8.3/checksums.txt"
+  },
+  {
+   "file": "renpy-7.8.4-sdk.zip",
+   "what": "Ren'Py 7.8.4 (SDK)",
+   "url": "https://www.renpy.org/dl/7.8.4/renpy-7.8.4-sdk.zip",
+   "sha256": "aaf04535795499beb07f432341a8b3c6fff1103fc966f66a36690b9959822a39",
+   "size": 161539235,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/7.8.4/checksums.txt"
+  },
+  {
+   "file": "renpy-7.8.5-sdk.zip",
+   "what": "Ren'Py 7.8.5 (SDK)",
+   "url": "https://www.renpy.org/dl/7.8.5/renpy-7.8.5-sdk.zip",
+   "sha256": "0367c729359ac08e0e2b1cae61c3401f9708074358a915a41cd39ce6b36333c2",
+   "size": 161933741,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/7.8.5/checksums.txt"
+  },
+  {
+   "file": "renpy-7.8.6-sdk.zip",
+   "what": "Ren'Py 7.8.6 (SDK)",
+   "url": "https://www.renpy.org/dl/7.8.6/renpy-7.8.6-sdk.zip",
+   "sha256": "30ccea646170c9fe8ebac8fe7f522d43e3826fe3f5526af210fa8948ad875b5c",
+   "size": 162088559,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/7.8.6/checksums.txt"
+  },
+  {
+   "file": "renpy-8.0.0-sdk.zip",
+   "what": "Ren'Py 8.0.0 (SDK)",
+   "url": "https://www.renpy.org/dl/8.0.0/renpy-8.0.0-sdk.zip",
+   "sha256": "adcc4b458f969e705c6397997cd75c915802ed85b3a737690d307ae488b36ce9",
+   "size": 104298772,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/8.0.0/checksums.txt"
+  },
+  {
+   "file": "renpy-8.0.1-sdk.zip",
+   "what": "Ren'Py 8.0.1 (SDK)",
+   "url": "https://www.renpy.org/dl/8.0.1/renpy-8.0.1-sdk.zip",
+   "sha256": "80d21196b75d10488ee85b99f97a1509d559112be93c257f59d7ec7f068d4d50",
+   "size": 104658853,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/8.0.1/checksums.txt"
+  },
+  {
+   "file": "renpy-8.0.2-sdk.zip",
+   "what": "Ren'Py 8.0.2 (SDK)",
+   "url": "https://www.renpy.org/dl/8.0.2/renpy-8.0.2-sdk.zip",
+   "sha256": "ce7c74db7a16efa8ebed63eba59273bf18f2520dbcc2d20b33652939cce9f667",
+   "size": 104704361,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/8.0.2/checksums.txt"
+  },
+  {
+   "file": "renpy-8.1.0-sdk.zip",
+   "what": "Ren'Py 8.1.0 (SDK)",
+   "url": "https://www.renpy.org/dl/8.1.0/renpy-8.1.0-sdk.zip",
+   "sha256": "ebf57545c6180e05f7f899568178bfb0d40113262654744dedd727e180b70573",
+   "size": 135834367,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/8.1.0/checksums.txt"
+  },
+  {
+   "file": "renpy-8.1.1-sdk.zip",
+   "what": "Ren'Py 8.1.1 (SDK)",
+   "url": "https://www.renpy.org/dl/8.1.1/renpy-8.1.1-sdk.zip",
+   "sha256": "6944ffff49b37f703c2257c23ca28cfab5d2a41944dd171f676c7385ba18b0f6",
+   "size": 135854771,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/8.1.1/checksums.txt"
+  },
+  {
+   "file": "renpy-8.1.2-sdk.zip",
+   "what": "Ren'Py 8.1.2 (SDK)",
+   "url": "https://www.renpy.org/dl/8.1.2/renpy-8.1.2-sdk.zip",
+   "sha256": "03d3c65332360a57e8fd960110c747055b0fec80bd969c88e95682b083ea8338",
+   "size": 135942938,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/8.1.2/checksums.txt"
+  },
+  {
+   "file": "renpy-8.2.0-sdk.zip",
+   "what": "Ren'Py 8.2.0 (SDK)",
+   "url": "https://www.renpy.org/dl/8.2.0/renpy-8.2.0-sdk.zip",
+   "sha256": "e2d6b482188e3aa191c954245295ab0b8441a1b735243050cc6114fadb64cbea",
+   "size": 145379067,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/8.2.0/checksums.txt"
+  },
+  {
+   "file": "renpy-8.2.1-sdk.zip",
+   "what": "Ren'Py 8.2.1 (SDK)",
+   "url": "https://www.renpy.org/dl/8.2.1/renpy-8.2.1-sdk.zip",
+   "sha256": "cc4da3469bb1aac840ffd4e805f9e96c59d5ef97c0b01e46962ff68a12e18c4a",
+   "size": 145389645,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/8.2.1/checksums.txt"
+  },
+  {
+   "file": "renpy-8.2.2-sdk.zip",
+   "what": "Ren'Py 8.2.2 (SDK)",
+   "url": "https://www.renpy.org/dl/8.2.2/renpy-8.2.2-sdk.zip",
+   "sha256": "7846f774af54f32d8acaf420230ec3e97862414fbd18687dfc2dbbadfc2643d1",
+   "size": 145713058,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/8.2.2/checksums.txt"
+  },
+  {
+   "file": "renpy-8.3.0-sdk.zip",
+   "what": "Ren'Py 8.3.0 (SDK)",
+   "url": "https://www.renpy.org/dl/8.3.0/renpy-8.3.0-sdk.zip",
+   "sha256": "d2f54c7ce96bd1b400bab4baddc40dcd807a24e37168f9eb7a3b104ebe8f3a74",
+   "size": 148800010,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/8.3.0/checksums.txt"
+  },
+  {
+   "file": "renpy-8.3.1-sdk.zip",
+   "what": "Ren'Py 8.3.1 (SDK)",
+   "url": "https://www.renpy.org/dl/8.3.1/renpy-8.3.1-sdk.zip",
+   "sha256": "d6a1a3d57116c57b91255413abe8bd781def285d3e442596700b5007cfbc1408",
+   "size": 149171751,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/8.3.1/checksums.txt"
+  },
+  {
+   "file": "renpy-8.3.2-sdk.zip",
+   "what": "Ren'Py 8.3.2 (SDK)",
+   "url": "https://www.renpy.org/dl/8.3.2/renpy-8.3.2-sdk.zip",
+   "sha256": "ad745937c1146765e170e1437b227833da7a3582d2cb2aadb7dce32e5c3a3c51",
+   "size": 148897459,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/8.3.2/checksums.txt"
+  },
+  {
+   "file": "renpy-8.3.3-sdk.zip",
+   "what": "Ren'Py 8.3.3 (SDK)",
+   "url": "https://www.renpy.org/dl/8.3.3/renpy-8.3.3-sdk.zip",
+   "sha256": "a87ff0ac0db67c98f4762f681cede5d4b61fe92d5b177f3100e8e87b964c50b6",
+   "size": 148924495,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/8.3.3/checksums.txt"
+  },
+  {
+   "file": "renpy-8.3.4-sdk.zip",
+   "what": "Ren'Py 8.3.4 (SDK)",
+   "url": "https://www.renpy.org/dl/8.3.4/renpy-8.3.4-sdk.zip",
+   "sha256": "50c83a9b785711916a4c8946d2d771c1df401c5074a84be087053ba6f09c9399",
+   "size": 155573320,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/8.3.4/checksums.txt"
+  },
+  {
+   "file": "renpy-8.3.5-sdk.zip",
+   "what": "Ren'Py 8.3.5 (SDK)",
+   "url": "https://www.renpy.org/dl/8.3.5/renpy-8.3.5-sdk.zip",
+   "sha256": "bfd4e36258be49c9fb615507847fa9afd6d4f5df6ccccafa98d8604934cd27e4",
+   "size": 149266239,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/8.3.5/checksums.txt"
+  },
+  {
+   "file": "renpy-8.3.6-sdk.zip",
+   "what": "Ren'Py 8.3.6 (SDK)",
+   "url": "https://www.renpy.org/dl/8.3.6/renpy-8.3.6-sdk.zip",
+   "sha256": "5499c9a510300dd66cf7c2d5331662fea5748c7dbc13a16c4dc36dbec45233c4",
+   "size": 149390480,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/8.3.6/checksums.txt"
+  },
+  {
+   "file": "renpy-8.4.0-sdk.zip",
+   "what": "Ren'Py 8.4.0 (SDK)",
+   "url": "https://www.renpy.org/dl/8.4.0/renpy-8.4.0-sdk.zip",
+   "sha256": "d37d2dcd14206bfd85fe680f9eab38aefde4119ee789ae40deeba5d599fa36dd",
+   "size": 159506162,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/8.4.0/checksums.txt"
+  },
+  {
+   "file": "renpy-8.5.0-sdk.zip",
+   "what": "Ren'Py 8.5.0 (SDK)",
+   "url": "https://www.renpy.org/dl/8.5.0/renpy-8.5.0-sdk.zip",
+   "sha256": "94832f50f1f54251772e71317b067f6ff342e7b9a93197dd5b9c75a0084af30d",
+   "size": 162838191,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/8.5.0/checksums.txt"
+  },
+  {
+   "file": "renpy-8.5.1-sdk.zip",
+   "what": "Ren'Py 8.5.1 (SDK)",
+   "url": "https://www.renpy.org/dl/8.5.1/renpy-8.5.1-sdk.zip",
+   "sha256": "2a46584405fde8ffa9c1d1cac8623ba7b6193ebbf90f0cb8d4f586cfb74cfef7",
+   "size": 162884120,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/8.5.1/checksums.txt"
+  },
+  {
+   "file": "renpy-8.5.2-sdk.zip",
+   "what": "Ren'Py 8.5.2 (SDK)",
+   "url": "https://www.renpy.org/dl/8.5.2/renpy-8.5.2-sdk.zip",
+   "sha256": "f85ac72c353cd14056ae0a9e25d8a2bd27232c0de4b59e29ead9114bd68b1fa4",
+   "size": 162884146,
+   "licence": "Ren'Py: MIT licence for the engine; it bundles libraries under other licences, some LGPL (the LICENSE.txt in the archive lists them).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_engine_hashes.py -> gamescan/engine_hashes.py, gamescan/compiled_hashes.py",
+   "listing": "https://www.renpy.org/dl/8.5.2/checksums.txt"
+  }
+ ]
+}

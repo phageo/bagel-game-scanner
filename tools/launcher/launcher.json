@@ -1,0 +1,9 @@
+{
+ "about": "Bagel.exe, the package's start program, built by tools/build_launcher.py with Windows' own csc.exe (dev-only); tools/build_package.py takes exactly this file.",
+ "compiler": "%WINDIR%\\Microsoft.NET\\Framework64\\v4.0.30319\\csc.exe",
+ "deterministic": true,
+ "sha256": "d7f0525c27a366f409f33d0abf6d9b0783e68073a8777a4f3686ba64e253f67e",
+ "size": 165888,
+ "source_sha256": "b51a1adaa8841e338e119c8ca7ae869e7e77837faec4b54869c245b8ec4954cf",
+ "version": "0.9.0-beta"
+}

@@ -1,0 +1,3048 @@
+{
+ "about": "The official files gamescan/library_hashes.py is built from besides those of tools/manifest.json (tools/build_library_hashes.py --register): jQuery from its own CDN, SDL2 and OpenAL Soft from their GitHub releases - each only with the SHA-256 its publisher states. Used with: python tools/fetch.py --manifest tools/manifest_libraries.json",
+ "licence_notes": "Licence notes are short reminders, not legal texts.",
+ "files": [
+  {
+   "file": "jquery-4.0.0.js",
+   "what": "jQuery (jquery-4.0.0.js)",
+   "url": "https://code.jquery.com/jquery-4.0.0.js",
+   "sha256": "f5fb077959ca06faa1dc50761d8bbb836c6c78067932537a2b3fea9e401257c5",
+   "size": 255967,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-4.0.0.min.js",
+   "what": "jQuery (jquery-4.0.0.min.js)",
+   "url": "https://code.jquery.com/jquery-4.0.0.min.js",
+   "sha256": "39a546ea9ad97f8bfaf5d3e0e8f8556adb415e470e59007ada9759dce472adaa",
+   "size": 78748,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-4.0.0.slim.js",
+   "what": "jQuery (jquery-4.0.0.slim.js)",
+   "url": "https://code.jquery.com/jquery-4.0.0.slim.js",
+   "sha256": "33e1a384c05f5e290cd62ccca65202093b1c223e61ccf0a9eae0f36b2a71b608",
+   "size": 182511,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-4.0.0.slim.min.js",
+   "what": "jQuery (jquery-4.0.0.slim.min.js)",
+   "url": "https://code.jquery.com/jquery-4.0.0.slim.min.js",
+   "sha256": "f031a9bf5dc7226fb9883356c355eac60141e268fec8e28535bfad1c164ea307",
+   "size": 56032,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-4.0.0.module.js",
+   "what": "jQuery (jquery-4.0.0.module.js)",
+   "url": "https://code.jquery.com/jquery-4.0.0.module.js",
+   "sha256": "58afc4248993aea979110204a6bd9588312e9430be15acbd4bc687fe1baad083",
+   "size": 255787,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-4.0.0.module.min.js",
+   "what": "jQuery (jquery-4.0.0.module.min.js)",
+   "url": "https://code.jquery.com/jquery-4.0.0.module.min.js",
+   "sha256": "7782f033d0faa53922c554153faea7cf705877cae2ed4ae2cfb0b75f8a810151",
+   "size": 78651,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-4.0.0.slim.module.js",
+   "what": "jQuery (jquery-4.0.0.slim.module.js)",
+   "url": "https://code.jquery.com/jquery-4.0.0.slim.module.js",
+   "sha256": "7ee07d264288397edb142573767726ecdcba49c0ba03d3c05f9384bfd271a938",
+   "size": 182331,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-4.0.0.slim.module.min.js",
+   "what": "jQuery (jquery-4.0.0.slim.module.min.js)",
+   "url": "https://code.jquery.com/jquery-4.0.0.slim.module.min.js",
+   "sha256": "a5f17921ae5006c6e4e6ebec9a02af63d9273e29f387877a6a4d3da9d91a2b3f",
+   "size": 55935,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.7.1.js",
+   "what": "jQuery (jquery-3.7.1.js)",
+   "url": "https://code.jquery.com/jquery-3.7.1.js",
+   "sha256": "78a85aca2f0b110c29e0d2b137e09f0a1fb7a8e554b499f740d6744dc8962cfe",
+   "size": 285314,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.7.1.min.js",
+   "what": "jQuery (jquery-3.7.1.min.js)",
+   "url": "https://code.jquery.com/jquery-3.7.1.min.js",
+   "sha256": "fc9a93dd241f6b045cbff0481cf4e1901becd0e12fb45166a8f17f95823f0b1a",
+   "size": 87533,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.7.1.slim.js",
+   "what": "jQuery (jquery-3.7.1.slim.js)",
+   "url": "https://code.jquery.com/jquery-3.7.1.slim.js",
+   "sha256": "520bef37cbc19203b496e3d2525dacf13225392611a061405f88e50889bd01d7",
+   "size": 232015,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.7.1.slim.min.js",
+   "what": "jQuery (jquery-3.7.1.slim.min.js)",
+   "url": "https://code.jquery.com/jquery-3.7.1.slim.min.js",
+   "sha256": "9261efb3407e3a9096e4654750d8eff6b3a663422f48845c7fbcc65034c340cf",
+   "size": 70264,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.7.0.js",
+   "what": "jQuery (jquery-3.7.0.js)",
+   "url": "https://code.jquery.com/jquery-3.7.0.js",
+   "sha256": "265a924c42de4784cba8fd0e1bd77133bc833ea5f5a31fc77e08922c18fcfa43",
+   "size": 284996,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.7.0.min.js",
+   "what": "jQuery (jquery-3.7.0.min.js)",
+   "url": "https://code.jquery.com/jquery-3.7.0.min.js",
+   "sha256": "d8f9afbf492e4c139e9d2bcb9ba6ef7c14921eb509fb703bc7a3f911b774eff8",
+   "size": 87462,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.7.0.slim.js",
+   "what": "jQuery (jquery-3.7.0.slim.js)",
+   "url": "https://code.jquery.com/jquery-3.7.0.slim.js",
+   "sha256": "ec63be8dea53f6025ef4b0785c57fcb2754e8d7de260d6f414762be4b2353797",
+   "size": 231697,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.7.0.slim.min.js",
+   "what": "jQuery (jquery-3.7.0.slim.min.js)",
+   "url": "https://code.jquery.com/jquery-3.7.0.slim.min.js",
+   "sha256": "b46e6671952d26c66fc8a03160b557ae68ca0552dde95a5571cab3febe32a451",
+   "size": 70193,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.6.4.js",
+   "what": "jQuery (jquery-3.6.4.js)",
+   "url": "https://code.jquery.com/jquery-3.6.4.js",
+   "sha256": "6bd8c1051ca05f5061e65b7c1998d70f3c8e07e6d6bdef4488eeed44e52d8ff1",
+   "size": 292458,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.6.4.min.js",
+   "what": "jQuery (jquery-3.6.4.min.js)",
+   "url": "https://code.jquery.com/jquery-3.6.4.min.js",
+   "sha256": "a0fe8723dcf55da64d06b25446d0a8513e52527c45afcb37073465f9c6f352af",
+   "size": 89795,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.6.4.slim.js",
+   "what": "jQuery (jquery-3.6.4.slim.js)",
+   "url": "https://code.jquery.com/jquery-3.6.4.slim.js",
+   "sha256": "756bd5f384fa061ccee2f1ba81686c595295a1ae255662e7a4139987f0801d4e",
+   "size": 239159,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.6.4.slim.min.js",
+   "what": "jQuery (jquery-3.6.4.slim.min.js)",
+   "url": "https://code.jquery.com/jquery-3.6.4.slim.min.js",
+   "sha256": "6b6ca31cce239c5f5fe78c5441a9236466aa62cfd5d4262f5a9a2a6730b6fc1c",
+   "size": 72666,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.6.3.js",
+   "what": "jQuery (jquery-3.6.3.js)",
+   "url": "https://code.jquery.com/jquery-3.6.3.js",
+   "sha256": "9d02ee01919145c20b03ee9d3013af7118793dedf5d2c0696a773af90066c953",
+   "size": 293671,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.6.3.min.js",
+   "what": "jQuery (jquery-3.6.3.min.js)",
+   "url": "https://code.jquery.com/jquery-3.6.3.min.js",
+   "sha256": "a6f3f0faea4b3d48e03176341bef0ed3151ffbf226d4c6635f1c6039c0500575",
+   "size": 89947,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.6.3.slim.js",
+   "what": "jQuery (jquery-3.6.3.slim.js)",
+   "url": "https://code.jquery.com/jquery-3.6.3.slim.js",
+   "sha256": "0ca5350a627c901b84c2e99a2ee87d4e5ffa641ea3cc638157fe58a4d1360567",
+   "size": 240372,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.6.3.slim.min.js",
+   "what": "jQuery (jquery-3.6.3.slim.min.js)",
+   "url": "https://code.jquery.com/jquery-3.6.3.slim.min.js",
+   "sha256": "670a99215743de25cdc861db49876c9963fffd4068923d851c0c4ab9204a0d2a",
+   "size": 72818,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.6.2.js",
+   "what": "jQuery (jquery-3.6.2.js)",
+   "url": "https://code.jquery.com/jquery-3.6.2.js",
+   "sha256": "a649f609466685e49ecacb18c37bcca75fb1cae6f89be7be40ae2c42c92fba8e",
+   "size": 293713,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.6.2.min.js",
+   "what": "jQuery (jquery-3.6.2.min.js)",
+   "url": "https://code.jquery.com/jquery-3.6.2.min.js",
+   "sha256": "da4ad864a87ffcf71c851b5df87f95cb242867f7b711cae4c6133cc9cc0048f0",
+   "size": 89942,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.6.2.slim.js",
+   "what": "jQuery (jquery-3.6.2.slim.js)",
+   "url": "https://code.jquery.com/jquery-3.6.2.slim.js",
+   "sha256": "39f949296f19f1a98452e09a7e505927818e838f899cd87d25d55fa15fba6e2c",
+   "size": 240414,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.6.2.slim.min.js",
+   "what": "jQuery (jquery-3.6.2.slim.min.js)",
+   "url": "https://code.jquery.com/jquery-3.6.2.slim.min.js",
+   "sha256": "1373f739a4d91fe1e510cedfd607404f7947027e27581657b987bcf43160d9dd",
+   "size": 72813,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.6.1.js",
+   "what": "jQuery (jquery-3.6.1.js)",
+   "url": "https://code.jquery.com/jquery-3.6.1.js",
+   "sha256": "df3941e6cdaec28533ad72b7053ec05f7172be88ecada345c42736bc2ffba4d2",
+   "size": 289812,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.6.1.min.js",
+   "what": "jQuery (jquery-3.6.1.min.js)",
+   "url": "https://code.jquery.com/jquery-3.6.1.min.js",
+   "sha256": "a3cf00c109d907e543bc4f6dbc85eb31068f94515251347e9e57509b52ee3d74",
+   "size": 89664,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.6.1.slim.js",
+   "what": "jQuery (jquery-3.6.1.slim.js)",
+   "url": "https://code.jquery.com/jquery-3.6.1.slim.js",
+   "sha256": "b579beb1ad6ecec6c59db5edf0626ab208b64f0fa6e012c60e87fa7943e36ed9",
+   "size": 236513,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.6.1.slim.min.js",
+   "what": "jQuery (jquery-3.6.1.slim.min.js)",
+   "url": "https://code.jquery.com/jquery-3.6.1.slim.min.js",
+   "sha256": "c3c0af845b3b88735552d9d23f460a120d34a7d221d77ae52fdcc6aaf2dd78f0",
+   "size": 72535,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.6.0.js",
+   "what": "jQuery (jquery-3.6.0.js)",
+   "url": "https://code.jquery.com/jquery-3.6.0.js",
+   "sha256": "1fe2bb5390a75e5d61e72c107cab528fc3c29a837d69aab7d200e1dbb5dcd239",
+   "size": 288580,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.6.0.min.js",
+   "what": "jQuery (jquery-3.6.0.min.js)",
+   "url": "https://code.jquery.com/jquery-3.6.0.min.js",
+   "sha256": "ff1523fb7389539c84c65aba19260648793bb4f5e29329d2ee8804bc37a3fe6e",
+   "size": 89501,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.6.0.slim.js",
+   "what": "jQuery (jquery-3.6.0.slim.js)",
+   "url": "https://code.jquery.com/jquery-3.6.0.slim.js",
+   "sha256": "1f058e34466ba6ea21f79d5c403d68bf61d42b9cc0e43c09d433545da33a16c6",
+   "size": 235341,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.6.0.slim.min.js",
+   "what": "jQuery (jquery-3.6.0.slim.min.js)",
+   "url": "https://code.jquery.com/jquery-3.6.0.slim.min.js",
+   "sha256": "bbb7b9921ca2b61948753a6edb63c78443663dc45d1621d18e102e1dcb34e512",
+   "size": 72372,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.5.1.js",
+   "what": "jQuery (jquery-3.5.1.js)",
+   "url": "https://code.jquery.com/jquery-3.5.1.js",
+   "sha256": "416a3b2c3bf16d64f6b5b6d0f7b079df2267614dd6847fc2f3271b4409233c37",
+   "size": 287630,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.5.1.min.js",
+   "what": "jQuery (jquery-3.5.1.min.js)",
+   "url": "https://code.jquery.com/jquery-3.5.1.min.js",
+   "sha256": "f7f6a5894f1d19ddad6fa392b2ece2c5e578cbf7da4ea805b6885eb6985b6e3d",
+   "size": 89476,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.5.1.slim.js",
+   "what": "jQuery (jquery-3.5.1.slim.js)",
+   "url": "https://code.jquery.com/jquery-3.5.1.slim.js",
+   "sha256": "0eb4f935fc5f6c7bcc1eec77d4b921c60e362d8ea87fc4da6322b9d239f14673",
+   "size": 234458,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.5.1.slim.min.js",
+   "what": "jQuery (jquery-3.5.1.slim.min.js)",
+   "url": "https://code.jquery.com/jquery-3.5.1.slim.min.js",
+   "sha256": "e3e5f35d586c0e6a9a9d7187687be087580c40a5f8d0e52f0c4053bbc25c98db",
+   "size": 72380,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.5.0.js",
+   "what": "jQuery (jquery-3.5.0.js)",
+   "url": "https://code.jquery.com/jquery-3.5.0.js",
+   "sha256": "aff01a147aeccc9b70a5efad1f2362fd709f3316296ec460d94aa7d31decdb37",
+   "size": 287649,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.5.0.min.js",
+   "what": "jQuery (jquery-3.5.0.min.js)",
+   "url": "https://code.jquery.com/jquery-3.5.0.min.js",
+   "sha256": "c4dccdd9ae25b64078e0c73f273de94f8894d5c99e4741645ece29aeefc9c5a4",
+   "size": 89493,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.5.0.slim.js",
+   "what": "jQuery (jquery-3.5.0.slim.js)",
+   "url": "https://code.jquery.com/jquery-3.5.0.slim.js",
+   "sha256": "b027b185a2a901fbaaba52a3b5263b57d1fb413d1308df741fe6393659aa3941",
+   "size": 234477,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.5.0.slim.min.js",
+   "what": "jQuery (jquery-3.5.0.slim.min.js)",
+   "url": "https://code.jquery.com/jquery-3.5.0.slim.min.js",
+   "sha256": "325bac0cb2483f519180bace7e5510b6c8723f44f04ff4475ec235c161a7421b",
+   "size": 72397,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.4.1.js",
+   "what": "jQuery (jquery-3.4.1.js)",
+   "url": "https://code.jquery.com/jquery-3.4.1.js",
+   "sha256": "5a93a88493aa32aab228bf4571c01207d3b42b0002409a454d404b4d8395bd55",
+   "size": 280364,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.4.1.min.js",
+   "what": "jQuery (jquery-3.4.1.min.js)",
+   "url": "https://code.jquery.com/jquery-3.4.1.min.js",
+   "sha256": "0925e8ad7bd971391a8b1e98be8e87a6971919eb5b60c196485941c3c1df089a",
+   "size": 88145,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.4.1.slim.js",
+   "what": "jQuery (jquery-3.4.1.slim.js)",
+   "url": "https://code.jquery.com/jquery-3.4.1.slim.js",
+   "sha256": "0539537503bdfdf6ac701d5dade92b0d591a29df4f93007298c9473a21bea8b2",
+   "size": 227022,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.4.1.slim.min.js",
+   "what": "jQuery (jquery-3.4.1.slim.min.js)",
+   "url": "https://code.jquery.com/jquery-3.4.1.slim.min.js",
+   "sha256": "a5ab2a00a0439854f8787a0dda775dea5377ef4905886505c938941d6854ee4f",
+   "size": 71037,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.4.0.js",
+   "what": "jQuery (jquery-3.4.0.js)",
+   "url": "https://code.jquery.com/jquery-3.4.0.js",
+   "sha256": "0d864c082f074c2f900ebe5035a21c7d1ed548fb5c212ca477ee9e4a6056e6aa",
+   "size": 279860,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.4.0.min.js",
+   "what": "jQuery (jquery-3.4.0.min.js)",
+   "url": "https://code.jquery.com/jquery-3.4.0.min.js",
+   "sha256": "0497a8d2a9bde7db8c0466fae73e347a3258192811ed1108e3e096d5f34ac0e8",
+   "size": 88151,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.4.0.slim.js",
+   "what": "jQuery (jquery-3.4.0.slim.js)",
+   "url": "https://code.jquery.com/jquery-3.4.0.slim.js",
+   "sha256": "9a295ecf1e656a4ad9bb438ff5bd90585cb57edfd41142ba347d49ab3f215214",
+   "size": 226518,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.4.0.slim.min.js",
+   "what": "jQuery (jquery-3.4.0.slim.min.js)",
+   "url": "https://code.jquery.com/jquery-3.4.0.slim.min.js",
+   "sha256": "65a5e76241c6a8886a4db27a301e25f45aecfebed4e23971ee2afc3c9601a9b2",
+   "size": 71043,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.3.1.js",
+   "what": "jQuery (jquery-3.3.1.js)",
+   "url": "https://code.jquery.com/jquery-3.3.1.js",
+   "sha256": "d8aa24ecc6cecb1a60515bc093f1c9da38a0392612d9ab8ae0f7f36e6eee1fad",
+   "size": 271751,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.3.1.min.js",
+   "what": "jQuery (jquery-3.3.1.min.js)",
+   "url": "https://code.jquery.com/jquery-3.3.1.min.js",
+   "sha256": "160a426ff2894252cd7cebbdd6d6b7da8fcd319c65b70468f10b6690c45d02ef",
+   "size": 86927,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.3.1.slim.js",
+   "what": "jQuery (jquery-3.3.1.slim.js)",
+   "url": "https://code.jquery.com/jquery-3.3.1.slim.js",
+   "sha256": "7cd5c914895c6b4e4120ed98e73875c6b4a12b7304fbf9586748fe0a1c57d830",
+   "size": 218897,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.3.1.slim.min.js",
+   "what": "jQuery (jquery-3.3.1.slim.min.js)",
+   "url": "https://code.jquery.com/jquery-3.3.1.slim.min.js",
+   "sha256": "dde76b9b2b90d30eb97fc81f06caa8c338c97b688cea7d2729c88f529f32fbb1",
+   "size": 69917,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.3.0.js",
+   "what": "jQuery (jquery-3.3.0.js)",
+   "url": "https://code.jquery.com/jquery-3.3.0.js",
+   "sha256": "4c5592b8326dea44be86e57ebd59725758ccdddc0675e356a9ece14f15c1fd7f",
+   "size": 271751,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.3.0.min.js",
+   "what": "jQuery (jquery-3.3.0.min.js)",
+   "url": "https://code.jquery.com/jquery-3.3.0.min.js",
+   "sha256": "453432f153a63654fa6f63c846eaf7ee9e8910165413ba3cc0f80cbeed7c302e",
+   "size": 86927,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.3.0.slim.js",
+   "what": "jQuery (jquery-3.3.0.slim.js)",
+   "url": "https://code.jquery.com/jquery-3.3.0.slim.js",
+   "sha256": "ec89a3d1f2cab57e4d144092d6e9a8429ecd0b594482be270536ac366ee004b6",
+   "size": 218897,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.3.0.slim.min.js",
+   "what": "jQuery (jquery-3.3.0.slim.min.js)",
+   "url": "https://code.jquery.com/jquery-3.3.0.slim.min.js",
+   "sha256": "00c83723bc9aefa38b3c3f4cf8c93b92aac0dbd1d49ff16e1817d3ffd51ff65b",
+   "size": 69917,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.2.1.js",
+   "what": "jQuery (jquery-3.2.1.js)",
+   "url": "https://code.jquery.com/jquery-3.2.1.js",
+   "sha256": "0d9027289ffa5d9f6c8b4e0782bb31bbff2cef5ee3708ccbcb7a22df9128bb21",
+   "size": 268039,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.2.1.min.js",
+   "what": "jQuery (jquery-3.2.1.min.js)",
+   "url": "https://code.jquery.com/jquery-3.2.1.min.js",
+   "sha256": "87083882cc6015984eb0411a99d3981817f5dc5c90ba24f0940420c5548d82de",
+   "size": 86659,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.2.1.slim.js",
+   "what": "jQuery (jquery-3.2.1.slim.js)",
+   "url": "https://code.jquery.com/jquery-3.2.1.slim.js",
+   "sha256": "b40f32d17aa2c27a7098e225dd218070597646fc478c0f2aa74fb5b821a64668",
+   "size": 215256,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.2.1.slim.min.js",
+   "what": "jQuery (jquery-3.2.1.slim.min.js)",
+   "url": "https://code.jquery.com/jquery-3.2.1.slim.min.js",
+   "sha256": "9365920887b11b33a3dc4ba28a0f93951f200341263e3b9cefd384798e4be398",
+   "size": 69597,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.2.0.js",
+   "what": "jQuery (jquery-3.2.0.js)",
+   "url": "https://code.jquery.com/jquery-3.2.0.js",
+   "sha256": "c0f149348165558e3d07e0ae008ac3afddf65d26fa264dc9d4cdb6337136ca54",
+   "size": 267686,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.2.0.min.js",
+   "what": "jQuery (jquery-3.2.0.min.js)",
+   "url": "https://code.jquery.com/jquery-3.2.0.min.js",
+   "sha256": "2405bdf4c255a4904671bcc4b97938033d39b3f5f20dd068985a8d94cde273e2",
+   "size": 86596,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.2.0.slim.js",
+   "what": "jQuery (jquery-3.2.0.slim.js)",
+   "url": "https://code.jquery.com/jquery-3.2.0.slim.js",
+   "sha256": "f18ac10930e84233b80814f5595bcc1f6ffad74047d038d997114e08880aec03",
+   "size": 214903,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.2.0.slim.min.js",
+   "what": "jQuery (jquery-3.2.0.slim.min.js)",
+   "url": "https://code.jquery.com/jquery-3.2.0.slim.min.js",
+   "sha256": "a8b02fd240408a170764b2377efdd621329e46c517dbb85deaea4105ad0c4a8c",
+   "size": 69533,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.1.1.js",
+   "what": "jQuery (jquery-3.1.1.js)",
+   "url": "https://code.jquery.com/jquery-3.1.1.js",
+   "sha256": "d7a71d3dd740e95755227ba6446a3a21b8af6c4444f29ec2411dc7cd306e10b0",
+   "size": 267194,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.1.1.min.js",
+   "what": "jQuery (jquery-3.1.1.min.js)",
+   "url": "https://code.jquery.com/jquery-3.1.1.min.js",
+   "sha256": "85556761a8800d14ced8fcd41a6b8b26bf012d44a318866c0d81a62092efd9bf",
+   "size": 86709,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.1.1.slim.js",
+   "what": "jQuery (jquery-3.1.1.slim.js)",
+   "url": "https://code.jquery.com/jquery-3.1.1.slim.js",
+   "sha256": "e62fe6437d3433befd3763950eb975ea56e88705cd51dccbfd1d9a5545f25d60",
+   "size": 214014,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.1.1.slim.min.js",
+   "what": "jQuery (jquery-3.1.1.slim.min.js)",
+   "url": "https://code.jquery.com/jquery-3.1.1.slim.min.js",
+   "sha256": "fd222b36abfc87a406283b8da0b180e22adeb7e9327ac0a41c6cd5514574b217",
+   "size": 69309,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.1.0.js",
+   "what": "jQuery (jquery-3.1.0.js)",
+   "url": "https://code.jquery.com/jquery-3.1.0.js",
+   "sha256": "b25a2092f0752b754e933008f10213c55dd5ce93a791e355b0abed9182cc8df9",
+   "size": 263767,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.1.0.min.js",
+   "what": "jQuery (jquery-3.1.0.min.js)",
+   "url": "https://code.jquery.com/jquery-3.1.0.min.js",
+   "sha256": "702b9e051e82b32038ffdb33a4f7eb5f7b38f4cf6f514e4182d8898f4eb0b7fb",
+   "size": 86351,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.1.0.slim.js",
+   "what": "jQuery (jquery-3.1.0.slim.js)",
+   "url": "https://code.jquery.com/jquery-3.1.0.slim.js",
+   "sha256": "2faa690232fa8e0b5199f8ae8a0784139030348da91ff5fd2016cfc9a9c9799c",
+   "size": 210659,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.1.0.slim.min.js",
+   "what": "jQuery (jquery-3.1.0.slim.min.js)",
+   "url": "https://code.jquery.com/jquery-3.1.0.slim.min.js",
+   "sha256": "711a568e848ec3929cc8839a64da388ba7d9f6d28f85861bea2e53f51495246f",
+   "size": 68952,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.0.0.js",
+   "what": "jQuery (jquery-3.0.0.js)",
+   "url": "https://code.jquery.com/jquery-3.0.0.js",
+   "sha256": "8eb3cb67ef2f0f1b76167135cef6570a409c79b23f0bc0ede71c9a4018f1408a",
+   "size": 263268,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.0.0.min.js",
+   "what": "jQuery (jquery-3.0.0.min.js)",
+   "url": "https://code.jquery.com/jquery-3.0.0.min.js",
+   "sha256": "266bcea0bb58b26aa5b16c5aee60d22ccc1ae9d67daeb21db6bad56119c3447d",
+   "size": 86341,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.0.0.slim.js",
+   "what": "jQuery (jquery-3.0.0.slim.js)",
+   "url": "https://code.jquery.com/jquery-3.0.0.slim.js",
+   "sha256": "1a9ea1a741fe03b6b1835b44ac2b9c59e39cdfc8abb64556a546c16528fc2828",
+   "size": 210179,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-3.0.0.slim.min.js",
+   "what": "jQuery (jquery-3.0.0.slim.min.js)",
+   "url": "https://code.jquery.com/jquery-3.0.0.slim.min.js",
+   "sha256": "45fe0169d7f20adb2f1e63bcf4151971b62f34dbd9bce4f4f002df133bc2b03d",
+   "size": 68924,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-2.2.4.js",
+   "what": "jQuery (jquery-2.2.4.js)",
+   "url": "https://code.jquery.com/jquery-2.2.4.js",
+   "sha256": "893e90f6230962e42231635df650f20544ad22affc3ee396df768eaa6bc5a6a2",
+   "size": 257551,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-2.2.4.min.js",
+   "what": "jQuery (jquery-2.2.4.min.js)",
+   "url": "https://code.jquery.com/jquery-2.2.4.min.js",
+   "sha256": "05b85d96f41fff14d8f608dad03ab71e2c1017c2da0914d7c59291bad7a54f8e",
+   "size": 85578,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-2.2.3.js",
+   "what": "jQuery (jquery-2.2.3.js)",
+   "url": "https://code.jquery.com/jquery-2.2.3.js",
+   "sha256": "95a5d6b46c9da70a89f0903e5fdc769a2c266a22a19fcb5598e5448a044db4fe",
+   "size": 258648,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-2.2.3.min.js",
+   "what": "jQuery (jquery-2.2.3.min.js)",
+   "url": "https://code.jquery.com/jquery-2.2.3.min.js",
+   "sha256": "6b6de0d4db7876d1183a3edb47ebd3bbbf93f153f5de1ba6645049348628109a",
+   "size": 85659,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-2.2.2.js",
+   "what": "jQuery (jquery-2.2.2.js)",
+   "url": "https://code.jquery.com/jquery-2.2.2.js",
+   "sha256": "e3fcd40aa8aad24ab1859232a781b41a4f803ad089b18d53034d24e4296c6581",
+   "size": 258648,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-2.2.2.min.js",
+   "what": "jQuery (jquery-2.2.2.min.js)",
+   "url": "https://code.jquery.com/jquery-2.2.2.min.js",
+   "sha256": "dfa729d82a3effadab1000181cb99108f232721e3b0af74cfae4c12704b35a32",
+   "size": 85656,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-2.2.1.js",
+   "what": "jQuery (jquery-2.2.1.js)",
+   "url": "https://code.jquery.com/jquery-2.2.1.js",
+   "sha256": "78d714ccede3b2fd179492ef7851246c1f1b03bfc2ae83693559375e99a7c077",
+   "size": 258549,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-2.2.1.min.js",
+   "what": "jQuery (jquery-2.2.1.min.js)",
+   "url": "https://code.jquery.com/jquery-2.2.1.min.js",
+   "sha256": "82f420005cd31fab6b4ab016a07d623e8f5773de90c526777de5ba91e9be3b4d",
+   "size": 85630,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-2.2.0.js",
+   "what": "jQuery (jquery-2.2.0.js)",
+   "url": "https://code.jquery.com/jquery-2.2.0.js",
+   "sha256": "a18aa92dea997bd71eb540d5f931620591e9dee27e5f817978bb385bab924d21",
+   "size": 258388,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-2.2.0.min.js",
+   "what": "jQuery (jquery-2.2.0.min.js)",
+   "url": "https://code.jquery.com/jquery-2.2.0.min.js",
+   "sha256": "8a102873a33f24f7eb22221e6b23c4f718e29f85168ecc769a35bfaed9b12cce",
+   "size": 85589,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-2.1.4.js",
+   "what": "jQuery (jquery-2.1.4.js)",
+   "url": "https://code.jquery.com/jquery-2.1.4.js",
+   "sha256": "b2215cce5830e2350b9d420271d9bd82340f664c3f60f0ea850f7e9c0392704e",
+   "size": 247597,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-2.1.4.min.js",
+   "what": "jQuery (jquery-2.1.4.min.js)",
+   "url": "https://code.jquery.com/jquery-2.1.4.min.js",
+   "sha256": "f16ab224bb962910558715c82f58c10c3ed20f153ddfaa199029f141b5b0255c",
+   "size": 84345,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-2.1.3.js",
+   "what": "jQuery (jquery-2.1.3.js)",
+   "url": "https://code.jquery.com/jquery-2.1.3.js",
+   "sha256": "828cbbcacb430f9c5b5d27fe9302f8795eb338f2421010f5141882125226f94f",
+   "size": 247387,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-2.1.3.min.js",
+   "what": "jQuery (jquery-2.1.3.min.js)",
+   "url": "https://code.jquery.com/jquery-2.1.3.min.js",
+   "sha256": "8af93bd675e1cfd9ecc850e862819fdac6e3ad1f5d761f970e409c7d9c63bdc3",
+   "size": 84320,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-2.1.2.js",
+   "what": "jQuery (jquery-2.1.2.js)",
+   "url": "https://code.jquery.com/jquery-2.1.2.js",
+   "sha256": "07cb07bdfba40ceff869b329eb48eeede41740ba6ce833dd3830bd0af49e4898",
+   "size": 247380,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-2.1.2.min.js",
+   "what": "jQuery (jquery-2.1.2.min.js)",
+   "url": "https://code.jquery.com/jquery-2.1.2.min.js",
+   "sha256": "604ec12a7d5e6bd8e2ac21cfaff11a5b93719a465919be76f99683d942a87576",
+   "size": 84318,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-2.1.1.js",
+   "what": "jQuery (jquery-2.1.1.js)",
+   "url": "https://code.jquery.com/jquery-2.1.1.js",
+   "sha256": "140ff438eaaede046f1ceba27579d16dc980595709391873fa9bf74d7dbe53ac",
+   "size": 247351,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-2.1.1.min.js",
+   "what": "jQuery (jquery-2.1.1.min.js)",
+   "url": "https://code.jquery.com/jquery-2.1.1.min.js",
+   "sha256": "874706b2b1311a0719b5267f7d1cf803057e367e94ae1ff7bf78c5450d30f5d4",
+   "size": 84245,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-2.1.0.js",
+   "what": "jQuery (jquery-2.1.0.js)",
+   "url": "https://code.jquery.com/jquery-2.1.0.js",
+   "sha256": "0fa7752926a95e3ab6b5f67a21ef40628ce4447c81ddf4f6cacf663b6fb85af7",
+   "size": 244963,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-2.1.0.min.js",
+   "what": "jQuery (jquery-2.1.0.min.js)",
+   "url": "https://code.jquery.com/jquery-2.1.0.min.js",
+   "sha256": "f284353a7cc4d97f6fe20a5155131bd43587a0f1c98a56eeaf52cff72910f47d",
+   "size": 83615,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-2.0.3.js",
+   "what": "jQuery (jquery-2.0.3.js)",
+   "url": "https://code.jquery.com/jquery-2.0.3.js",
+   "sha256": "9427fe2df51f7d4c6bf35f96d19169714d0b432b99dc18f41760d0342c538122",
+   "size": 242142,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-2.0.3.min.js",
+   "what": "jQuery (jquery-2.0.3.min.js)",
+   "url": "https://code.jquery.com/jquery-2.0.3.min.js",
+   "sha256": "b13cb5989e08fcb02314209d101e1102f3d299109bdc253b62aa1da21c9e38ba",
+   "size": 83612,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-2.0.2.js",
+   "what": "jQuery (jquery-2.0.2.js)",
+   "url": "https://code.jquery.com/jquery-2.0.2.js",
+   "sha256": "d2ed0720108a75db0d53248ba8e36332658064c4189714d16c0f117efb42016d",
+   "size": 242915,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-2.0.2.min.js",
+   "what": "jQuery (jquery-2.0.2.min.js)",
+   "url": "https://code.jquery.com/jquery-2.0.2.min.js",
+   "sha256": "4d9586a075f082a04fd40178499c472012b351db4c1a4d210907a0891f7d8ad9",
+   "size": 83501,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-2.0.1.js",
+   "what": "jQuery (jquery-2.0.1.js)",
+   "url": "https://code.jquery.com/jquery-2.0.1.js",
+   "sha256": "820fb338fe8c7478a1b820e2708b4fd306a68825de1194803e7a93fbc2177a16",
+   "size": 242727,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-2.0.1.min.js",
+   "what": "jQuery (jquery-2.0.1.min.js)",
+   "url": "https://code.jquery.com/jquery-2.0.1.min.js",
+   "sha256": "243f6ee513637db6d897f01b89862f54f29c2cd94a35edaead432e1b334421c9",
+   "size": 83519,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-2.0.0.js",
+   "what": "jQuery (jquery-2.0.0.js)",
+   "url": "https://code.jquery.com/jquery-2.0.0.js",
+   "sha256": "896e379d334cf0b16c78d9962a1579147156d4a72355032fce0de5f673d4e287",
+   "size": 240196,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-2.0.0.min.js",
+   "what": "jQuery (jquery-2.0.0.min.js)",
+   "url": "https://code.jquery.com/jquery-2.0.0.min.js",
+   "sha256": "d482871a5e948cb4884fa0972ea98a81abca057b6bd3f8c995a18c12487e761c",
+   "size": 83095,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.12.4.js",
+   "what": "jQuery (jquery-1.12.4.js)",
+   "url": "https://code.jquery.com/jquery-1.12.4.js",
+   "sha256": "430f36f9b5f21aae8cc9dca6a81c4d3d84da5175eaedcf2fdc2c226302cb3575",
+   "size": 293430,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.12.4.min.js",
+   "what": "jQuery (jquery-1.12.4.min.js)",
+   "url": "https://code.jquery.com/jquery-1.12.4.min.js",
+   "sha256": "668b046d12db350ccba6728890476b3efee53b2f42dbb84743e5e9f1ae0cc404",
+   "size": 97163,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.12.3.js",
+   "what": "jQuery (jquery-1.12.3.js)",
+   "url": "https://code.jquery.com/jquery-1.12.3.js",
+   "sha256": "d5732912d03878a5cd3695dc275a6630fb3c255fa7c0b744ab08897824049327",
+   "size": 293650,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.12.3.min.js",
+   "what": "jQuery (jquery-1.12.3.min.js)",
+   "url": "https://code.jquery.com/jquery-1.12.3.min.js",
+   "sha256": "69a3831c082fc105b56c53865cc797fa90b83d920fb2f9f6875b00ad83a18174",
+   "size": 97180,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.12.2.js",
+   "what": "jQuery (jquery-1.12.2.js)",
+   "url": "https://code.jquery.com/jquery-1.12.2.js",
+   "sha256": "5540b2af46570795610626e8d8391356176ca639b1520c4319a2d0c7ba9bef16",
+   "size": 293840,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.12.2.min.js",
+   "what": "jQuery (jquery-1.12.2.min.js)",
+   "url": "https://code.jquery.com/jquery-1.12.2.min.js",
+   "sha256": "95914789b5f3307a3718679e867d61b9d4c03f749cd2e2970570331d7d6c8ed9",
+   "size": 97244,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.12.1.js",
+   "what": "jQuery (jquery-1.12.1.js)",
+   "url": "https://code.jquery.com/jquery-1.12.1.js",
+   "sha256": "56e843a66b2bf7188ac2f4c81df61608843ce144bd5aa66c2df4783fba85e8ef",
+   "size": 294199,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.12.1.min.js",
+   "what": "jQuery (jquery-1.12.1.min.js)",
+   "url": "https://code.jquery.com/jquery-1.12.1.min.js",
+   "sha256": "2359d383bf2d4ab65ebf7923bdf74ce40e4093f6e58251b395a64034b3c39772",
+   "size": 97403,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.12.0.js",
+   "what": "jQuery (jquery-1.12.0.js)",
+   "url": "https://code.jquery.com/jquery-1.12.0.js",
+   "sha256": "c85537acad72f0d7d409dfc1e2d2daa59032f71d29642a8b64b9852f70166fbb",
+   "size": 294161,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.12.0.min.js",
+   "what": "jQuery (jquery-1.12.0.min.js)",
+   "url": "https://code.jquery.com/jquery-1.12.0.min.js",
+   "sha256": "5f1ab65fe2ad6b381a1ae036716475bf78c9b2e309528cf22170c1ddeefddcbf",
+   "size": 97362,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.11.3.js",
+   "what": "jQuery (jquery-1.11.3.js)",
+   "url": "https://code.jquery.com/jquery-1.11.3.js",
+   "sha256": "2065aecca0fb9b0567358d352ed5f1ab72fce139bf449b4d09805f5d9c3725ed",
+   "size": 284394,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.11.3.min.js",
+   "what": "jQuery (jquery-1.11.3.min.js)",
+   "url": "https://code.jquery.com/jquery-1.11.3.min.js",
+   "sha256": "ecb916133a9376911f10bc5c659952eb0031e457f5df367cde560edbfba38fb8",
+   "size": 95957,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.11.2.js",
+   "what": "jQuery (jquery-1.11.2.js)",
+   "url": "https://code.jquery.com/jquery-1.11.2.js",
+   "sha256": "58c27035b7a2e589df397e5d7e05424b90b8c1aaaf73eff47d5ed6daecb70f25",
+   "size": 284184,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.11.2.min.js",
+   "what": "jQuery (jquery-1.11.2.min.js)",
+   "url": "https://code.jquery.com/jquery-1.11.2.min.js",
+   "sha256": "2ecd295d295bec062cedebe177e54b9d6b19fc0a841dc5c178c654c9ccff09c0",
+   "size": 95931,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.11.1.js",
+   "what": "jQuery (jquery-1.11.1.js)",
+   "url": "https://code.jquery.com/jquery-1.11.1.js",
+   "sha256": "3029834a820c79c154c377f52e2719fc3ff2a27600a07ae089ea7fde9087f6bc",
+   "size": 282766,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.11.1.min.js",
+   "what": "jQuery (jquery-1.11.1.min.js)",
+   "url": "https://code.jquery.com/jquery-1.11.1.min.js",
+   "sha256": "540bc6dec1dd4b92ea4d3fb903f69eabf6d919afd48f4e312b163c28cff0f441",
+   "size": 95786,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.11.0.js",
+   "what": "jQuery (jquery-1.11.0.js)",
+   "url": "https://code.jquery.com/jquery-1.11.0.js",
+   "sha256": "ce0343e1d6f489768eeefe022c12181c6a0822e756239851310acf076d23d10c",
+   "size": 282944,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.11.0.min.js",
+   "what": "jQuery (jquery-1.11.0.min.js)",
+   "url": "https://code.jquery.com/jquery-1.11.0.min.js",
+   "sha256": "b294e973896f8f874e90a8eb1a8908ac790980d034c4c4bdf0fc3d37b8abf682",
+   "size": 96381,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.10.2.js",
+   "what": "jQuery (jquery-1.10.2.js)",
+   "url": "https://code.jquery.com/jquery-1.10.2.js",
+   "sha256": "8ade6740a1d3cfedf81e28d9250929341207b23a55f1be90ccc26cf6d98e052a",
+   "size": 273199,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.10.2.min.js",
+   "what": "jQuery (jquery-1.10.2.min.js)",
+   "url": "https://code.jquery.com/jquery-1.10.2.min.js",
+   "sha256": "0ba081f546084bd5097aa8a73c75931d5aa1fc4d6e846e53c21f98e6a1509988",
+   "size": 93107,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.10.1.js",
+   "what": "jQuery (jquery-1.10.1.js)",
+   "url": "https://code.jquery.com/jquery-1.10.1.js",
+   "sha256": "ebaded49db62a60060caa2577f2a4ec1ff68726bc40861bc65d977abeb64fa7d",
+   "size": 274080,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.10.1.min.js",
+   "what": "jQuery (jquery-1.10.1.min.js)",
+   "url": "https://code.jquery.com/jquery-1.10.1.min.js",
+   "sha256": "4837f7e1f1565ff667528cd75c41f401e07e229de1bd1b232f0a7a40d4c46f79",
+   "size": 93064,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.10.0.js",
+   "what": "jQuery (jquery-1.10.0.js)",
+   "url": "https://code.jquery.com/jquery-1.10.0.js",
+   "sha256": "8aa0f84b5331efcc3cb72c7d504c2bc6ebd861da003d72c33df99ce650d4531d",
+   "size": 273810,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.10.0.min.js",
+   "what": "jQuery (jquery-1.10.0.min.js)",
+   "url": "https://code.jquery.com/jquery-1.10.0.min.js",
+   "sha256": "dbe2f39d679680bec02757226881b9ac53fb18a7a6cf397e2bbe6d4724c1c8e1",
+   "size": 93026,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.9.1.js",
+   "what": "jQuery (jquery-1.9.1.js)",
+   "url": "https://code.jquery.com/jquery-1.9.1.js",
+   "sha256": "7bd80d06c01c0340c1b9159b9b4a197db882ca18cbac8e9b9aa025e68f998d40",
+   "size": 268381,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.9.1.min.js",
+   "what": "jQuery (jquery-1.9.1.min.js)",
+   "url": "https://code.jquery.com/jquery-1.9.1.min.js",
+   "sha256": "c12f6098e641aaca96c60215800f18f5671039aecf812217fab3c0d152f6adb4",
+   "size": 92629,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.9.0.js",
+   "what": "jQuery (jquery-1.9.0.js)",
+   "url": "https://code.jquery.com/jquery-1.9.0.js",
+   "sha256": "4d7b01c2f6043bcee83a33d0f627dc6fbc27dc8aeb5bdd5d863e84304b512ef3",
+   "size": 267320,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.9.0.min.js",
+   "what": "jQuery (jquery-1.9.0.min.js)",
+   "url": "https://code.jquery.com/jquery-1.9.0.min.js",
+   "sha256": "7fa0d5c3f538c76f878e012ac390597faecaabfe6fb9d459b919258e76c5df8e",
+   "size": 93068,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.8.3.js",
+   "what": "jQuery (jquery-1.8.3.js)",
+   "url": "https://code.jquery.com/jquery-1.8.3.js",
+   "sha256": "756d7dfac4a35bb57543f677283d6c682e8d704e5350884b27325badd2b3c4a7",
+   "size": 266057,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.8.3.min.js",
+   "what": "jQuery (jquery-1.8.3.min.js)",
+   "url": "https://code.jquery.com/jquery-1.8.3.min.js",
+   "sha256": "61c6caebd23921741fb5ffe6603f16634fca9840c2bf56ac8201e9264d6daccf",
+   "size": 93636,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.8.2.js",
+   "what": "jQuery (jquery-1.8.2.js)",
+   "url": "https://code.jquery.com/jquery-1.8.2.js",
+   "sha256": "cfa69516375e27e56519cae71f28818e0e52515b70e705a600d1db459998335a",
+   "size": 265218,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.8.2.min.js",
+   "what": "jQuery (jquery-1.8.2.min.js)",
+   "url": "https://code.jquery.com/jquery-1.8.2.min.js",
+   "sha256": "f554d2f09272c6f71447ebfe4532d3b1dd1959bce669f9a5ccc99e64ef511729",
+   "size": 93435,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.8.1.js",
+   "what": "jQuery (jquery-1.8.1.js)",
+   "url": "https://code.jquery.com/jquery-1.8.1.js",
+   "sha256": "7baae7dee44c0f5fc953e15dfce6027f639215c50e5c74259022f4ad847f2543",
+   "size": 259996,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.8.1.min.js",
+   "what": "jQuery (jquery-1.8.1.min.js)",
+   "url": "https://code.jquery.com/jquery-1.8.1.min.js",
+   "sha256": "fc184f96dd18794e204c41075a00923be7e8e568744231d74f2fdf8921f78d29",
+   "size": 92792,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.8.0.js",
+   "what": "jQuery (jquery-1.8.0.js)",
+   "url": "https://code.jquery.com/jquery-1.8.0.js",
+   "sha256": "d34161f2d90f01ef849956871690fe1e8bf15a4edbf7bab0a958bb9cbbe3760b",
+   "size": 258377,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.8.0.min.js",
+   "what": "jQuery (jquery-1.8.0.min.js)",
+   "url": "https://code.jquery.com/jquery-1.8.0.min.js",
+   "sha256": "8c574e0a06396dfa7064b8b460e0e4a8d5d0748c4aa66eb2e4efdfcb46da4b31",
+   "size": 92555,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.7.2.js",
+   "what": "jQuery (jquery-1.7.2.js)",
+   "url": "https://code.jquery.com/jquery-1.7.2.js",
+   "sha256": "1717ea1fde8ceb7584341a24efc85c853083c660a1185968fbf94520f7193de2",
+   "size": 252881,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.7.2.min.js",
+   "what": "jQuery (jquery-1.7.2.min.js)",
+   "url": "https://code.jquery.com/jquery-1.7.2.min.js",
+   "sha256": "47b68dce8cb6805ad5b3ea4d27af92a241f4e29a5c12a274c852e4346a0500b4",
+   "size": 94840,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.7.1.js",
+   "what": "jQuery (jquery-1.7.1.js)",
+   "url": "https://code.jquery.com/jquery-1.7.1.js",
+   "sha256": "9fcc241093405946885039df428cfa7f0051a1f2bdbcc5a313a177a9e35f8806",
+   "size": 248235,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.7.1.min.js",
+   "what": "jQuery (jquery-1.7.1.min.js)",
+   "url": "https://code.jquery.com/jquery-1.7.1.min.js",
+   "sha256": "88171413fc76dda23ab32baa17b11e4fff89141c633ece737852445f1ba6c1bd",
+   "size": 93868,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.7.0.js",
+   "what": "jQuery (jquery-1.7.0.js)",
+   "url": "https://code.jquery.com/jquery-1.7.0.js",
+   "sha256": "7c1885ec8620f40a10d045948d3f9f7b8f9c4f7bd2ff1ddfb486a9f27e95e3e3",
+   "size": 249159,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.7.0.min.js",
+   "what": "jQuery (jquery-1.7.0.min.js)",
+   "url": "https://code.jquery.com/jquery-1.7.0.min.js",
+   "sha256": "ff4e4975ef403004f8fe8e59008db7ad47f54b10d84c72eb90e728d1ec9157ce",
+   "size": 94020,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.7.js",
+   "what": "jQuery (jquery-1.7.js)",
+   "url": "https://code.jquery.com/jquery-1.7.js",
+   "sha256": "7c1885ec8620f40a10d045948d3f9f7b8f9c4f7bd2ff1ddfb486a9f27e95e3e3",
+   "size": 249159,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.7.min.js",
+   "what": "jQuery (jquery-1.7.min.js)",
+   "url": "https://code.jquery.com/jquery-1.7.min.js",
+   "sha256": "ff4e4975ef403004f8fe8e59008db7ad47f54b10d84c72eb90e728d1ec9157ce",
+   "size": 94020,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.6.4.js",
+   "what": "jQuery (jquery-1.6.4.js)",
+   "url": "https://code.jquery.com/jquery-1.6.4.js",
+   "sha256": "54964f8b580ad795a962fb27066715d3281ae1ad13a28bf8aedd5d8859ebae37",
+   "size": 238159,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.6.4.min.js",
+   "what": "jQuery (jquery-1.6.4.min.js)",
+   "url": "https://code.jquery.com/jquery-1.6.4.min.js",
+   "sha256": "951d6bae39eb172f57a88bd686f7a921cf060fd21f59648f0d20b6a8f98fc5a5",
+   "size": 91669,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.6.3.js",
+   "what": "jQuery (jquery-1.6.3.js)",
+   "url": "https://code.jquery.com/jquery-1.6.3.js",
+   "sha256": "9baa10e1c5630c3dcd9bb46bf00913cc94b3855d58c9459ae9848339c566e97b",
+   "size": 238009,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.6.3.min.js",
+   "what": "jQuery (jquery-1.6.3.min.js)",
+   "url": "https://code.jquery.com/jquery-1.6.3.min.js",
+   "sha256": "d3f3779f5113da6da957c4d81481146a272c31aefe0d3e4b64414fd686fd9744",
+   "size": 91626,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.6.2.js",
+   "what": "jQuery (jquery-1.6.2.js)",
+   "url": "https://code.jquery.com/jquery-1.6.2.js",
+   "sha256": "a57292619d14eb8cbd923bde9f28cf994ac66abc48f7c975b769328ff33bddc9",
+   "size": 236202,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.6.2.min.js",
+   "what": "jQuery (jquery-1.6.2.min.js)",
+   "url": "https://code.jquery.com/jquery-1.6.2.min.js",
+   "sha256": "d16d07a0353405fcec95f7efc50a2621bc7425f9a5e8895078396fb0dc460c4f",
+   "size": 91556,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.6.1.js",
+   "what": "jQuery (jquery-1.6.1.js)",
+   "url": "https://code.jquery.com/jquery-1.6.1.js",
+   "sha256": "0eef76a9583a6c7a1eb764d33fe376bfe1861df79fab82c2c3f5d16183e82016",
+   "size": 234995,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.6.1.min.js",
+   "what": "jQuery (jquery-1.6.1.min.js)",
+   "url": "https://code.jquery.com/jquery-1.6.1.min.js",
+   "sha256": "c784376960f3163dc760bc019e72e5fed78203745a5510c69992a39d1d8fe776",
+   "size": 91342,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.6.js",
+   "what": "jQuery (jquery-1.6.js)",
+   "url": "https://code.jquery.com/jquery-1.6.js",
+   "sha256": "a7c98da2a0260a5c8ac615cad956b8b220b7a2d73d85364dcf77b63f92e907b3",
+   "size": 232651,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.6.min.js",
+   "what": "jQuery (jquery-1.6.min.js)",
+   "url": "https://code.jquery.com/jquery-1.6.min.js",
+   "sha256": "e58da58b314ccdeefa3c4865b4b8aa3153e890d7904e04483481d8fff2c27eaa",
+   "size": 90518,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.5.2.js",
+   "what": "jQuery (jquery-1.5.2.js)",
+   "url": "https://code.jquery.com/jquery-1.5.2.js",
+   "sha256": "e2107c8ecdb479c36d822d82bda2a8caf4429ab2d2cf9f20d5c931f75275403c",
+   "size": 219227,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.5.2.min.js",
+   "what": "jQuery (jquery-1.5.2.min.js)",
+   "url": "https://code.jquery.com/jquery-1.5.2.min.js",
+   "sha256": "8f0a19ee8c606b35a10904951e0a27da1896eafe33c6e88cb7bcbe455f05a24a",
+   "size": 85925,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.5.1.js",
+   "what": "jQuery (jquery-1.5.1.js)",
+   "url": "https://code.jquery.com/jquery-1.5.1.js",
+   "sha256": "e2ea0a6ca6b984a9405a759d24cf3c51eb3164e5c43e95c3e9a59b316be7b3b9",
+   "size": 216840,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.5.1.min.js",
+   "what": "jQuery (jquery-1.5.1.min.js)",
+   "url": "https://code.jquery.com/jquery-1.5.1.min.js",
+   "sha256": "764b9e9f3ad386aaa5cdeae9368353994de61c0bede087c8f7e3579cb443de3b",
+   "size": 85260,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.5.js",
+   "what": "jQuery (jquery-1.5.js)",
+   "url": "https://code.jquery.com/jquery-1.5.js",
+   "sha256": "3613c89747be4a2d5dc17f442d0a482da665784e2e5a3931fb9a1fc38fa0fa8d",
+   "size": 211978,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.5.min.js",
+   "what": "jQuery (jquery-1.5.min.js)",
+   "url": "https://code.jquery.com/jquery-1.5.min.js",
+   "sha256": "229278f6a9c1c27fc55bec50f06548fe64c2629f59f462d50cac28e65bb93a83",
+   "size": 84362,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.4.4.js",
+   "what": "jQuery (jquery-1.4.4.js)",
+   "url": "https://code.jquery.com/jquery-1.4.4.js",
+   "sha256": "b31cd094af7950b3a461dc78161fd2faf01faa9d0ed8c1c072790f83ab26d482",
+   "size": 183184,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.4.4.min.js",
+   "what": "jQuery (jquery-1.4.4.min.js)",
+   "url": "https://code.jquery.com/jquery-1.4.4.min.js",
+   "sha256": "517364f2d45162fb5037437b5b6cb953d00d9b2b3b79ba87d9fe57ea6ee6070c",
+   "size": 78601,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.4.3.js",
+   "what": "jQuery (jquery-1.4.3.js)",
+   "url": "https://code.jquery.com/jquery-1.4.3.js",
+   "sha256": "0e3303a3a0cec95ebc8c3cc3e19fc71c99487faa286b05d01a3eb8cca4d90bc7",
+   "size": 180459,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.4.3.min.js",
+   "what": "jQuery (jquery-1.4.3.min.js)",
+   "url": "https://code.jquery.com/jquery-1.4.3.min.js",
+   "sha256": "f800b399e5c7a5254fc66bb407117fe38dbde0528780e68c9f7c87d299f8486a",
+   "size": 77746,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.4.2.js",
+   "what": "jQuery (jquery-1.4.2.js)",
+   "url": "https://code.jquery.com/jquery-1.4.2.js",
+   "sha256": "95c023c80dfe0d30304c58244878995061f87801a66daa5d6bf4f2512be0e6f9",
+   "size": 163855,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.4.2.min.js",
+   "what": "jQuery (jquery-1.4.2.min.js)",
+   "url": "https://code.jquery.com/jquery-1.4.2.min.js",
+   "sha256": "e23a2a4e2d7c2b41ebcdd8ffc0679df7140eb7f52e1eebabf827a88182643c59",
+   "size": 72174,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.4.1.js",
+   "what": "jQuery (jquery-1.4.1.js)",
+   "url": "https://code.jquery.com/jquery-1.4.1.js",
+   "sha256": "9edc9f813781eca2aad6de78ef85cdbe92ee32bb0a56791be4da0fa7b472c1d8",
+   "size": 160712,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.4.1.min.js",
+   "what": "jQuery (jquery-1.4.1.min.js)",
+   "url": "https://code.jquery.com/jquery-1.4.1.min.js",
+   "sha256": "2cec78f739fbddfed852cd7934d2530e7cc4c8f14b38673b03ba5fb880ad4cc7",
+   "size": 70843,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.4.js",
+   "what": "jQuery (jquery-1.4.js)",
+   "url": "https://code.jquery.com/jquery-1.4.js",
+   "sha256": "882927b9aadb2504b5c6a823bd8c8c516f21dec6e441fe2c8fa228e35951bcc8",
+   "size": 158407,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.4.min.js",
+   "what": "jQuery (jquery-1.4.min.js)",
+   "url": "https://code.jquery.com/jquery-1.4.min.js",
+   "sha256": "89abaf1e2471b00525b0694048e179c0f39a2674e3bcb34460ea6bc4801882be",
+   "size": 69838,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.3.2.js",
+   "what": "jQuery (jquery-1.3.2.js)",
+   "url": "https://code.jquery.com/jquery-1.3.2.js",
+   "sha256": "233a5d16bee5a64bf3bc19abe3cc812a1e0619435f01c163f628773a469ff719",
+   "size": 120619,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.3.2.min.js",
+   "what": "jQuery (jquery-1.3.2.min.js)",
+   "url": "https://code.jquery.com/jquery-1.3.2.min.js",
+   "sha256": "c8370a2d050359e9d505acc411e6f457a49b21360a21e6cbc9229bad3a767899",
+   "size": 57254,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.3.1.js",
+   "what": "jQuery (jquery-1.3.1.js)",
+   "url": "https://code.jquery.com/jquery-1.3.1.js",
+   "sha256": "04175a2929f4d72b7cfc63be13103632e200ddb741c999cab76bed7775fd547d",
+   "size": 117302,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.3.1.min.js",
+   "what": "jQuery (jquery-1.3.1.min.js)",
+   "url": "https://code.jquery.com/jquery-1.3.1.min.js",
+   "sha256": "17ec1f16efac893b9bd89bba5f13cb1e0bf938bdc9cece6cae3ed77f18fa6fd7",
+   "size": 55272,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.3.js",
+   "what": "jQuery (jquery-1.3.js)",
+   "url": "https://code.jquery.com/jquery-1.3.js",
+   "sha256": "5c44ebfc4b86e80fad397c5fb99fc35a0a97bbf6793dd295b224e46ea9bf2393",
+   "size": 116798,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.3.min.js",
+   "what": "jQuery (jquery-1.3.min.js)",
+   "url": "https://code.jquery.com/jquery-1.3.min.js",
+   "sha256": "900191a443115d8b48a9d68d3062e8b3d7129727951b8617465b485baf253006",
+   "size": 55026,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.2.6.js",
+   "what": "jQuery (jquery-1.2.6.js)",
+   "url": "https://code.jquery.com/jquery-1.2.6.js",
+   "sha256": "3cc5c121471323b25de45fcab48631d4a09c78e76af21c10d747352682605587",
+   "size": 100196,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.2.6.min.js",
+   "what": "jQuery (jquery-1.2.6.min.js)",
+   "url": "https://code.jquery.com/jquery-1.2.6.min.js",
+   "sha256": "d548530775a6286f49ba66e0715876b4ec5985966b0291c21568fecfc4178e8d",
+   "size": 55774,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.2.5.js",
+   "what": "jQuery (jquery-1.2.5.js)",
+   "url": "https://code.jquery.com/jquery-1.2.5.js",
+   "sha256": "7b038f185fdf7611317c5714ff7ccfe83e768d2c5e6e80df8659210160321c37",
+   "size": 99997,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.2.5.min.js",
+   "what": "jQuery (jquery-1.2.5.min.js)",
+   "url": "https://code.jquery.com/jquery-1.2.5.min.js",
+   "sha256": "dba3ed2e85be82c9109419d15f948eaf3832fffce09376d8665e29105c28e9c6",
+   "size": 55715,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.2.4.js",
+   "what": "jQuery (jquery-1.2.4.js)",
+   "url": "https://code.jquery.com/jquery-1.2.4.js",
+   "sha256": "94624d40721f1c352b2fecc802295da4d3083192fb2d7a1049b3aee26d8fdb7c",
+   "size": 97623,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.2.4.min.js",
+   "what": "jQuery (jquery-1.2.4.min.js)",
+   "url": "https://code.jquery.com/jquery-1.2.4.min.js",
+   "sha256": "99f3c010ca75e5169317a43115178e9f96b1e4ac31470e5508437d4e7b46747a",
+   "size": 54620,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.2.3.js",
+   "what": "jQuery (jquery-1.2.3.js)",
+   "url": "https://code.jquery.com/jquery-1.2.3.js",
+   "sha256": "d977fc32dd4bdb0479604abf078f1045b0e922666313f2f42cd71ce7835e0061",
+   "size": 96763,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.2.3.min.js",
+   "what": "jQuery (jquery-1.2.3.min.js)",
+   "url": "https://code.jquery.com/jquery-1.2.3.min.js",
+   "sha256": "f1c4a0a7b5dead231fc9b42f06965a036ab7a2a788768847eb81e1528d6402ad",
+   "size": 54075,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.2.2.js",
+   "what": "jQuery (jquery-1.2.2.js)",
+   "url": "https://code.jquery.com/jquery-1.2.2.js",
+   "sha256": "717d8d9b9802ac9fd75cc287c0624f37f9306c470c5a6da05abe9659d790e7cc",
+   "size": 95285,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.2.2.min.js",
+   "what": "jQuery (jquery-1.2.2.min.js)",
+   "url": "https://code.jquery.com/jquery-1.2.2.min.js",
+   "sha256": "d3d0ff1c55ef3ac8aa1fbea3e61d550f3950a6729e03fcbfc1c3ef15241ba84e",
+   "size": 52656,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.2.1.js",
+   "what": "jQuery (jquery-1.2.1.js)",
+   "url": "https://code.jquery.com/jquery-1.2.1.js",
+   "sha256": "43b98f6d029d12c6a1623302b2d03b70799099641200965c006582d82d341b85",
+   "size": 80469,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.2.1.min.js",
+   "what": "jQuery (jquery-1.2.1.min.js)",
+   "url": "https://code.jquery.com/jquery-1.2.1.min.js",
+   "sha256": "18ab106814b6251057c7b739d818b43887b443c42b8f488a052aeeaa4cea6b1f",
+   "size": 46437,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.2.js",
+   "what": "jQuery (jquery-1.2.js)",
+   "url": "https://code.jquery.com/jquery-1.2.js",
+   "sha256": "e95be8c2affede53b586a32b2863aaa01870f120981367b2cf958951df2fdc67",
+   "size": 79259,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.2.min.js",
+   "what": "jQuery (jquery-1.2.min.js)",
+   "url": "https://code.jquery.com/jquery-1.2.min.js",
+   "sha256": "100e1a173a6113218ffb49e13a14778fa3b91ff7fcd9fac5c523baedb0f1b7fb",
+   "size": 45707,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.1.4.js",
+   "what": "jQuery (jquery-1.1.4.js)",
+   "url": "https://code.jquery.com/jquery-1.1.4.js",
+   "sha256": "d374a0c5a109404028493a8685b62ec577dd1c55658bfff5cb54581ee5df219c",
+   "size": 67241,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.1.3.js",
+   "what": "jQuery (jquery-1.1.3.js)",
+   "url": "https://code.jquery.com/jquery-1.1.3.js",
+   "sha256": "f00531f499c731c6985d4a460cced2fee38bda891d4820ce959dae7d78834812",
+   "size": 62726,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.1.2.js",
+   "what": "jQuery (jquery-1.1.2.js)",
+   "url": "https://code.jquery.com/jquery-1.1.2.js",
+   "sha256": "8be4bfe64c6e8c2c85f6a31e6a8b44bb7417dc9835873a83dfa4b0b8fa5c0f5e",
+   "size": 59291,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.1.1.js",
+   "what": "jQuery (jquery-1.1.1.js)",
+   "url": "https://code.jquery.com/jquery-1.1.1.js",
+   "sha256": "ebfead106f7529d2c976f6100d1223726cec07837f410f76026953b419d20944",
+   "size": 57737,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.1.js",
+   "what": "jQuery (jquery-1.1.js)",
+   "url": "https://code.jquery.com/jquery-1.1.js",
+   "sha256": "582fd438f0901d64d06c63255d4d7dd8ac2a21767d5da7b51617da8c6851323e",
+   "size": 56993,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.0.4.js",
+   "what": "jQuery (jquery-1.0.4.js)",
+   "url": "https://code.jquery.com/jquery-1.0.4.js",
+   "sha256": "a1efd8aad160c17fd9afe1aca8e93bef444692988af58852dccdb1942fe3abb8",
+   "size": 52401,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.0.3.js",
+   "what": "jQuery (jquery-1.0.3.js)",
+   "url": "https://code.jquery.com/jquery-1.0.3.js",
+   "sha256": "b83a31e6bb8c91e113e18f899091e941dc21bfa4e4bcdbde133f2bee0aef4051",
+   "size": 51116,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.0.2.js",
+   "what": "jQuery (jquery-1.0.2.js)",
+   "url": "https://code.jquery.com/jquery-1.0.2.js",
+   "sha256": "16d5d701bb80202ab68da7ccd88421a94818c42588cc6cf3a984129492d8dffc",
+   "size": 49341,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.0.1.js",
+   "what": "jQuery (jquery-1.0.1.js)",
+   "url": "https://code.jquery.com/jquery-1.0.1.js",
+   "sha256": "ec5129f542849aa777ee6054326a39b92b4dff3036c2055ffbf5f0249a6515e3",
+   "size": 45777,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.0.js",
+   "what": "jQuery (jquery-1.0.js)",
+   "url": "https://code.jquery.com/jquery-1.0.js",
+   "sha256": "826c64c13cb636dc1596b19f78f11fc8aefd8792f00aa8151abb4b22528e73d7",
+   "size": 45369,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "SDL2-2.32.8-win32-x64.zip",
+   "what": "SDL2 (SDL2-2.32.8-win32-x64.zip)",
+   "url": "https://github.com/libsdl-org/SDL/releases/download/release-2.32.8/SDL2-2.32.8-win32-x64.zip",
+   "sha256": "43bb0277be34354de8d8fc8aa154b87121acdd0923ba48703070fdb5d71f3238",
+   "size": 603280,
+   "licence": "SDL: zlib licence.",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://api.github.com/repos/libsdl-org/SDL/releases"
+  },
+  {
+   "file": "SDL2-2.32.8-win32-x86.zip",
+   "what": "SDL2 (SDL2-2.32.8-win32-x86.zip)",
+   "url": "https://github.com/libsdl-org/SDL/releases/download/release-2.32.8/SDL2-2.32.8-win32-x86.zip",
+   "sha256": "4df1e3da741e44fa02812d8db3c60cf63a5a9a387e13809a7f7a6b57122cab1d",
+   "size": 525485,
+   "licence": "SDL: zlib licence.",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://api.github.com/repos/libsdl-org/SDL/releases"
+  },
+  {
+   "file": "SDL2-2.32.10-win32-x64.zip",
+   "what": "SDL2 (SDL2-2.32.10-win32-x64.zip)",
+   "url": "https://github.com/libsdl-org/SDL/releases/download/release-2.32.10/SDL2-2.32.10-win32-x64.zip",
+   "sha256": "6cf9706eefd0a4a06dc764007934d428afaf029fabdd408a9e646048c91e18fb",
+   "size": 608965,
+   "licence": "SDL: zlib licence.",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://api.github.com/repos/libsdl-org/SDL/releases"
+  },
+  {
+   "file": "SDL2-2.32.10-win32-x86.zip",
+   "what": "SDL2 (SDL2-2.32.10-win32-x86.zip)",
+   "url": "https://github.com/libsdl-org/SDL/releases/download/release-2.32.10/SDL2-2.32.10-win32-x86.zip",
+   "sha256": "d72b0728a315ab25ad43123b89baa2ab6fd7c335a43f737213685d29fd2aa4fe",
+   "size": 530617,
+   "licence": "SDL: zlib licence.",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://api.github.com/repos/libsdl-org/SDL/releases"
+  },
+  {
+   "file": "openal-soft-1.25.1-bin.zip",
+   "what": "OpenAL Soft (openal-soft-1.25.1-bin.zip)",
+   "url": "https://github.com/kcat/openal-soft/releases/download/1.25.1/openal-soft-1.25.1-bin.zip",
+   "sha256": "0915af01928b17e46f7c59ffc44a7413486bbef8424a3465109f489a80cb68a2",
+   "size": 18329592,
+   "licence": "OpenAL Soft: LGPL 2.0 or later (the library); the archive's COPYING file has the text.",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://api.github.com/repos/kcat/openal-soft/releases"
+  },
+  {
+   "file": "openal-soft-1.25.2-bin.zip",
+   "what": "OpenAL Soft (openal-soft-1.25.2-bin.zip)",
+   "url": "https://github.com/kcat/openal-soft/releases/download/1.25.2/openal-soft-1.25.2-bin.zip",
+   "sha256": "67a0c4b800bd860c93c04f38caf8cbe4875f9c84700ac430efc451f70e265434",
+   "size": 18574944,
+   "licence": "OpenAL Soft: LGPL 2.0 or later (the library); the archive's COPYING file has the text.",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://api.github.com/repos/kcat/openal-soft/releases"
+  },
+  {
+   "file": "jquery-1.3.2.pack.js",
+   "what": "jQuery (jquery-1.3.2.pack.js)",
+   "url": "https://code.jquery.com/jquery-1.3.2.pack.js",
+   "sha256": "c8370a2d050359e9d505acc411e6f457a49b21360a21e6cbc9229bad3a767899",
+   "size": 57254,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.3.1.pack.js",
+   "what": "jQuery (jquery-1.3.1.pack.js)",
+   "url": "https://code.jquery.com/jquery-1.3.1.pack.js",
+   "sha256": "17ec1f16efac893b9bd89bba5f13cb1e0bf938bdc9cece6cae3ed77f18fa6fd7",
+   "size": 55272,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.3.pack.js",
+   "what": "jQuery (jquery-1.3.pack.js)",
+   "url": "https://code.jquery.com/jquery-1.3.pack.js",
+   "sha256": "900191a443115d8b48a9d68d3062e8b3d7129727951b8617465b485baf253006",
+   "size": 55026,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.2.6.pack.js",
+   "what": "jQuery (jquery-1.2.6.pack.js)",
+   "url": "https://code.jquery.com/jquery-1.2.6.pack.js",
+   "sha256": "4b4e5615009a01b9dc1c7372569c28b8ba705e2d1544692821fbe32d66a3f9e6",
+   "size": 31033,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.2.5.pack.js",
+   "what": "jQuery (jquery-1.2.5.pack.js)",
+   "url": "https://code.jquery.com/jquery-1.2.5.pack.js",
+   "sha256": "221202e8f9297d8619f166f3bb5c0fe2d67c5a6f0c2f4159b688beb8e440fa82",
+   "size": 30967,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.2.4.pack.js",
+   "what": "jQuery (jquery-1.2.4.pack.js)",
+   "url": "https://code.jquery.com/jquery-1.2.4.pack.js",
+   "sha256": "1c98b596a8c025d5abe8279fede864b325793e2342425861e23e340ff11bdf4d",
+   "size": 30139,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.2.3.pack.js",
+   "what": "jQuery (jquery-1.2.3.pack.js)",
+   "url": "https://code.jquery.com/jquery-1.2.3.pack.js",
+   "sha256": "8107cbffb89d340918691e7f2569c3f02474236c961bad169be3c06d9281dddf",
+   "size": 29846,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.2.2.pack.js",
+   "what": "jQuery (jquery-1.2.2.pack.js)",
+   "url": "https://code.jquery.com/jquery-1.2.2.pack.js",
+   "sha256": "9db225c50bd535f0e170ca98c93e353d65db90887504f26b58b673ac01c2088d",
+   "size": 29318,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.2.1.pack.js",
+   "what": "jQuery (jquery-1.2.1.pack.js)",
+   "url": "https://code.jquery.com/jquery-1.2.1.pack.js",
+   "sha256": "675a68ab60ce5068044d9a49a989dbf7cf5f051eece9f9d8f32faa1e89dc3912",
+   "size": 27147,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.2.pack.js",
+   "what": "jQuery (jquery-1.2.pack.js)",
+   "url": "https://code.jquery.com/jquery-1.2.pack.js",
+   "sha256": "2658fde47a48160ae16ce1da53c43ace28a6e25a9a32ec8637f4c28b09e32d17",
+   "size": 26871,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.1.4.pack.js",
+   "what": "jQuery (jquery-1.1.4.pack.js)",
+   "url": "https://code.jquery.com/jquery-1.1.4.pack.js",
+   "sha256": "fad422652127c7d6565677f79d94e440958dd9d39d9b5fd1e0cab60c51e61825",
+   "size": 22679,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.1.3.pack.js",
+   "what": "jQuery (jquery-1.1.3.pack.js)",
+   "url": "https://code.jquery.com/jquery-1.1.3.pack.js",
+   "sha256": "d749c3daee6aa5ba1f6a1f396d0513993d5e305cf61472c30d4a388959024bc2",
+   "size": 21472,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.1.2.pack.js",
+   "what": "jQuery (jquery-1.1.2.pack.js)",
+   "url": "https://code.jquery.com/jquery-1.1.2.pack.js",
+   "sha256": "b439c5becbed9aa416ed94ba2c2a8f08dec45b66b1092a489a60db21ba8e3b54",
+   "size": 21235,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.1.1.pack.js",
+   "what": "jQuery (jquery-1.1.1.pack.js)",
+   "url": "https://code.jquery.com/jquery-1.1.1.pack.js",
+   "sha256": "68844e711d326b238d3b8dd966069dcebd7bedf34e847960fc5a8f5cfeaa7e12",
+   "size": 20720,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.1.pack.js",
+   "what": "jQuery (jquery-1.1.pack.js)",
+   "url": "https://code.jquery.com/jquery-1.1.pack.js",
+   "sha256": "e39ff7cb464153999bc5d49f6031637c3cf66f5d97d49c5e58de1dd526fcf08d",
+   "size": 20525,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.0.4.pack.js",
+   "what": "jQuery (jquery-1.0.4.pack.js)",
+   "url": "https://code.jquery.com/jquery-1.0.4.pack.js",
+   "sha256": "ba93945bf3bd4fce7b7a99dacd1f08957d42d19484135f4cbaa5a80bbe4a50e1",
+   "size": 19285,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.0.3.pack.js",
+   "what": "jQuery (jquery-1.0.3.pack.js)",
+   "url": "https://code.jquery.com/jquery-1.0.3.pack.js",
+   "sha256": "0b78abb4e941ad3c7d0f6ffcbb5e6773512f66732d3a807033a11d7d19eb5f9e",
+   "size": 19019,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.0.2.pack.js",
+   "what": "jQuery (jquery-1.0.2.pack.js)",
+   "url": "https://code.jquery.com/jquery-1.0.2.pack.js",
+   "sha256": "a5cdc5534d32bfa93388cf8e685d126426fd0bc567bbeff206837a72ffddfb8a",
+   "size": 18694,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.0.1.pack.js",
+   "what": "jQuery (jquery-1.0.1.pack.js)",
+   "url": "https://code.jquery.com/jquery-1.0.1.pack.js",
+   "sha256": "4abb183d4d63faf9af902aca0801f93fd8d3e2a4c54a88c3f145fbdb95f2b6c6",
+   "size": 17334,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  },
+  {
+   "file": "jquery-1.0.pack.js",
+   "what": "jQuery (jquery-1.0.pack.js)",
+   "url": "https://code.jquery.com/jquery-1.0.pack.js",
+   "sha256": "20e48a200af32eaef71ac6d841701d815a77568a83844cdca3573cdde6809b1f",
+   "size": 17171,
+   "licence": "jQuery: MIT licence (OpenJS Foundation).",
+   "groups": [
+    "archives"
+   ],
+   "used_by": "tools/build_library_hashes.py -> gamescan/library_hashes.py",
+   "listing": "https://code.jquery.com/jquery/"
+  }
+ ]
+}

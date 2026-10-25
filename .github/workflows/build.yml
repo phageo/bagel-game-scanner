@@ -1,0 +1,136 @@
+# Builds Bagel's portable zip and installer from this repository alone, on GitHub's Windows runner.
+#
+# Outside parts come only through tools/fetch.py, each checked against the SHA-256 of its manifest
+# row: python.org's embeddable Python and its full package (Tcl/Tk, tkinter) from
+# tools/manifest_package.json, the Inno Setup 6.7.3 compiler from tools/manifest.json (its
+# publisher's signature checked too, then set up in portable mode inside tests/_tools).
+# Bagel.exe is compiled from tools/launcher/Bagel.cs with the .NET Framework's own csc.exe.
+# The release checklist and the privacy check run at the end; the files are uploaded as artifacts.
+#
+# Optional repository secrets (Settings -> Secrets and variables -> Actions):
+#   BAGEL_PRIVACY_WORDS  private words the privacy check searches for (comma separated)
+#   BAGEL_NAMES          the code -> real name mapping file's text, for the game-name checks
+# Without them those checks say SKIPPED; they run in full on the developer's PC.
+
+name: build
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-2022
+    timeout-minutes: 60
+    env:
+      PYTHONDONTWRITEBYTECODE: "1"     # no __pycache__ (it would hold the runner's paths)
+      PYTHONUTF8: "1"
+    steps:
+      - name: Folders outside the repository (inputs, output, mapping file)
+        shell: pwsh
+        run: |
+          "INPUTS=$env:RUNNER_TEMP\inputs" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
+          "DIST=$env:RUNNER_TEMP\dist" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
+          "NAMES=$env:RUNNER_TEMP\names.txt" | Out-File -Append -Encoding utf8 $env:GITHUB_ENV
+
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+
+      - name: Mapping file (private; empty without the secret)
+        shell: pwsh
+        env:
+          BAGEL_NAMES: ${{ secrets.BAGEL_NAMES }}
+        run: |
+          [IO.File]::WriteAllText($env:NAMES, "$env:BAGEL_NAMES", [Text.UTF8Encoding]::new($false))
+
+      - name: Fetch python.org's Python (embeddable + full package for Tcl/Tk) by SHA-256
+        run: python tools/fetch.py --manifest tools/manifest_package.json --group package --fetch --to "${{ env.INPUTS }}"
+
+      - name: Fetch Inno Setup 6.7.3 by SHA-256 and signature (portable, inside tests/_tools)
+        run: python -c "import sys; sys.path.insert(0, 'tests'); import build_installers; print(build_installers.inno_compiler())"
+
+      - name: Build Bagel.exe with csc.exe (deterministic, no debug data)
+        run: |
+          python tools/build_launcher.py
+          python tools/build_launcher.py --check
+
+      - name: Is it the same Bagel.exe as the committed record?
+        shell: pwsh
+        run: |
+          git diff --quiet -- tools/launcher/launcher.json
+          if ($LASTEXITCODE -ne 0) {
+            Write-Output "::warning::Bagel.exe differs from tools/launcher/launcher.json (another csc.exe version?)"
+            git diff -- tools/launcher/launcher.json
+          } else { Write-Output "Bagel.exe is byte for byte the committed record" }
+          exit 0
+
+      # --- SIGNPATH PLACEHOLDER (1 of 2) ---------------------------------------------------------
+      # Sign tools/launcher/Bagel.exe here, BEFORE the package is built: the package's file list
+      # (app/package_files.json) must hold the signed file's SHA-256. Switched on only after the
+      # SignPath Foundation has accepted the project (docs/CODE_SIGNING.md).
+      - name: "SIGNPATH PLACEHOLDER: sign Bagel.exe (not active)"
+        if: false
+        run: echo "submit tools/launcher/Bagel.exe to SignPath, wait for approval, put the signed file back"
+
+      - name: Build the portable zip
+        run: python tools/build_package.py --inputs "${{ env.INPUTS }}" --names "${{ env.NAMES }}" --out "${{ env.DIST }}"
+
+      - name: Build the installer
+        shell: pwsh
+        run: |
+          $zip = Get-ChildItem "$env:DIST\Bagel-*.zip" | Select-Object -First 1
+          python tools/build_installer.py --package $zip.FullName
+
+      # --- SIGNPATH PLACEHOLDER (2 of 2) ---------------------------------------------------------
+      - name: "SIGNPATH PLACEHOLDER: sign the installer (not active)"
+        if: false
+        run: echo "submit Bagel-<version>-setup.exe to SignPath, wait for approval, put the signed file back"
+
+      - name: Release checklist
+        shell: pwsh
+        run: |
+          $zip = Get-ChildItem "$env:DIST\Bagel-*.zip" | Select-Object -First 1
+          $setup = Get-ChildItem "$env:DIST\Bagel-*-setup.exe" | Select-Object -First 1
+          $names = @()
+          if ((Get-Item $env:NAMES).Length -gt 0) { $names = @("--names", $env:NAMES) }
+          python tools/ci_release_check.py $zip.FullName --installer $setup.FullName @names
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+
+      - name: Privacy check (repository, zip, installer, Bagel.exe)
+        shell: pwsh
+        env:
+          BAGEL_PRIVACY_WORDS: ${{ secrets.BAGEL_PRIVACY_WORDS }}
+        run: |
+          $zip = Get-ChildItem "$env:DIST\Bagel-*.zip" | Select-Object -First 1
+          $setup = Get-ChildItem "$env:DIST\Bagel-*-setup.exe" | Select-Object -First 1
+          $names = @()
+          if ((Get-Item $env:NAMES).Length -gt 0) { $names = @("--names", $env:NAMES) }
+          python tools/privacy_check.py . --tracked $zip.FullName $setup.FullName tools/launcher/Bagel.exe @names
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+
+      - name: SHA-256 of the files
+        shell: pwsh
+        run: |
+          Copy-Item tools/launcher/Bagel.exe $env:DIST
+          Get-ChildItem $env:DIST -File | Where-Object Name -ne "SHA256SUMS.txt" | ForEach-Object {
+            "{0}  {1}" -f (Get-FileHash $_.FullName -Algorithm SHA256).Hash.ToLower(), $_.Name
+          } | Tee-Object -FilePath "$env:DIST\SHA256SUMS.txt"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: bagel-${{ github.sha }}
+          path: |
+            ${{ env.DIST }}\Bagel-*.zip
+            ${{ env.DIST }}\Bagel-*-setup.exe
+            ${{ env.DIST }}\Bagel.exe
+            ${{ env.DIST }}\SHA256SUMS.txt
+          if-no-files-found: error

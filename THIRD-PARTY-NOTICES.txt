@@ -1,0 +1,34 @@
+Bagel - third-party notices of the source repository
+=====================================================
+
+Bagel's own code, tests, tools, texts and pictures in this repository are under the MIT
+licence: see LICENSE ("Copyright (c) 2026 phageo").
+
+This repository holds no code of other projects. What it holds about other projects:
+
+- Hash tables in gamescan/ (engine_hashes, compiled_hashes, library_hashes, electron_official,
+  inno_official, nsis_official, directx_official, npm_hashes and their .bin files): SHA-256
+  values, file names, sizes and version numbers of official, published files - facts about those
+  files, written by the builders in tools/ from the publishers' own archives. No file content of
+  those archives is stored here. tools/manifest*.json name each archive, its official address,
+  its SHA-256 and a short note on its licence (reminders, not legal texts).
+- Test fixtures in tests/fixtures_cs, tests/fixtures_msi and tests/fixtures_screnc: built here
+  from the project's own harmless inputs with Windows' own tools (the .NET Framework's csc.exe,
+  Windows Installer through PowerShell, makecab.exe, the Script Encoder), stored as base64 text
+  with their SHA-256 (tests/build_*.py say how each was made).
+
+Not in this repository, fetched at build time by tools/fetch.py (each by its SHA-256):
+
+  Part                                     Licence                              Where used
+  Python 3.13.16 for Windows, 64-bit       PSF License Version 2, and the       shipped in the package
+    (embeddable package; tkinter and         notices of its parts                 (python/); the package's
+    Tcl/Tk from the full package)            (python/LICENSE.txt)                 own notices list them
+  Tcl/Tk 8.6                               Tcl/Tk licence (BSD-style)           shipped in the package
+  Inno Setup 6.7.3 (Jordan Russell,        Inno Setup License                   builds the installer; the
+    Martijn Laan)                                                                 installer's setup program
+                                                                                  is Inno Setup's own
+  NSIS 3.13, older Inno Setup compilers    zlib/libpng and others; Inno Setup   tests only (tests/_tools),
+                                           License                              never shipped
+
+The built package carries its own THIRD-PARTY-NOTICES.txt (written by tools/build_package.py)
+with the full list of what python.org's Python incorporates.

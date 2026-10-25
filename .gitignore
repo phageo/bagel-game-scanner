@@ -1,0 +1,22 @@
+# Python caches (they hold absolute paths of the PC that ran the code)
+__pycache__/
+*.py[co]
+
+# built locally or by the workflow, never committed
+/tools/launcher/Bagel.exe
+/build/
+/dist/
+/inputs/
+*.zip
+*-setup.exe
+
+# outside files: compilers of the installer tests, official archives (tools/fetch.py)
+/tests/_tools/
+/engine_archives/
+
+# what tools/build_icon.py writes beside its pictures
+/assets/icon/bagel_256_clean.png
+
+# samples and benchmark results are never part of this repository
+/docs/benchmark/
+*.csv
