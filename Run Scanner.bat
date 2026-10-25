@@ -27,7 +27,7 @@ for /d %%D in ("%LOCALAPPDATA%\Programs\Python\Python3*") do (
 )
 
 echo Python was not found on this computer.
-echo Install Python 3.9 or newer from https://www.python.org/downloads/
+echo Install Python 3.13 (the only version tested) from https://www.python.org/downloads/
 echo and tick "Add python.exe to PATH" during setup. Then run this file again.
 pause
 exit /b 1
