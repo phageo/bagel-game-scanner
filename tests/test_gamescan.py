@@ -25078,9 +25078,11 @@ class WorkflowCommandTests(unittest.TestCase):
                 fh.write("nothing private\n")
             with open(single, "w", encoding="utf-8") as fh:
                 fh.write("Zorbleq was here\n")
+            missing = os.path.join(tmp, "no-words.txt")         # never the real words file
             for env, want, from_env in (({"BAGEL_PRIVACY_WORDS": "Qwxplm, Vrtnok"}, 0, 2),
                                         ({"BAGEL_PRIVACY_WORDS": "Qwxplm,Zorbleq"}, 1, 2),
                                         ({"BAGEL_PRIVACY_WORDS": ""}, 0, 0)):
+                env = dict(env, BAGEL_PRIVACY_WORDS_FILE=missing)
                 out = io.StringIO()
                 with mock.patch.dict(os.environ, env), contextlib.redirect_stdout(out):
                     code = P.main([folder, "--word", "Plmqwx", single])     # a flag between the paths
@@ -25092,6 +25094,84 @@ class WorkflowCommandTests(unittest.TestCase):
                 self.assertRegex(text, r"words\s+(PASS|FAIL) \d+ of 2 files")
                 for word in ("Qwxplm", "Vrtnok", "Zorbleq", "Plmqwx"):
                     self.assertNotIn(word, text)          # the words are never printed
+
+    def test_privacy_check_reads_the_local_words_file_only_when_the_variable_is_unset(self):
+        # README follow-ups (phageo, 2026-10-25): %USERPROFILE%\Documents\bagel-privacy-words.txt,
+        # one word per line; made-up words and a made-up file only - never the real one
+        import privacy_check as P
+        from unittest import mock
+        with tempfile.TemporaryDirectory() as tmp:
+            folder, words = os.path.join(tmp, "repo"), os.path.join(tmp, "words.txt")
+            gone = os.path.join(tmp, "gone.txt")
+            os.makedirs(folder)
+            with open(os.path.join(folder, "a.txt"), "w", encoding="utf-8") as fh:
+                fh.write("Zorbleq was here\n")
+            with open(words, "w", encoding="utf-8-sig") as fh:
+                fh.write("Vrtnok\n\n  Zorbleq  \n")
+            self.assertEqual(P.words_file({"USERPROFILE": tmp}),
+                             os.path.join(tmp, "Documents", "bagel-privacy-words.txt"))
+            self.assertEqual(P.words_file({"USERPROFILE": tmp, "BAGEL_PRIVACY_WORDS_FILE": words}), words)
+            self.assertEqual(P.file_words(words), ["Vrtnok", "Zorbleq"])
+            self.assertIsNone(P.file_words(gone))
+            for env, args, want, line in (
+                    ({"BAGEL_PRIVACY_WORDS_FILE": words}, [], 1, r"words file\s+read \(2 words\)"),
+                    ({"BAGEL_PRIVACY_WORDS_FILE": words, "BAGEL_PRIVACY_WORDS": " "}, [], 1, r"read \(2 words\)"),
+                    ({"BAGEL_PRIVACY_WORDS_FILE": words, "BAGEL_PRIVACY_WORDS": "Qwxplm"}, [], 0,
+                     r"words file\s+not read \(BAGEL_PRIVACY_WORDS set\)"),
+                    ({"BAGEL_PRIVACY_WORDS_FILE": gone}, [], 0, r"words file\s+SKIPPED \(missing"),
+                    # --require (the pre-push hook): a missing file fails, a SKIPPED check fails
+                    ({"BAGEL_PRIVACY_WORDS_FILE": gone}, ["--require", "--word", "Qwxplm"], 1,
+                     r"or SKIPPED \(--require\)"),
+                    ({"BAGEL_PRIVACY_WORDS_FILE": words}, ["--require"], 1, r"game names\s+SKIPPED")):
+                out = io.StringIO()
+                with mock.patch.dict(os.environ, env), contextlib.redirect_stdout(out):
+                    if "BAGEL_PRIVACY_WORDS" not in env:
+                        os.environ.pop("BAGEL_PRIVACY_WORDS", None)
+                    code = P.main([folder] + args)
+                text = out.getvalue()
+                self.assertEqual(code, want, text)
+                self.assertRegex(text, line)
+                for word in ("Qwxplm", "Vrtnok", "Zorbleq", tmp):
+                    self.assertNotIn(word, text)          # neither the words nor the file's place
+            # words found and a mapping file given: --require passes on clean files
+            names = os.path.join(tmp, "names.txt")
+            with open(names, "w", encoding="utf-8") as fh:
+                fh.write("XX-01 = Blorptastic Quest\n")
+            with open(os.path.join(folder, "a.txt"), "w", encoding="utf-8") as fh:
+                fh.write("nothing private\n")
+            out = io.StringIO()
+            with mock.patch.dict(os.environ, {"BAGEL_PRIVACY_WORDS_FILE": words}), contextlib.redirect_stdout(out):
+                os.environ.pop("BAGEL_PRIVACY_WORDS", None)
+                code = P.main([folder, "--require", "--names", names])
+            self.assertEqual(code, 0, out.getvalue())
+
+
+class SourceExportListTests(unittest.TestCase):
+    """Every document the README, CONTRIBUTING.md and SECURITY.md link to is in the export's list
+    (README follow-ups, phageo 2026-10-25: the three files of the README split were copied by hand)."""
+
+    def test_linked_documents_are_exported(self):
+        sys.path.insert(0, os.path.join(ROOT, "tools"))
+        self.addCleanup(sys.path.remove, os.path.join(ROOT, "tools"))
+        import fnmatch
+        import export_source as E
+        linked = set()
+        for name in ("README.md", "CONTRIBUTING.md", "SECURITY.md"):
+            with open(os.path.join(ROOT, name), encoding="utf-8") as fh:
+                linked |= set(re.findall(r"\]\(([^)#:\s]+)\)", fh.read()))
+        self.assertTrue({"docs/HOW_IT_WORKS.md", "docs/DEVELOPING.md", "docs/LIMITS.md", "CONTRIBUTING.md",
+                         "SECURITY.md"} <= linked, linked)
+        for path in sorted(linked):
+            self.assertTrue(os.path.isfile(os.path.join(ROOT, path)), path)
+            self.assertTrue(any(fnmatch.fnmatchcase(path, p) for p in E.ALLOWED), "not exported: " + path)
+            self.assertNotIn(path, E.NEVER_NAMES)
+        with tempfile.TemporaryDirectory() as tmp:
+            for path in ("CONTRIBUTING.md", "docs/HOW_IT_WORKS.md", "docs/DEVELOPING.md", "docs/LIMITS.md",
+                         "docs/CHANGELOG.md", "docs/memory/status.md"):
+                os.makedirs(os.path.dirname(os.path.join(tmp, path)), exist_ok=True)
+                open(os.path.join(tmp, path), "w").close()
+            self.assertEqual(E.chosen(tmp), ["CONTRIBUTING.md", "docs/DEVELOPING.md", "docs/HOW_IT_WORKS.md",
+                                             "docs/LIMITS.md"])
 
 
 if __name__ == "__main__":

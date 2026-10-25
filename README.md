@@ -26,6 +26,9 @@ Two ways; both are the same program.
 protected your PC". Click **More info** -> **Run anyway** only if you got the file from where
 phageo published it, and compare its SHA-256 with the one in the release notes.
 
+**Microsoft Defender may flag the unsigned installer** (a machine-learning guess, reported to
+Microsoft as a false alarm); the zip is not flagged.
+
 **Windows Defender:** at start Bagel compares its own files with a list written when the package
 was built and says clearly if one was changed, is missing or was added (for example a file an
 antivirus removed). You can still scan, but download Bagel again. This finds damage, not
@@ -108,6 +111,9 @@ söyler. **Statiktir**: dosyaları yalnızca okur, **oyunu ya da içindeki hiçb
 korudu" diyebilir. **Ek bilgi** -> **Yine de çalıştır**'a yalnızca dosyayı phageo'nun
 yayımladığı yerden aldıysanız tıklayın ve SHA-256 değerini sürüm notlarındakiyle karşılaştırın.
 
+**Microsoft Defender imzasız kurulum dosyasını işaretleyebilir** (makine öğrenmesine dayanan bir
+tahmin; Microsoft'a yanlış alarm olarak bildirildi); zip işaretlenmiyor.
+
 **Windows Defender:** Bagel açılırken kendi dosyalarını, paket hazırlanırken yazılmış bir
 listeyle karşılaştırır; bir dosya değişmiş, eksik ya da fazlaysa (örneğin bir antivirüsün
 sildiği bir dosya) bunu açıkça söyler. Yine de tarama yapabilirsiniz, ama Bagel'ı yeniden
@@ -176,4 +182,5 @@ In the source code, not in the download / Kaynak kodda, indirilen pakette değil
 - [docs/HOW_IT_WORKS.md](docs/HOW_IT_WORKS.md) - engines, rules, verdict logic / motorlar, kurallar, sonuç mantığı
 - [docs/DEVELOPING.md](docs/DEVELOPING.md) - tests, `tools/fetch.py`, tables, build, CI / testler, tablolar, derleme
 - [docs/LIMITS.md](docs/LIMITS.md) - the full list of limits / sınırların tam listesi
+- [CONTRIBUTING.md](CONTRIBUTING.md) - report a false alarm or a missed sample, tests, pull requests / yanlış alarm ya da kaçırılan örnek bildirme, testler
 <!-- user-section-end -->

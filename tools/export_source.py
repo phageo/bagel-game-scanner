@@ -34,6 +34,7 @@ from typing import List, Optional, Tuple
 # what may be exported (paths below the project, "/" as separator)
 ALLOWED = (
     "GameSafetyScanner.pyw", "Run Scanner.bat", "LICENSE", "README.md", "CHANGELOG.md", "SECURITY.md",
+    "CONTRIBUTING.md",
     "THIRD-PARTY-NOTICES.txt", ".gitignore", ".gitattributes", ".github/workflows/*.yml",
     "gamescan/*.py", "gamescan/*/*.py", "gamescan/*.bin", "gamescan/known_findings.json.gz",
     "gamescan/bagel.ico",
@@ -44,6 +45,8 @@ ALLOWED = (
     "tests/fixtures_cs/*.cs", "tests/fixtures_cs/fixtures.json", "tests/fixtures_msi/fixtures.json",
     "tests/fixtures_screnc/fixtures.json",
     "docs/RELEASE_NOTES.md", "docs/RELEASE_CHECKLIST.md", "docs/CODE_SIGNING.md",
+    # the long parts of the old README (short README, phageo 2026-10-25)
+    "docs/HOW_IT_WORKS.md", "docs/DEVELOPING.md", "docs/LIMITS.md",
     "assets/icon/README.md", "assets/icon/bagel_pixel.png", "assets/icon/bagel_ai.png",
 )
 # never exported, wherever they stand (checked again on every path)

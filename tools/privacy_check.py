@@ -1,7 +1,7 @@
 """Privacy check of the source release and of the built files (source release, phageo 2026-10-25).
 
     python tools/privacy_check.py <folder | zip | setup.exe | file> ... [--names <mapping file>]
-                                  [--word <word> ...]
+                                  [--word <word> ...] [--tracked] [--require]
 
 Searches every file - in a folder (``.git`` left out), every member of a zip (a zip inside a zip
 too), every file an Inno Setup installer installs (read in memory by the scanner's own reader,
@@ -9,7 +9,10 @@ too), every file an Inno Setup installer installs (read in memory by the scanner
 as UTF-8 and as UTF-16LE text, for:
 
  1. words      each private word (``--word``, or the variable ``BAGEL_PRIVACY_WORDS``: words split
-               by commas or new lines - a secret in the workflow) as a whole word
+               by commas or new lines - a secret in the workflow) as a whole word. When that
+               variable is unset or empty, the words file is read instead: one word per line,
+               ``%USERPROFILE%\\Documents\\bagel-privacy-words.txt`` (outside the repository; another
+               place by ``BAGEL_PRIVACY_WORDS_FILE``) - a missing file says SKIPPED
  2. user name  the Windows user name of the PC running the check (``USERNAME``, the last part of
                ``USERPROFILE``) as a whole word
  3. users path ``<drive>:\\Users\\<name>`` (also with ``/`` or doubled ``\\``), except the made-up
@@ -33,7 +36,8 @@ Setup's) are counted apart for checks 4 and 6: their build paths and icons are t
 The words themselves are never printed and never written into this file. One line per check:
 the count of files with a hit and their names; what an allowlist let through is counted on a
 line of its own. Exit code 0 only when every check is 0; a check with nothing to search with
-(no word, no mapping file) says SKIPPED and does not fail.
+(no word, no mapping file) says SKIPPED and does not fail - with ``--require`` (the local
+pre-push hook) a SKIPPED check, or a missing words file, fails too.
 """
 from __future__ import annotations
 
@@ -64,6 +68,8 @@ MADE_UP_POSIX = frozenset({"tom", "someone"})
 TABLE_MAGIC = b"GSS-TABLES 1\n"          # gamescan/bintable.py
 PNG = b"\x89PNG\r\n\x1a\n"
 PNG_PLAIN = frozenset({b"IHDR", b"PLTE", b"tRNS", b"IDAT", b"IEND"})
+# the local private words, below %USERPROFILE% (never in the repository, never copied or printed)
+WORDS_FILE = os.path.join("Documents", "bagel-privacy-words.txt")
 MAX_DEPTH = 3                    # a zip inside a zip inside a zip
 MAX_MEMBER = 512 * 1024 * 1024   # one member read in memory
 _SEP = r"(?:\\\\|\\|/)+"
@@ -147,6 +153,21 @@ def _whole(words: List[str]) -> Optional["re.Pattern"]:
         return None
     return re.compile(r"(?<![A-Za-z0-9])(?:%s)(?![A-Za-z0-9])" % "|".join(sorted(parts, key=len, reverse=True)),
                       re.IGNORECASE)
+
+
+def words_file(env: Optional[Dict[str, str]] = None) -> str:
+    """Where the local private words are: ``BAGEL_PRIVACY_WORDS_FILE``, else ``WORDS_FILE`` below
+    ``USERPROFILE``."""
+    env = os.environ if env is None else env
+    return env.get("BAGEL_PRIVACY_WORDS_FILE") or os.path.join(env.get("USERPROFILE", ""), WORDS_FILE)
+
+
+def file_words(path: str) -> Optional[List[str]]:
+    """The words of the words file, one per line (blank lines left out), or None when it is missing."""
+    if not os.path.isfile(path):
+        return None
+    with open(path, encoding="utf-8-sig") as fh:      # Notepad may write a BOM
+        return [line.strip() for line in fh if line.strip()]
 
 
 def user_names(env: Optional[Dict[str, str]] = None) -> List[str]:
@@ -331,19 +352,27 @@ def main(argv: Optional[List[str]] = None) -> int:
     ap.add_argument("--names", help="the code -> real name mapping file (outside the repository)")
     ap.add_argument("--word", action="append", default=[], help="a private word (repeatable; never printed)")
     ap.add_argument("--tracked", action="store_true", help="of a folder, only the files git tracks")
+    ap.add_argument("--require", action="store_true",
+                    help="a SKIPPED check or a missing words file fails too (the local pre-push hook)")
     # flags may stand between the paths (the workflow's ". --tracked <zip> <setup> <exe>")
     args = ap.parse_intermixed_args(argv)
     from_env = [w.strip() for w in re.split(r"[,\r\n]+", os.environ.get("BAGEL_PRIVACY_WORDS", "")) if w.strip()]
-    words = list(args.word) + from_env
-    # where the words and the mapping came from - never the words themselves
-    print("%-22s %s" % ("private words", "%d from --word, %d from BAGEL_PRIVACY_WORDS" % (len(args.word), len(from_env))
-                        if words else "none (--word / BAGEL_PRIVACY_WORDS empty)"))
+    # the words file only when the variable is unset or empty (on this PC, not in the workflow)
+    from_file = None if from_env else file_words(words_file())
+    words = list(args.word) + from_env + (from_file or [])
+    # where the words and the mapping came from - never the words themselves, nor the file's path
+    print("%-22s %s" % ("private words", "%d from --word, %d from BAGEL_PRIVACY_WORDS, %d from the words file" % (
+        len(args.word), len(from_env), len(from_file or [])) if words else "none (--word / BAGEL_PRIVACY_WORDS empty)"))
+    print("%-22s %s" % ("words file", "not read (BAGEL_PRIVACY_WORDS set)" if from_env else
+                        "SKIPPED (missing: Documents\\bagel-privacy-words.txt)" if from_file is None else
+                        "read (%d words)" % len(from_file)))
     print("%-22s %s" % ("mapping file", "given" if args.names else "none (--names not given)"))
     result = run(args.paths, words, args.names, only_tracked=args.tracked)
-    failed = 0
+    failed = 1 if args.require and not from_env and from_file is None else 0
     for check, entry in result.items():
         if entry["skipped"]:
             print("%-22s SKIPPED (%s)" % (check, entry["skipped"]))
+            failed += args.require and not check.startswith("third-party")
             continue
         files = entry["files"]
         counted = check.startswith("third-party")
@@ -352,7 +381,8 @@ def main(argv: Optional[List[str]] = None) -> int:
             check, "info" if counted else ("FAIL" if files else "PASS"), len(files), entry["searched"],
             "" if not entry["allowed"] else " (allowlisted places: %d)" % entry["allowed"],
             (": " + ", ".join(files[:12]) + (" ..." if len(files) > 12 else "")) if files and not counted else ""))
-    print("privacy check: %s" % ("all checks 0" if not failed else "%d check(s) with hits" % failed))
+    print("privacy check: %s" % ("all checks 0" if not failed else "%d check(s) with hits%s" % (
+        failed, " or SKIPPED (--require)" if args.require else "")))
     return 1 if failed else 0
 
 
