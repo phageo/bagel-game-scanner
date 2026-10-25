@@ -18,7 +18,8 @@ it scans is a security bug: report it privately (see [SECURITY.md](SECURITY.md))
 
 ## Run the tests
 
-You need Python 3.9 or newer; Bagel uses the standard library only (no new dependencies).
+You need Python 3.13 (the only version tested); Bagel uses the standard library only (no new
+dependencies).
 
 ```
 python -m unittest tests.test_gamescan
@@ -28,8 +29,9 @@ unittest writes to stderr. `GSS_FAST=1` leaves out the slow tests; one class alo
 `python -m unittest tests.test_gamescan.<Class>`. Tests that need sample games or outside
 archives skip without them. Details: [docs/DEVELOPING.md](docs/DEVELOPING.md).
 
-Every change in behaviour needs a test, and new text a user sees goes into `gamescan/i18n.py`
-in English and Turkish.
+Every change in behaviour needs a test. New text a user sees goes into `gamescan/i18n.py` in
+English; a Turkish translation is welcome but not required - the maintainer adds missing ones
+before release.
 
 ## Pull requests
 
