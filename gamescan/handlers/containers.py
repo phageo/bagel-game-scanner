@@ -27,9 +27,10 @@ import zipfile
 from typing import Iterator, List, Optional, Tuple
 
 from .. import localdrop
+from ..fixlog import note as _fix_note
 from ..models import NOT_INSPECTED, Category, FileContext, Finding, Severity
 from ..pe import extract_strings
-from ..unpack import cab, inno, media, nsis, rar, rgss, sevenzip, sniff, spool, unity
+from ..unpack import cab, inno, limits, media, nsis, rar, rgss, sevenzip, sniff, spool, unity
 
 ZIP_EXTS = frozenset({".zip", ".jar", ".apk", ".nupkg", ".whl", ".docx", ".docm", ".dotm", ".xlsx",
                       ".xlsm", ".xlsb", ".xltm", ".pptx", ".pptm", ".ppsm"})
@@ -74,10 +75,119 @@ _SLICE = (b"idska32\x1a", b"idska16\x1a")   # Inno Setup data in a separate setu
 _PACKAGE_EXTS = frozenset({".html", ".htm", ".mjs", ".cjs"})
 _ZIP_END = b"PK\x05\x06"
 
+# ARC-ENC-EXEC-001 (phageo, 2026-10-15, fiftieth message): a password archive whose own list of entries -
+# readable although the members are encrypted - names a program or a script. By the ending only.
+# (The lists stood in handlers/documents.py, for password zips, until 2026-11-09; C4 uses the same ones.)
+ENCRYPTED_PROGRAMS = frozenset({".exe", ".dll", ".scr", ".com", ".msi", ".node", ".sys", ".cpl", ".ocx", ".pif",
+                                ".jar"})
+ENCRYPTED_SCRIPTS = frozenset({".js", ".jse", ".mjs", ".cjs", ".vbs", ".vbe", ".wsf", ".hta", ".ps1", ".psm1",
+                               ".bat", ".cmd", ".py", ".pyw", ".pyc", ".pyo", ".rpy", ".rpyc", ".rb", ".lnk",
+                               ".html", ".htm"})
+# ... or an archive (phageo, 2026-10-15, fifty-first message: it hides its content twice). A password archive
+# of pictures, sound or documents only (bonus content of a visual novel) stays ARC-001 / ARC-002 alone - REVIEW.
+ENCRYPTED_ARCHIVES = frozenset({".zip", ".7z", ".rar", ".asar", ".rpa", ".cab", ".gz", ".tgz", ".bz2", ".xz",
+                                ".tar", ".iso", ".img", ".rgssad", ".rgss2a", ".rgss3a"})
+# (phase D, session R2b-1, S06 - phageo 2026-11-17) the endings by which a member of a game archive (.rpa, RGSS) that
+# its own reader does not hand on is said as "not inspected" (ARC-002): the lists above without pages (pages of a
+# game's own archive are data there), and compiled Python. Used by handlers/renpy.py and handlers/rgss.py, which
+# leave out what they read themselves. A note only - such a member is not read.
+SAID_MEMBER_EXTS = (ENCRYPTED_PROGRAMS | ENCRYPTED_SCRIPTS | ENCRYPTED_ARCHIVES) - frozenset({".html", ".htm"})
+SAID_MEMBERS = ("%d member(s) that are, by their ending or their first bytes, programs, scripts or archives of a kind "
+                "this archive's reader does not read were not inspected: %s")
+ENCRYPTED_RUNNABLE = "ARC-ENC-EXEC-001"
+ENCRYPTED_RUNNABLE_TITLE = "Password-protected archive holding programs, scripts or archives"
+ENCRYPTED_RUNNABLE_REASON = (
+    "The archive is encrypted, so its contents cannot be inspected - and its list of entries, which stays "
+    "readable, names programs, scripts or further archives. Malware is delivered this way so that scanners "
+    "cannot look at what will run.")
+# C4 (phase C native group, phageo 2026-11-02 / 11-08): the same rule for 7z archives whose header is not
+# encrypted and for RAR 4 / 5 archives whose file headers are not - the names of the *encrypted* entries are
+# read by the project's own 7z / RAR readers (no decryption, no program), within their bounds (entries, header
+# bytes; the scanner's nesting depth). An archive whose header is encrypted keeps its ARC-002 note only.
+ENCRYPTED_LISTING_ON = True          # the C4 switch: off -> 7z / RAR give what they gave before
+ENCRYPTED_LISTING = "encrypted_listing"   # FileContext.cache: {kind: [programs, scripts, archives, entries]}
+# C4 follow-up (phageo, 2026-11-09, answer 5): a password zip appended to a program (a zip self-extractor) gets
+# the password-zip rule too - until then it gave ARC-002 only. Counted as the zip rule counts (every entry,
+# once any member is encrypted; kept under the kind "zip"). Its own switch: off -> what it gave before.
+ENCRYPTED_ZIP_BEHIND_ON = True
+# (phase D, session R2, B2 - phageo 2026-11-15) an Inno Setup installer whose installed files lie in a setup-N.bin file
+# that is not at hand (beside it on disk, or - with B3 - beside it in the same archive): the members read before that
+# point stay, and the rest is said as content that could not be read (ARC-002, rule 15: at least REVIEW) instead of a
+# read error that ends the reading. Off: the error goes on (SCAN-ERR-001; see scanner.MEMBER_ERRORS_ISOLATED).
+INNO_SLICES_NOTE = True
+INNO_SLICES_MISSING = ("Inno Setup: the installed files are in separate setup-N.bin files that are not at hand "
+                       "(%s) - those files could not be inspected")
+# (phase D, session R2, B3 - phageo 2026-11-15; a reader limit, not a feature) the setup-N.bin files of an Inno Setup
+# installer that is a member of a zip are taken from the same zip: the member named "<installer's stem>-N.bin" in the
+# installer's own folder (one exact match, ignoring case; not encrypted; stored, not compressed - the reader seeks in a
+# slice, and a compressed zip member is unpacked again from its start at every step back; at most MAX_MEMBER bytes - the
+# existing member limit). Only a program member (".exe") that has a "<stem>-1.bin" beside it gets the opener
+# (FileContext.cache[SLICES]; any other member's cache stays as it was). Off: such an installer's files are not at hand
+# (B2's note).
+INNO_SLICES_IN_ARCHIVE = True
+# (phase D, session R2b-1, S01 - phageo 2026-11-17; a silent escape) a zip member that cannot be unpacked - a compression
+# Python's zipfile does not decode (Deflate64, PPMd, Zstandard, XZ), a wrong checksum, a damaged stream - is said
+# (ARC-002: Policy.failed) and the members after it are still read. Until then such a member vanished without a word,
+# and a damaged stream (zlib.error / LZMAError) ended the whole zip's reading. Only the error's type name is said.
+# Off: what it gave before (the five old error types dropped quietly, any other error raised).
+ZIP_MEMBER_ERRORS_SAID = True
+_ZIP_MEMBER_ERRORS = (zipfile.BadZipFile, OSError, RuntimeError, NotImplementedError, EOFError)   # (the old catch)
+# (phase D, session R2b-2, S07 - phageo 2026-11-17; a silent escape) the script endings a handler reads on disk but
+# MEMBER_EXTS lacked are read inside archives too, by the same readers (ADDED_EXTS: Ren'Py .pyw / .rpym / .rpymc / .rpi,
+# RGSS .rbw, shell .psm1 / .bash / .command); an HTML page inside an archive is only said (ARC-002), not read - read, a
+# zipped manual's remote script tag could make a clean game DANGEROUS (pages are read as before in an asar and in a zip
+# behind a program). Until then both were text, so "data" (2026-10-23), and vanished without a word. Off: as before.
+HANDLER_ENDINGS_IN_ARCHIVES = True
+ADDED_EXTS = frozenset({".pyw", ".rpym", ".rpymc", ".rpi", ".rbw", ".psm1", ".bash", ".command"})
+_PAGES = frozenset({".html", ".htm"})
+UNREAD_PAGES = "%d page(s) (.html) inside the archive were not inspected: %s"
+SLICES = "inno_slices"
+_SLICE_NAME = re.compile(r"(?i)-\d{1,4}\.bin\Z")
+
+
+def _count_entries(ctx: FileContext, kind: str, names: List[str]) -> None:
+    counts = ctx.cache.setdefault(ENCRYPTED_LISTING, {}).setdefault(kind, [0, 0, 0, 0])
+    for i, n in enumerate(runnable_counts(names) + (len(names),)):
+        counts[i] += n
+
+
+def _ending(name: str) -> str:
+    leaf = name.replace("\\", "/").rsplit("/", 1)[-1]
+    return leaf[leaf.rfind("."):].lower() if "." in leaf else ""
+
+
+def runnable_counts(names) -> Tuple[int, int, int]:
+    """``(programs, scripts, archives)`` among entry names, by their endings (``ARC-ENC-EXEC-001``)."""
+    endings = [_ending(name) for name in names]
+    return (sum(e in ENCRYPTED_PROGRAMS for e in endings), sum(e in ENCRYPTED_SCRIPTS for e in endings),
+            sum(e in ENCRYPTED_ARCHIVES for e in endings))
+
+
+def _note_encrypted(ctx: FileContext, kind: str, names: List[str]) -> None:
+    """Keep the counts of a 7z / RAR archive's encrypted entries for :func:`findings` (C4)."""
+    if not ENCRYPTED_LISTING_ON or not names:
+        return
+    _count_entries(ctx, kind, names)
+
 
 def ext_of(name: str) -> str:
     leaf = name.replace("\\", "/").rsplit("/", 1)[-1]
     return "." + leaf.rsplit(".", 1)[-1].lower() if "." in leaf else ""
+
+
+def _is_text(head: bytes) -> bool:
+    from .text import is_text
+    return is_text(head)
+
+
+def member_ext(ext: str) -> bool:
+    """Is a member with this ending read (``MEMBER_EXTS``, and with S07 ``ADDED_EXTS``)?"""
+    if ext in MEMBER_EXTS:
+        return True
+    if HANDLER_ENDINGS_IN_ARCHIVES and ext in ADDED_EXTS:
+        _fix_note("S07")                  # (asked once or more per member: for the gate, gamescan/fixlog.py)
+        return True
+    return False
 
 
 _FONTS = (b"\x00\x01\x00\x00", b"OTTO", b"true", b"ttcf", b"wOFF", b"wOF2")
@@ -148,12 +258,24 @@ class Policy:
         self.unread_programs: List[str] = []      # members that are programs of a kind nobody reads
         self.unread_formats: List[Tuple[str, str]] = []   # (member, format) of a format nobody reads
         self.unread_members: List[Tuple[str, str]] = []   # (member, kind) left out, not clearly harmless
+        self.failed: List[str] = []               # (S01) "member (ErrorType)": could not be unpacked
+        self.unread_pages: List[str] = []         # (S07) HTML pages left out: said, not read
+
+    def member_failed(self, name: str, exc: BaseException) -> bool:
+        """(S01) A zip member whose unpacking raised ``exc``: said, when ``ZIP_MEMBER_ERRORS_SAID`` - then True, and
+        the caller goes on with the next member. Off: True for the five error types of before (the caller does what
+        it did then), False for any other (the caller raises it, as before)."""
+        if ZIP_MEMBER_ERRORS_SAID:
+            _fix_note("S01")
+            self.failed.append("%s (%s)" % (name[-120:], type(exc).__name__))
+            return True
+        return isinstance(exc, _ZIP_MEMBER_ERRORS)
 
     @staticmethod
     def limit(name: str) -> int:
         ext = ext_of(name)
         return (MAX_GAME_ARCHIVE if ext in GAME_ARCHIVES else
-                MAX_MEMBER if ext in MEMBER_EXTS else MAX_UNNAMED)
+                MAX_MEMBER if member_ext(ext) else MAX_UNNAMED)
 
     def unread_format(self, name: str, size: Optional[int] = None) -> bool:
         """A member named like a format the scanner has no reader for (``sniff.UNREAD_ENDINGS``;
@@ -163,7 +285,7 @@ class Policy:
         file that is one of their files is known content (``UnreadFormatHandler``; phageo,
         fifty-ninth message) - any other gets its own note there."""
         ext = ext_of(name)
-        if ext in sniff.UNREAD_ENDINGS and ext not in MEMBER_EXTS:
+        if ext in sniff.UNREAD_ENDINGS and not member_ext(ext):
             if size is not None and size <= MAX_COMPARED:
                 return False
             self.unread_formats.append((name, sniff.UNREAD_ENDINGS[ext]))
@@ -179,7 +301,7 @@ class Policy:
             return False
         if self.unread_format(name, size):
             return False
-        known = ext_of(name) in MEMBER_EXTS or ext_of(name) in sniff.UNREAD_ENDINGS
+        known = member_ext(ext_of(name)) or ext_of(name) in sniff.UNREAD_ENDINGS
         if size > self.limit(name):
             # (a member without a telling ending, too large to be looked at, was left out without
             # a word until 2026-10-23: what it is cannot be told, so it is said too)
@@ -196,7 +318,7 @@ class Policy:
     def keep(name: str, data: bytes) -> bool:
         """Members with no telling extension are only kept for what they contain (a container,
         or a format the scanner has no reader for - which its handler then says)."""
-        return (ext_of(name) in MEMBER_EXTS or ext_of(name) in sniff.UNREAD_ENDINGS
+        return (member_ext(ext_of(name)) or ext_of(name) in sniff.UNREAD_ENDINGS
                 or data.startswith(CONTAINER_MAGICS) or bool(sniff.unread_kind(data)))
 
     def settle(self, name: str, data) -> bool:
@@ -206,6 +328,12 @@ class Policy:
         head = spool.head_of(data)
         if self.keep(name, head):
             return True
+        if HANDLER_ENDINGS_IN_ARCHIVES and ext_of(name) in _PAGES and _is_text(head):
+            # (S07) a page (text): said, never read here. A member named .html that is no text goes on as before
+            # (said as a member of an unknown kind, unless clearly harmless - msichain counts those).
+            self.unread_pages.append(name[-120:])
+            _fix_note("S07")
+            return False
         if not harmless(data):
             self.unread_members.append((name, _member_kind(head)))
         return False
@@ -226,6 +354,12 @@ class Policy:
         if self.skipped:
             out.append("%d member(s) over the size or count limit were not inspected: %s"
                        % (len(self.skipped), ", ".join(self.skipped[:5])))
+        if self.unread_pages:
+            out.append(limits.said(UNREAD_PAGES % (len(self.unread_pages), ", ".join(self.unread_pages[:5]))))
+        if self.failed:
+            out.append(limits.said("%d member(s) could not be unpacked (damaged, or a compression the scanner does "
+                                   "not decode) and were not inspected: %s"
+                                   % (len(self.failed), ", ".join(self.failed[:5]))))
         return out
 
 
@@ -430,6 +564,38 @@ def covers_overlay(ctx: FileContext) -> bool:
 
 
 # -- reading -----------------------------------------------------------------------------
+class ZipSlices:
+    """(B3) The ``setup-N.bin`` members of one open zip, for the Inno Setup installers among its members."""
+
+    def __init__(self, archive: zipfile.ZipFile, infos) -> None:
+        self.archive = archive
+        self.named: dict = {}                   # lower-case name -> the members of that name
+        for info in infos:
+            if not info.is_dir() and _SLICE_NAME.search(info.filename):
+                self.named.setdefault(info.filename.lower(), []).append(info)
+
+    def opener(self, name: str):
+        """For the member ``name``: ``open(N)`` -> a stream of its ``<stem>-N.bin`` beside it in this zip, or
+        None when there is none, more than one, or it may not be read; None when it has no ``<stem>-1.bin``."""
+        if not INNO_SLICES_IN_ARCHIVE or not self.named or ext_of(name) != ".exe":
+            return None
+        stem = os.path.splitext(name)[0].lower()
+        if stem + "-1.bin" not in self.named:
+            return None
+
+        def open_slice(number: int):
+            found = self.named.get("%s-%d.bin" % (stem, number), [])
+            info = found[0] if len(found) == 1 else None
+            if info is None or info.flag_bits & 1 or info.compress_type != zipfile.ZIP_STORED \
+                    or info.file_size > MAX_MEMBER:
+                return None
+            try:
+                return self.archive.open(info)
+            except (zipfile.BadZipFile, OSError, RuntimeError, NotImplementedError, ValueError, EOFError):
+                return None
+        return open_slice
+
+
 def child(ctx: FileContext, name: str, data) -> FileContext:
     """Context for a member of ``ctx``: ``data`` is its content, or the
     :class:`spool.Blob` it was unpacked into. A spooled member is a file on
@@ -477,9 +643,14 @@ def _native(ctx: FileContext, kind: str, offset: int, size: int, policy: Policy,
             # tar.exe) reads a scanned file's cabinet (phageo); Quantum stays a note
             yield from cab.members(stream, policy.want, notes=notes)
         elif kind == "7z":
-            yield from sevenzip.Archive(stream).members(policy.want, ctx.tick)
+            archive = sevenzip.Archive(stream)
+            if ENCRYPTED_LISTING_ON:
+                _note_encrypted(ctx, kind, archive.encrypted_names())
+            yield from archive.members(policy.want, ctx.tick)
         elif kind == "rar":
             entries = rar.entries(stream)
+            if ENCRYPTED_LISTING_ON:
+                _note_encrypted(ctx, kind, [e.name for e in entries if e.encrypted])
             wanted = [e for e in entries if policy.want(e.name, e.size)]
             blocked = next((e for e in wanted if e.encrypted or not e.stored), None)
             if blocked is not None:
@@ -501,6 +672,8 @@ def _zip_members(stream, policy: Policy, ctx: FileContext,
         if locked:
             notes.append("zip behind the program: %d password-protected member(s) were not "
                          "inspected" % locked)
+            if ENCRYPTED_ZIP_BEHIND_ON:                 # the password-zip rule: every entry counts
+                _count_entries(ctx, "zip", [i.filename for i in infos])
         total, done = sum(i.compress_size for i in infos) or 1, 0
         for info in infos:
             if ctx.cancelled:
@@ -524,8 +697,13 @@ def _zip_members(stream, policy: Policy, ctx: FileContext,
             except spool.SpoolError as exc:
                 policy.skipped.append("%s (%s)" % (name, exc))
                 continue
-            except (zipfile.BadZipFile, OSError, RuntimeError, NotImplementedError, EOFError):
-                policy.skipped.append(name)
+            except MemoryError:
+                raise
+            except Exception as exc:                    # (S01) said; the members after it are read
+                if not policy.member_failed(name, exc):
+                    raise
+                if not ZIP_MEMBER_ERRORS_SAID:
+                    policy.skipped.append(name)         # (as before)
                 continue
             if spool.size_of(data) > limit:
                 if isinstance(data, spool.Blob):
@@ -582,6 +760,10 @@ def expand(ctx: FileContext) -> Iterator[FileContext]:
                             localdrop.offer("%s!%s" % (ctx.relpath, name), data)
                 except spool.SpoolError as exc:
                     notes.append(str(exc))
+                except inno.SliceMissing as exc:
+                    if not INNO_SLICES_NOTE:
+                        raise inno.InnoError(str(exc)) from None    # (off: the very error of before R2)
+                    notes.append(INNO_SLICES_MISSING % exc)
                 notes.extend(policy.problems())
             continue
         policy = Policy()
@@ -599,15 +781,43 @@ def expand(ctx: FileContext) -> Iterator[FileContext]:
 
 
 def findings(handler, ctx: FileContext) -> List[Finding]:
-    """Say so when a container (or part of one) could not be looked into."""
+    """Say so when a container (or part of one) could not be looked into - and, for a 7z / RAR archive
+    whose readable entry list names programs, scripts or archives among its encrypted entries, give
+    ``ARC-ENC-EXEC-001`` (C4; the password-zip rule of 2026-10-15)."""
     notes = ctx.cache.pop("container_notes", [])
-    return [handler.make(
+    out = [handler.make(
         ctx, "ARC-002", "Archive could not be fully inspected", Category.EVASION, Severity.LOW,
         NOT_INSPECTED,
         note[:300], 0.3) for note in dict.fromkeys(notes)]
+    for note, f in zip(dict.fromkeys(notes), out):
+        if isinstance(note, limits.SaidNote):       # (R2b-1: a note of a silent-escape fix)
+            limits.mark(f)
+    for kind, (programs, scripts, archives, entries) in sorted(ctx.cache.pop(ENCRYPTED_LISTING, {}).items()):
+        if programs or scripts or archives:
+            # (a zip is counted as the password-zip rule counts: all its entries; 7z / RAR: the encrypted ones)
+            out.append(handler.make(
+                ctx, ENCRYPTED_RUNNABLE, ENCRYPTED_RUNNABLE_TITLE, Category.EVASION, Severity.HIGH,
+                ENCRYPTED_RUNNABLE_REASON,
+                "%s: %d program(s), %d script(s), %d archive(s) among %d %sentries"
+                % ("zip behind the program" if kind == "zip" else kind, programs, scripts, archives, entries,
+                   "" if kind == "zip" else "encrypted "), 0.6))
+    return out
 
 
 # -- Inno Setup: content is found, not listed --------------------------------------------------
+# (phase D, session R2b-1, item 5 - phageo 2026-11-17) a memory-only scan (spool.DISK False: the measurement runners)
+# never writes a temporary file: the unpacked data of an Inno Setup installer read without its file table stops at
+# _Spool's memory bound (64 MB), and that is said as a reading limit (ARC-002). Until then it went on into an unnamed
+# temporary file. Ordinary scans (spool.DISK True) are unchanged. Off: the temporary file, as before.
+MEMORY_ONLY_NO_FILE = True
+MEMORY_ONLY_CUT = ("Inno Setup data over %d MB in a scan that keeps everything in memory: the rest was not "
+                   "inspected (a reading limit - nothing is written to disk)")
+
+
+class SpoolFull(Exception):
+    """(item 5) The in-memory bound of :class:`_Spool` was reached in a memory-only scan."""
+
+
 class _Spool:
     """Unpacked data: in memory while small, in an unnamed temporary file
     (gone when closed) once it is large. ``view()`` gives random access."""
@@ -620,6 +830,8 @@ class _Spool:
 
     def write(self, data: bytes) -> None:
         if self.buffer is not None and self.size + len(data) > self.memory:
+            if MEMORY_ONLY_NO_FILE and not spool.DISK:
+                raise SpoolFull()                   # (item 5) a memory-only scan writes nothing to disk
             self.file = tempfile.TemporaryFile()
             self.file.write(self.buffer.getvalue())
             self.buffer = None
@@ -664,7 +876,10 @@ def scan_inno(handler, ctx: FileContext, rules) -> List[Finding]:
             def part(number: int):
                 stem = os.path.splitext(ctx.path)[0]
                 path = "%s-%d.bin" % (stem, number)
-                return open(path, "rb") if _on_disk(ctx) and os.path.isfile(path) else None
+                if _on_disk(ctx) and os.path.isfile(path):
+                    return open(path, "rb")
+                beside = ctx.cache.get(SLICES) if INNO_SLICES_IN_ARCHIVE else None
+                return beside(number) if beside is not None else None    # (B3: from the same zip)
 
             first = ctx.pe.overlay_offset
             offsets = [at for _n, at in _search_file(ctx.path, (inno.CHUNK_MAGIC,), first)] \
@@ -712,7 +927,11 @@ def scan_inno(handler, ctx: FileContext, rules) -> List[Finding]:
                             notes.append("Inno Setup data over %d GB: the rest was not inspected"
                                          % (MAX_PAYLOAD >> 30))
                             return
-                        spool.write(piece)
+                        try:
+                            spool.write(piece)
+                        except SpoolFull:
+                            notes.append(limits.said(MEMORY_ONLY_CUT % (spool.memory >> 20)))
+                            return
                         yield piece
                 except inno.InnoError as exc:
                     notes.append("Inno Setup data needs %s" % exc if isinstance(

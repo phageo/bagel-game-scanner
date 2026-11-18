@@ -1,0 +1,49 @@
+{
+ "about": "Phase C0 (phageo, 2026-11-03): the three third-party wheels of the parser spike - tree-sitter and its JavaScript grammar (C2 / C1 / C3), Capstone (hook reader, C4 / C5 group). Official PyPI names only; each version released at least 3 months before 2026-11-03; SHA-256 as PyPI's JSON API and its simple index both state it (the two agree; no PyPI provenance attestation exists for any of them, and no GitHub release carries the wheels). Nothing of them is wired into the product or shipped. pip form of the same pins: tools/spike-requirements.txt (pip --require-hashes). Used with: python tools/fetch.py --manifest tools/manifest_spike.json --to <folder outside the project>",
+ "supply_chain": "Checked 2026-11-03. PyPI owners: tree-sitter - maxbrunsfeld, patrickthomson (maxbrunsfeld created tree-sitter and is the second contributor of github.com/tree-sitter/py-tree-sitter); tree-sitter-javascript - amaanq (public member of the tree-sitter GitHub organisation, third contributor of github.com/tree-sitter/tree-sitter-javascript); capstone - aquynh, kabeor (owners), qilingframework, rhelmot (maintainers) (aquynh created Capstone and is its first contributor, kabeor a public member of the capstone-engine organisation and third contributor). Each wheel is built by the project's own GitHub Actions workflow on the release tag (cibuildwheel) and uploaded with a stored PyPI token: py-tree-sitter .github/workflows/pypi.yml at v0.25.2 (commit e2a5b214), tree-sitter-javascript publish.yml at v0.25.0 (tag object f76aea6a), capstone python-publish-release.yml at 5.0.9 (tag object 841cee33). Building from source is not possible on the build PC without a C compiler (none installed).",
+ "virustotal": "2026-11-03, phageo: all three wheels clean - 0 detections each (tree-sitter 0.25.2, tree-sitter-javascript 0.25.0, capstone 5.0.9).",
+ "files": [
+  {
+   "file": "tree_sitter-0.25.2-cp313-cp313-win_amd64.whl",
+   "what": "py-tree-sitter 0.25.2, the Python binding of the tree-sitter parser library, CPython 3.13 64-bit (released 2025-09-25)",
+   "url": "https://files.pythonhosted.org/packages/d4/3c/87caaed663fabc35e18dc704cd0e9800a0ee2f22bd18b9cbe7c10799895d/tree_sitter-0.25.2-cp313-cp313-win_amd64.whl",
+   "sha256": "463c032bd02052d934daa5f45d183e0521ceb783c2548501cf034b0beba92c9b",
+   "size": 127157,
+   "listing": "https://pypi.org/pypi/tree-sitter/0.25.2/json",
+   "licence": "MIT License (PyPI classifier; github.com/tree-sitter/py-tree-sitter LICENSE)",
+   "groups": [
+    "spike"
+   ],
+   "used_by": "phase C0 spike (a): JavaScript parsing; scratch scripts only",
+   "note": "VirusTotal 2026-11-03 (phageo): 0 detections."
+  },
+  {
+   "file": "tree_sitter_javascript-0.25.0-cp310-abi3-win_amd64.whl",
+   "what": "tree-sitter-javascript 0.25.0, the JavaScript grammar for tree-sitter, stable ABI for CPython 3.10+ 64-bit (released 2025-09-01)",
+   "url": "https://files.pythonhosted.org/packages/3b/dc/d90cb1790f8cec9b4878d278ad9faf7c8f893189ce0f855304fd704fc274/tree_sitter_javascript-0.25.0-cp310-abi3-win_amd64.whl",
+   "sha256": "e5ed840f5bd4a3f0272e441d19429b26eedc257abe5574c8546da6b556865e3c",
+   "size": 62975,
+   "listing": "https://pypi.org/pypi/tree-sitter-javascript/0.25.0/json",
+   "licence": "MIT License (PyPI license field; github.com/tree-sitter/tree-sitter-javascript LICENSE)",
+   "groups": [
+    "spike"
+   ],
+   "used_by": "phase C0 spike (a): JavaScript parsing; scratch scripts only",
+   "note": "VirusTotal 2026-11-03 (phageo): 0 detections."
+  },
+  {
+   "file": "capstone-5.0.9-py3-none-win_amd64.whl",
+   "what": "Capstone 5.0.9 disassembly framework, Python binding with its 64-bit capstone.dll (released 2026-05-28; the 6.0 line is still alpha)",
+   "url": "https://files.pythonhosted.org/packages/50/e6/6f06fdb6a9ed32b2f7cd9c036b92d5324112c3ef7080f2c71efc367d40dd/capstone-5.0.9-py3-none-win_amd64.whl",
+   "sha256": "732cedbbb56d42e723f14d7af6387f1454194a820b4b96b56d1e53f865ef85d0",
+   "size": 1273459,
+   "listing": "https://pypi.org/pypi/capstone/5.0.9/json",
+   "licence": "BSD 3-Clause License (PyPI classifier BSD; github.com/capstone-engine/capstone LICENSE.TXT)",
+   "groups": [
+    "spike"
+   ],
+   "used_by": "phase C0 spike (b): reading SetWindowsHookEx calls in programs; scratch scripts only",
+   "note": "VirusTotal 2026-11-03 (phageo): 0 detections."
+  }
+ ]
+}

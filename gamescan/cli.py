@@ -7,7 +7,7 @@ import sys
 import time
 from typing import List, Optional
 
-from . import export, i18n, launcher, models, settings, system
+from . import causes, export, i18n, launcher, models, settings, system
 from .context import ContextEngine, HashAllowlist
 from .defender import DefenderScan
 from .handlers import engine_files
@@ -58,6 +58,11 @@ def _print_report(report: ScanReport, show_suppressed: bool, minimum: Severity) 
     mx = report.max_severity
     print("Verdict  : %s - %s" % (paint(report.verdict, mx.name if mx else "DIM"),
                                   report.verdict_detail))
+    # why SUSPICIOUS / DANGEROUS, in plain words (the documented cause classes; 2026-10-29)
+    for cause, found in causes.explain(report):
+        title, reason = causes.CLASSES[cause] if cause else causes.OTHER
+        print("Why      : %s - %s (%s)" % (title, reason, ", ".join(sorted({f.rule_id for f in found}))))
+        print("Where    : %s" % i18n.origins(found, english=True))
 
 
 def _watch(scanner: Scanner, folders: Optional[List[str]]) -> int:

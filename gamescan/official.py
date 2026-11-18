@@ -3,7 +3,8 @@
 One question over every table built from official releases only - never from a scanned game:
 the engines (:mod:`gamescan.engine_hashes`: NW.js, Ren'Py, Unity), Inno Setup, NSIS,
 Electron, Microsoft's DirectX package, the libraries games bundle, published npm packages,
-and the RPG Maker runtimes taken from the vendor's own installers. A file whose SHA-256 is
+the RPG Maker runtimes taken from the vendor's own installers, and the Windows players of
+Unity's own signed editor installers (:mod:`gamescan.unity_players`, since 2026-10-26). A file whose SHA-256 is
 in one of them is known content, wherever it sits - loose, or inside an archive or an
 installer (phageo, 2026-10-17, fifty-ninth message).
 
@@ -16,7 +17,7 @@ from __future__ import annotations
 from typing import Optional
 
 from . import (directx_official, electron_official, engine_hashes, inno_official, library_hashes,
-               npm_hashes, nsis_official, runtimes)
+               npm_hashes, nsis_official, runtimes, unity_players)
 
 
 def exact(sha256: str) -> Optional[str]:
@@ -25,4 +26,5 @@ def exact(sha256: str) -> Optional[str]:
         return None
     return (engine_hashes.verified(sha256) or inno_official.verified(sha256) or nsis_official.verified(sha256)
             or electron_official.verified(sha256) or directx_official.verified(sha256)
-            or library_hashes.verified(sha256) or npm_hashes.verified(sha256) or runtimes.vendor_rgss(sha256))
+            or library_hashes.verified(sha256) or npm_hashes.verified(sha256) or runtimes.vendor_rgss(sha256)
+            or unity_players.verified(sha256))

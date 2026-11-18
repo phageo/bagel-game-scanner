@@ -76,7 +76,14 @@ HOSTS = frozenset({"dl.nwjs.io", "www.renpy.org", "download.unity3d.com", "githu
                    "download.microsoft.com",   # (since 2026-10-17: the DirectX June 2010 package)
                    # (since 2026-10-19, phageo: jQuery from its own CDN; the lists of GitHub releases -
                    # Electron, SDL2, OpenAL Soft - with the SHA-256 GitHub states for each file)
-                   "code.jquery.com", "api.github.com"})
+                   "code.jquery.com", "api.github.com",
+                   # (since 2026-11-03, phase C0, phageo: the pinned wheels of the parser spike -
+                   # tools/manifest_spike.json - and PyPI's JSON listing of each release)
+                   "files.pythonhosted.org", "pypi.org",
+                   # (since 2026-11-03, phase C, JS group, phageo: the official Node.js LTS zip that runs
+                   # javascript-obfuscator to build the C2 test fixtures - tests/_tools, never shipped;
+                   # checked against nodejs.org's own SHASUMS256.txt)
+                   "nodejs.org"})
 # ... and the servers those hand a download on to; a redirect to anywhere else is refused
 REDIRECTS = HOSTS | frozenset({"dl.node-webkit.org", "codeload.github.com",
                                "objects.githubusercontent.com",
@@ -85,15 +92,19 @@ REDIRECTS = HOSTS | frozenset({"dl.node-webkit.org", "codeload.github.com",
 REDIRECT_SUFFIXES = (".dl.sourceforge.net",)      # SourceForge's mirrors
 # samples: clean games for the false-positive benchmark; package: the python.org files the user
 # package is built from (since 2026-10-24, tools/manifest_package.json)
-GROUPS = ("archives", "test-tools", "samples", "package")
+# spike: third-party wheels tried in phase C0 (tools/manifest_spike.json; nothing of them in the package)
+GROUPS = ("archives", "test-tools", "samples", "package", "spike")
 FIELDS = frozenset({"file", "url", "sha256", "size", "licence", "groups", "what", "used_by", "md5", "note",
                     "listing", "integrity", "first", "publisher"})
 REQUIRED = ("file", "url", "sha256", "size", "licence", "groups")
 MAX_MANIFEST = 4 * 1024 * 1024
 MAX_FILES = 5000                         # (1000 until 2026-10-14: the npm manifest has a row per package)
-MAX_SIZE = 512 * 1024 * 1024             # one file, also when its size is not listed
+MAX_SIZE = 512 * 1024 * 1024             # one file whose size is not listed
+# ... and one whose size is listed (since 2026-10-26: Unity's editor installer of 5.1.0p1, 1.3 GB, which
+# holds the Windows player - round-3 item C, phageo); the download stops at the listed size
+MAX_LISTED = 2 * 1024 * 1024 * 1024
 MAX_LISTING = 4 * 1024 * 1024            # one checksum list of a publisher
-MAX_SECONDS = 1800                       # per download
+MAX_SECONDS = 3600                       # per download (1800 until 2026-10-26: the 1.3 GB Unity installer)
 TRIES = 3                                # when the server cannot be reached or the connection breaks
 RETRY_WAIT = 5                           # seconds between two tries
 _CHUNK = 1 << 20
@@ -140,8 +151,8 @@ def _entry_problem(entry: object) -> str:
     elif "first" in entry:
         return "%s: a SHA-256 is listed - take the \"first\" note out" % name
     size = entry["size"]
-    if size is not None and (type(size) is not int or not 0 < size <= MAX_SIZE):
-        return "%s: not a size (a whole number of bytes up to %d MB, or null)" % (name, MAX_SIZE >> 20)
+    if size is not None and (type(size) is not int or not 0 < size <= MAX_LISTED):
+        return "%s: not a size (a whole number of bytes up to %d MB, or null)" % (name, MAX_LISTED >> 20)
     if not isinstance(entry["licence"], str) or not entry["licence"].strip():
         return "%s: no licence note" % name
     groups = entry["groups"]

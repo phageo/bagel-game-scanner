@@ -123,6 +123,17 @@ BY_RULE = {
                   "its developer's own page; a fresh copy from there should have the official files.",
     "ENGINE-009": "Apps often bring helper programs of their own. Run the game only if you got it from "
                   "its developer's own page and the developer can say what this program is.",
+    "ENGINE-010": "A game rarely needs administrator rights. Run it only if you got it from its developer's "
+                  "own page, and say no if Windows asks for administrator rights without a reason you know.",
+    "ENGINE-011": "Packaging tools sometimes change a runtime's resources. Run the game only if you got it "
+                  "from its developer's own page.",
+    "PY-OBF-003": "This is ordinary in old Ren'Py games. Run the game only if you got it from its developer's "
+                  "own page.",
+    "CHAIN-MSI-LOAD": "Do not install this package. Even if you trust its source, ask the developer for a "
+                      "signed installer; if you must install it, have it checked first by a service such "
+                      "as VirusTotal.",
+    "MSI-PROG-001": "This is rare in installers. Install the package only if you got it from its developer's "
+                    "own page.",
     "RPY-CONTENT-001": "A file named like a compiled script that is something else is a way to hide a "
                        "program or data. Run the game only if you got it from its developer's own page.",
     "INST-REDIST-001": "Ordinary for game installers. The downloaded file comes from its official "
@@ -136,6 +147,8 @@ BY_RULE = {
                         "the scanner follows. Run it only if you trust where it came from.",
     "ENC-SCRIPT-001": "An encoded script in this file could not be decoded, so what it runs was not inspected. "
                       "Run it only if you trust where it came from.",
+    "JS-OBF-005": "Some of the texts this script hides in a table could not be rebuilt, so what those parts "
+                  "call or send was not seen. Run it only if you trust where it came from.",
     "EXEC-FMT-001": "This is a program of a kind the scanner cannot read (Java): what it does was not "
                     "inspected. Start it only if you trust where it came from.",
     "JSC-FMT-001": "This is compiled JavaScript, which the scanner cannot read: what this code does was not "

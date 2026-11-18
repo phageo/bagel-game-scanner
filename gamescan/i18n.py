@@ -14,7 +14,7 @@ import re
 import sys
 from typing import Tuple
 
-from . import advice as advice_module, settings
+from . import advice as advice_module, causes, settings
 from .models import Category, Finding, ScanReport, Severity
 
 LANGUAGES = {"en": "English", "tr": "Türkçe"}
@@ -272,10 +272,30 @@ UI_TR = {
         "Her taramadan sonra çalıştırılabilir dosyaları VirusTotal'da denetle",
     "API key": "API anahtarı",
     "Max. lookups": "En fazla sorgu",
-    "Only the SHA-256 hash of each program is sent, never the file. The free API allows 4 "
-    "lookups per minute, so each new file adds about 15 seconds. The key is stored "
-    "unencrypted in your user profile.":
-        "Her programın yalnızca SHA-256 özeti gönderilir, dosyanın kendisi asla gönderilmez. "
+    # (privacy wording, plan-reputation.md section 3; phageo 2026-11-10; the Turkish exactly as phageo wrote it,
+    # 2026-11-15, session R1b)
+    "The VirusTotal check is off unless you turn it on. When on, Bagel sends VirusTotal only each "
+    "program's fingerprint (SHA-256); it never sends the file itself, its name or its location. "
+    "VirusTotal can see which fingerprints were looked up with your API key. If you downloaded the "
+    "known-malware list, the comparison happens entirely on your PC; nothing is sent.":
+        "VirusTotal denetimi siz açmadıkça kapalıdır. Açıkken Bagel, VirusTotal'a yalnızca her "
+        "programın parmak izini (SHA-256) gönderir; dosyanın kendisini, adını ya da konumunu asla "
+        "göndermez. VirusTotal, API anahtarınızla hangi parmak izlerinin sorgulandığını görebilir. "
+        "Bilinen zararlılar listesini indirdiyseniz karşılaştırma tamamen bilgisayarınızda yapılır; "
+        "hiçbir şey gönderilmez.",
+    "A clean result from VirusTotal never hides a finding; VirusTotal can only add new findings.":
+        "VirusTotal'dan temiz sonuç gelmesi hiçbir bulguyu gizlemez; VirusTotal yalnızca yeni bulgu "
+        "ekleyebilir.",
+    "Bagel never uploads your files anywhere. During a scan, Windows' own malware check (Microsoft "
+    "Defender) is also used. If automatic sample submission is on in Windows Security, Windows may "
+    "send suspicious files to Microsoft. You can turn this off in Windows Security → Virus & threat "
+    "protection settings.":
+        "Bagel dosyalarınızı hiçbir yere yüklemez. Tarama sırasında Windows'un kendi kötü amaçlı "
+        "yazılım denetimi (Microsoft Defender) de kullanılır. Windows Güvenliği'nde otomatik örnek "
+        "gönderme açıksa Windows şüpheli dosyaları Microsoft'a gönderebilir. Bunu Windows Güvenliği → "
+        "Virüs ve tehdit koruması ayarlarından kapatabilirsiniz.",
+    "The free API allows 4 lookups per minute, so each new file adds about 15 seconds. The key "
+    "is stored unencrypted in your user profile.":
         "Ücretsiz API dakikada 4 sorguya izin verir; bu yüzden her yeni dosya yaklaşık 15 "
         "saniye ekler. Anahtar, kullanıcı profilinizde şifrelenmeden saklanır.",
     "Automatically quarantine files with HIGH or CRITICAL findings":
@@ -461,6 +481,8 @@ UI_TR = {
         "Kayıtlı tarama geçmişi ve kod parçaları silinsin mi? Tarayıcının öğrendikleri "
         "korunur.",
     # -- exported reports -------------------------------------------------------
+    "Why this result": "Bu sonuç neden",
+    "Where": "Nerede",
     "Scan report": "Tarama raporu",
     "Risk score": "Risk puanı",
     "Findings": "Bulgular",
@@ -530,6 +552,157 @@ def t(text: str, *args) -> str:
     if _lang == "tr":
         text = UI_TR.get(text, text)
     return text % args if args else text
+
+
+# the documented cause classes of gamescan/causes.py (id -> title, reason), in Turkish
+CAUSES_TR = {
+    "KEYBOARD-HOOK": (
+        "Bir programda ya da kütüphanede klavye kancası",
+        "Bir program ya da kütüphane Windows'tan her tuş basışını izlemesini istiyor. Oyunlar, oyun "
+        "motorları ve SDL2 gibi kütüphaneler bunu kontrolleri için yapar; tuş kaydediciler de yapar. "
+        "Hangisi olduğunu yalnızca dosyanın birebir resmî kopyası gösterebilir ve bunun için bilinen "
+        "bir kopya yok."),
+    "PROGRAM-TEXTS": (
+        "Doğrulanmamış bir programın metinlerinde adlar",
+        "Hiçbir resmî tablonun kanıtlamadığı bir program ya da kütüphane - çoğunlukla bir motor "
+        "çalışma zamanı ya da birlikte gelen bir kütüphane - metinleri ya da içe aktarımları arasında "
+        "zararlı yazılımların da kullandığı adlar taşıyor (bir sistem aracı, başka programların içine "
+        "yazan bir işlev, bir parola deposu). Adlar tek başına programın onlarla ne yaptığını "
+        "göstermez."),
+    "UNVERIFIED-LIBRARY": (
+        "Oyunun programının yanında doğrulanmamış kütüphane",
+        "Oyunun programının yanında bir Windows kütüphanesinin adını taşıyan bir kütüphane duruyor ve "
+        "onu hiçbir şey kanıtlamıyor (geçerli imza yok, resmî tablo yok). Eski oyunlar böyle çalışma "
+        "zamanı kütüphaneleriyle gelir; zararlı yazılım da bir programın yanına aynı şekilde saklanır."),
+    "PACKED-PROGRAM": (
+        "Paketlenmiş program",
+        "Bir program gerçek kodunu çalışana kadar sıkıştırılmış ya da şifreli tutuyor; bu yüzden kodu "
+        "okunamadı ve ayrıca yargılamak için o kodu gerektiren izler gösteriyor."),
+    "SCRIPT-STARTS-PROGRAMS": (
+        "Bir betik program başlatabiliyor",
+        "Bir betik - bir eklenti, birlikte gelen bir kütüphane, bir güncelleyici - başka programları "
+        "ya da komutları başlatabiliyor. Tarayıcı başlattığı şeyin zararsız olduğunu kanıtlayamadı."),
+    "REMOTE-CODE": (
+        "İnternetten gelen kod",
+        "Kod internetten bir şey alıp yükleyebiliyor, çalıştırabiliyor ya da bir programa "
+        "verebiliyor. Kütüphaneler kendi parçalarını bir web adresinden yüklemek için bunu yapar; "
+        "adresin ne göndereceği dosyalarda görülemez."),
+    "DECODE-AND-RUN": (
+        "Veriyi çözüp çalıştırıyor",
+        "Kod veriyi tek adımda çözüyor ya da açıyor ve kod olarak çalıştırıyor. Eski motorlar bunu "
+        "kendi derlenmiş koduyla yapar; zararlı yazılım yükünü bu yolla saklar. Bu, güven nedeniyle "
+        "asla düşürülmez."),
+    "RUNS-STORED-CODE": (
+        "Saklanmış derlenmiş kodu çalıştırıyor",
+        "Bir betik saklanmış derlenmiş kodu yeniden koda çevirip çalıştırıyor. O dosyada buna giden bir "
+        "kod çözme, açma, şifre çözme ya da indirme adımı yok. Eski motorlar kendi derlenmiş betiklerini "
+        "bu yolla çalıştırır; burada ne çalıştığı betiğe ne verildiğine bağlıdır ve bunun zararsız olduğu "
+        "kanıtlanamadı."),
+    "HIDDEN-IN-MEDIA": (
+        "Bir medya dosyasında saklı metin",
+        "Bir medya dosyasının ses ya da resim verisinin arkasında, bir oynatıcının hiç okumadığı "
+        "yerde, betik gibi okunan bir metin duruyor."),
+    "DELETES-OUTSIDE": (
+        "Oyunun dışında dosya siliyor",
+        "Bir betik dosya siliyor ve sildiği yer oyunun kendi verisi değil, bir kullanıcı ya da sistem "
+        "klasörü."),
+    "PRIVATE-DATA-SENT": (
+        "Bir betik özel verileri dışarı gönderiyor",
+        "Bir betik tarayıcıların, sohbet programlarının ya da cüzdanların sakladıklarını - oturumları, "
+        "çerezleri, belirteçleri, cüzdan dosyalarını - ya da bir eklentinin onun için çözdüğünü okuyor "
+        "veya panoyu ya da ekranı alıyor; tarayıcı bu veriyi kodun içinde, onu internet üzerinden "
+        "gönderen bir çağrıya kadar izledi. Oyunlar başka programların özel verilerini okumaz."),
+    "PRIVATE-DATA-NAMES": (
+        "Bir betik özel verilerin yerini adlandırıyor",
+        "Bir betik tarayıcıların, sohbet programlarının ya da cüzdanların oturumları veya parolaları "
+        "sakladığı yerleri adlandırıyor ya da veri gönderiyor. Tarayıcı bunlarla ne yaptığını "
+        "kanıtlayamadı."),
+    "HIDDEN-PAYLOAD-RUN": (
+        "Saklı veri çözülüp başlatılıyor",
+        "Bir betik ya da kurulum programı saklı veriyi çözüyor, açıyor ya da okuyor, çıkanı yazıyor "
+        "veya yüklüyor ve başlatıyor. Oyunlar kendi programlarını böyle saklamaz; bırakıcılar saklar."),
+    "DISGUISED-FILE": (
+        "Başka bir şey gibi görünen dosya",
+        "Bir program ya da betik, başka bir şey olduğunu söyleyen bir ad, uzantı ya da yer taşıyor - bir "
+        "resim, bir belge, bir veri dosyası, derlenmiş bir betik - ya da bir programın imza bloğunun "
+        "içinde duruyor ve imza yine geçerli görünüyor. Bir dosyanın ne olduğunu saklamanın bir oyuna "
+        "faydası yoktur."),
+    "CONCEALED-CODE": (
+        "Saklı biçimde taşınan kod",
+        "Bir program ya da komut, ancak çalıştırılınca açılan bir biçimde taşınıyor - tersten yazılmış, "
+        "bir betiğin içinde kodlanmış ya da parolalı bir arşivin içinde - bu yüzden hiçbir tarayıcı onu "
+        "önceden okuyamaz."),
+    "SECURITY-TAMPERING": (
+        "Windows'un korumasını kurcalıyor",
+        "Kod, Windows'un korumasını - virüsten koruma yazılımını, güvenlik duvarını, kurtarma verilerini "
+        "ya da olay günlüklerini - kapatan veya atlatan bir talimat taşıyor. Oyunların bunu yapması için "
+        "bir neden yoktur."),
+    "STARTS-WITH-WINDOWS": (
+        "Windows ile birlikte başlıyor",
+        "Bir şey Windows açılınca kendiliğinden başlayacak şekilde ayarlanıyor. Başlatıcılar ve "
+        "güncelleyiciler bunu yapar; zararlı yazılım da bilgisayarda kalmak için yapar."),
+    "CHANGED-ENGINE-FILE": (
+        "Değiştirilmiş bir motor dosyası",
+        "Oyun motorunun derlenmiş bir dosyası, kaynağı resmî olduğu hâlde resmî dosyadan farklı ya da "
+        "kaynağından fazlasını yapıyor. Yeniden derleme ya da düzenlenmiş bir kaynak bunu açıklayabilir; "
+        "yerleştirilmiş bir değişiklik de aynı görünür."),
+    "KNOWN-MALWARE": (
+        "Dış bir denetimin adlandırdığı dosya",
+        "Dış bir denetim tam bu dosyayı adlandırıyor: tarayıcının bilinen zararlı dosyalar listesi, "
+        "Windows Defender, kötü amaçlı yazılımdan koruma motoru ya da VirusTotal'daki virüs motorları."),
+    None: ("Başka işaretler (belgelenmiş bir neden yok)",
+           "Bu bulgular belgelenmiş hiçbir nedenin kapsamında değil: her birine bakın."),
+}
+
+
+def cause(cause_id) -> Tuple[str, str]:
+    """``(title, reason)`` of a cause class of ``gamescan.causes`` (None: the findings no class
+    covers), in the current language."""
+    if _lang == "tr":
+        return CAUSES_TR[cause_id]
+    return causes.CLASSES[cause_id] if cause_id else causes.OTHER
+
+
+# where a finding stands (gamescan/origin.py; 2026-11-02): kind -> plain words, English and Turkish
+ORIGIN_WORDS = {
+    "GAME_CODE": ("the game's own code", "oyunun kendi kodu"),
+    "BUNDLED_LIBRARY": ("a library the game ships", "oyunla gelen bir kütüphane"),
+    "ENGINE_OFFICIAL": ("an official engine file", "resmî bir motor dosyası"),
+    "INSTALLER": ("the installer", "kurulum programı"),
+    "UNKNOWN": ("origin not known", "kaynağı bilinmiyor"),
+}
+# the places origin.by_place names for the game's own code (its "detail")
+ORIGIN_PLACES_TR = {
+    "Ren'Py game scripts": "Ren'Py oyun betikleri",
+    "RPG Maker scripts": "RPG Maker betikleri",
+    "RPG Maker plugins": "RPG Maker eklentileri",
+    "Unity game code": "Unity oyun kodu",
+    "Unity game code (IL2CPP)": "Unity oyun kodu (IL2CPP)",
+    "the app's own files": "uygulamanın kendi dosyaları",
+    "Godot pack": "Godot paketi",
+}
+
+
+def origins(found, english: bool = False) -> str:
+    """Where the findings ``found`` stand, in plain words, most first: "a library the game ships: SDL2
+    2.30.0 (verified) x2; origin not known x1" (``gamescan.origin``; information only)."""
+    from . import origin as origin_module
+    tr = _lang == "tr" and not english          # (the CLI speaks English: old decision 4)
+    parts = []
+    for kind, detail, verified, count in origin_module.summary(found):
+        words = ORIGIN_WORDS.get(kind, ORIGIN_WORDS["UNKNOWN"])[1 if tr else 0]
+        if kind == "GAME_CODE" and detail:
+            words += ": " + (ORIGIN_PLACES_TR.get(detail, detail) if tr else detail)
+        elif kind == "BUNDLED_LIBRARY":
+            words += (": %s " % detail if detail else " ") + (
+                ("(doğrulandı)" if verified else "(doğrulanmadı)") if tr else
+                ("(verified)" if verified else "(not verified)"))
+        elif kind == "UNKNOWN" and detail:
+            words += (" (imzalayan: %s)" if tr else " (signed by %s)") % detail
+        elif detail:
+            words += ": " + detail
+        parts.append("%s x%d" % (words, count))
+    return "; ".join(parts)
 
 
 # -- fixed vocabularies ---------------------------------------------------------
@@ -711,6 +884,17 @@ ADVICE_TR = {
     "ENGINE-009": "Uygulamalar çoğu zaman kendi yardımcı programlarını getirir. Oyunu yalnızca "
                   "geliştiricisinin kendi sayfasından aldıysanız ve geliştirici bu programın ne olduğunu "
                   "söyleyebiliyorsa çalıştırın.",
+    "ENGINE-010": "Bir oyunun yönetici haklarına ihtiyacı nadiren olur. Oyunu yalnızca geliştiricisinin "
+                  "kendi sayfasından aldıysanız çalıştırın; Windows bildiğiniz bir neden olmadan yönetici "
+                  "hakları isterse hayır deyin.",
+    "ENGINE-011": "Paketleme araçları bazen bir çalışma ortamının kaynaklarını değiştirir. Oyunu yalnızca "
+                  "geliştiricisinin kendi sayfasından aldıysanız çalıştırın.",
+    "PY-OBF-003": "Eski Ren'Py oyunlarında bu olağandır. Oyunu yalnızca geliştiricisinin kendi sayfasından "
+                  "aldıysanız çalıştırın.",
+    "CHAIN-MSI-LOAD": "Bu paketi kurmayın. Kaynağından emin olsanız bile, geliştiriciden imzalı bir kurulum "
+                      "dosyası isteyin; kuracaksanız önce VirusTotal gibi bir hizmette denetletin.",
+    "MSI-PROG-001": "Kurulum paketlerinde sık görülmez. Paketi yalnızca geliştiricisinin kendi sayfasından "
+                    "aldıysanız kurun.",
     "RPY-CONTENT-001": "Derlenmiş betik gibi adlandırılmış ama başka bir şey olan bir dosya, bir programı "
                        "ya da veriyi saklamanın bir yoludur. Oyunu yalnızca geliştiricisinin kendi "
                        "sayfasından aldıysanız çalıştırın.",
@@ -725,6 +909,8 @@ ADVICE_TR = {
                         "daha büyük ya da daha uzun. Yalnızca geldiği kaynağa güveniyorsanız çalıştırın.",
     "ENC-SCRIPT-001": "Bu dosyadaki şifrelenmiş betik çözülemedi; bu yüzden neyi çalıştırdığı incelenemedi. "
                       "Yalnızca geldiği kaynağa güveniyorsanız çalıştırın.",
+    "JS-OBF-005": "Bu betiğin bir tabloda gizlediği metinlerin bir kısmı yeniden oluşturulamadı; bu yüzden o "
+                  "bölümlerin neyi çağırdığı ya da gönderdiği görülmedi. Yalnızca geldiği kaynağa güveniyorsanız çalıştırın.",
     "EXEC-FMT-001": "Bu, tarayıcının okuyamadığı türden bir program (Java): ne yaptığı incelenemedi. "
                     "Yalnızca geldiği kaynağa güveniyorsanız başlatın.",
     "JSC-FMT-001": "Bu, tarayıcının okuyamadığı derlenmiş JavaScript: bu kodun ne yaptığı incelenemedi. "
@@ -737,6 +923,9 @@ ADVICE_TR = {
 
 def advice(f: Finding) -> str:
     """"What should I do?" for a finding, in the current language."""
+    variant = ADVICE_VARIANTS.get(_key(f))
+    if variant is not None:
+        return variant[1] if _lang == "tr" else variant[0]
     key = advice_module.key_for(f.rule_id, f.category.value)
     if _lang == "tr" and key in ADVICE_TR:
         return ADVICE_TR[key]
@@ -769,6 +958,24 @@ RULES_TR = {
     "PY-OBF-001": ("Kodu çözülmüş/açılmış yükün çalıştırılması",
                    "Gizli bir yükün kodunu çözüp tek adımda çalıştırır - klasik gizlenmiş yükleyici "
                    "kalıbı."),
+    "PY-OBF-003": ("Hiçbir kod çözme adımının götürmediği saklı derlenmiş kodu çalıştırıyor",
+                   "Bu betik saklanmış derlenmiş kodu yeniden koda çevirip çalıştırıyor. Değer dosya içinde "
+                   "izlendi; ona giden bir kod çözme, açma, şifre çözme ya da indirme yok. Eski oyun "
+                   "motorları kendi derlenmiş betiklerini bu yolla çalıştırır; bir yükleyici de başka bir "
+                   "dosyada tuttuğu kodla aynısını yapabilir. Ne çalıştığı ona ne verildiğine bağlıdır ve "
+                   "bunun zararsız olduğu kanıtlanamadı."),
+    "CHAIN-MSI-LOAD": ("İmzasız kurulum paketi kendi programını başlatıyor, bu da okunamayan bir parçaya götürüyor",
+                       "Bu Windows Installer paketinin geçerli bir imzası yok. Kendi tabloları, kurulum "
+                       "sırasında programlarından birini kendiliğinden başlatıyor; o program paketin yine "
+                       "imzasız bir kütüphanesini yüklüyor; kütüphane de paketteki, rastgele veri gibi görünen "
+                       "ve hiçbir okuyucunun anlayamadığı bir dosyanın adını geçiriyor. Zararlı yazılım böyle "
+                       "kurulur: sıradan görünen bir program, küçük bir kütüphane ve zararsız adlı bir dosyada "
+                       "şifreli tutulan asıl kod. Parçaların her biri tek başına sıradandır - önemli olan "
+                       "zincirin tamamıdır ve okunamayan parçanın ne yaptığı görülemez."),
+    "MSI-PROG-001": ("Program gibi adlandırılmış dosyada program yok",
+                     "Paketin bu üyesinin adı bir program ya da kütüphane gibi bitiyor, ama içindeki veri "
+                     "tarayıcının tanıdığı hiçbir sistem için program değil. Bir dosya bazen sıradan görünsün "
+                     "diye böyle adlandırılır ve başka bir veri taşır; gerçekte ne tuttuğu okunmadı."),
     "PY-OBF-002": ("Yük kodu çözme işlevi",
                    "Gömülü verinin kodunu çözer veya sıkıştırmasını açar. Kayıtlar ve varlıklar için "
                    "zararsızdır; kod yürütmenin yanında şüphelidir."),
@@ -954,6 +1161,10 @@ RULES_TR = {
                          "Tarayıcı, bir betiğin indirdiği şeyi çalıştırıldığı yere kadar izler. Bu betikte bu okuma "
                          "sınırına ulaşıp erken durdu; bu yüzden betiğin daha aşağısındaki bir indir-ve-çalıştır "
                          "gözden kaçmış olabilir. Olağan kurallar dosyanın tamamını her zamanki gibi okudu."),
+    "JS-OBF-005": ("Dizge tablosu tam çözülemedi",
+                   "Bu betik metinlerini, çalışırken küçük bir çözücünün okuduğu bir tabloya gizliyor (bir kod "
+                   "gizleyicinin dizge tablosu). Tarayıcı bu metinleri betiği çalıştırmadan yeniden oluşturur; "
+                   "burada bir kısmı oluşturulamadı, bu yüzden o bölümlerin neyi çağırdığı ya da gönderdiği görülmedi."),
     "ENC-SCRIPT-001": ("Şifrelenmiş betik çözülemedi",
                        "Bu dosya, Microsoft'un Script Encoder biçiminde bir betik içeriyor; Windows bunu çözer ve "
                        "düz bir betik gibi çalıştırır. Tarayıcı da çözer ve gizlediğini okur. Burada bu olmadı - "
@@ -1117,6 +1328,18 @@ RULES_TR = {
                    "aktarma tablosunu ve metinlerini okur; bu yüzden ne olduğu söylenemez; uygulama onu "
                    "başlatabilir ya da yükleyebilir. Bu, yanındaki doğrulanmış çalışma ortamının gizlemediği "
                    "görünür bir nottur."),
+    "ENGINE-010": ("Resmi çalışma ortamı, bildirim dosyası yönetici hakları istiyor",
+                   "Bu program kodunda, bayt bayt, %s - ama oyunun yapımcısının "
+                   "değiştirdiği bildirim dosyası (manifest), Windows'tan onu yönetici haklarıyla (ya da "
+                   "kullanıcının alabileceği en yüksek haklarla) başlatmasını istiyor. Sıradan bir oyunun buna "
+                   "ihtiyacı yoktur. Kod değiştirilmemiş; bu yüzden bu görünür bir nottur, tek başına bir "
+                   "saldırı işareti değildir."),
+    "ENGINE-011": ("Resmi çalışma ortamı, kaynak değiştirilmiş",
+                   "Bu program kodunda, bayt bayt, %s - ama kaynaklarının bir "
+                   "parçası resmi programınkinden, tarayıcının zararsız olduğunu kanıtlayamadığı bir biçimde "
+                   "farklı (simge, sürüm metni, yönetici hakkı istemeyen bir bildirim dosyası, Windows'un "
+                   "kaynak güncelleme dolgusu ya da uygulamanın arşiviyle eşleşen bir bütünlük kaydı değil). "
+                   "Değişen parça ayrıca tarandı; bu, kodun eşleşmesinin gizlemediği görünür bir nottur."),
     "RPY-CONTENT-001": ("Derlenmiş betik başka bir şey içeriyor (%s)",
                         "Bu dosya derlenmiş bir Ren'Py betiği gibi adlandırılmış, ama Ren'Py başlığı yok ve "
                         "metin de değil: ilk baytlarına göre başka bir şey. Ren'Py onu betik olarak "
@@ -1275,7 +1498,7 @@ RULES_TR = {
                      "çalıştırtır (\"DLL side-loading\"). Gerçek kitaplık Microsoft imzalıdır; bu dosya "
                      "geçerli bir Microsoft imzası taşımıyor ve tarayıcının bildiği resmî bir sürümün "
                      "dosyası da değil. Oyunlar bu tür kitaplıklarla gelir, ama imzalı olarak."),
-    "CHAIN-REMOTE-ARG": ("İndirilen veri bir programa veriliyor",
+    "CHAIN-REMOTE-ARG": ("İnternetten indirilen veri, başlatılan bir programa veriliyor",
                          "Bu dosya bir adresten veri istiyor ve geleni başlattığı bir programa veriyor - "
                          "argüman olarak, ortam değişkenlerinde ya da çalışma klasörü olarak. Programın "
                          "kendisi indirilmiyor ve metni bir kabuk okumuyor; yani indirilen şey burada kod "
@@ -1320,6 +1543,32 @@ RULES_TR = {
                           "çalışırken geliyor - ve aynı dosyanın kodunda uzak bir adres yazıyor. Adresi "
                           "başka bir yerden vermek, bir indirmeyi gözden uzak tutmanın yoludur; sıradan "
                           "betik yükleyiciler de böyle yazılır. Bu yüzden adresin nereden geldiğine bakın."),
+    "CHAIN-EXFIL": ("Özel veriler dışarı gönderiliyor",
+                    _IND[8]),
+    "CHAIN-DECODE-RUN": ("Çözülen veri kod olarak çalıştırılıyor",
+                         "Bu betiğin çalışırken çözdüğü, açtığı ya da şifresini çözdüğü veri, kodu boyunca "
+                         "izlendi ve kod olarak çalıştığı bir yere ulaşıyor - eval, new Function, vm modülü, "
+                         "yazıp sonra yüklediği bir dosya ya da başlattığı bir program. O kodun ne yaptığı "
+                         "dosyalarda görülemez. Gizli yükler bu yolla çalıştırılır; kod koruyucular da kendi "
+                         "kodlarının şifresini aynı yolla çözer - bu yüzden bu bir zincirdir, kötü niyetin "
+                         "kanıtı değildir."),
+    "SCRIPT-LIMIT-001#PAYLOAD": ("Betiğin çözülen kodu tam okunmadı",
+                                 "Tarayıcı, bir betiğin metin birleştirmelerini ve çözmelerini geri alarak exec'e, "
+                                 "kabuğa ya da ağa neyin ulaştığını görür. Bu betikte bu okuma başarısız oldu ya da "
+                                 "taradığından daha fazla çözülmüş kod buldu; bu yüzden bir bölümüne bakılmadı. "
+                                 "Sıradan kurallar dosyanın tamamını her zamanki gibi okudu."),
+    "SCRIPT-LIMIT-001#CAP": ("Uygulamanın pencere ayarları, betiklerinin yalnızca bir bölümüne bakılarak değerlendirildi",
+                             "Bu uygulama, tarayıcının pencerelerini ve sayfalarını değerlendirmek için "
+                             "birleştirdiğinden daha fazla betik içeriyor. Her betik sıradan kurallarla okundu; "
+                             "yalnızca hangi pencerenin hangi sayfayı gösterdiğine dair resim eksik. Yalnızca "
+                             "bilgi: hiçbir düzeyi değiştirmez."),
+    "CHAIN-DECODE-RUN#CS": ("Çözülen veri kod olarak çalıştırılıyor",
+                            "Bu .NET kitaplığının çalışırken çözdüğü (Base64), şifresini çözdüğü ya da açtığı veri, "
+                            "komut komut izlendi ve onu kod olarak yükleyen bir çağrıya - ya da sonra başlatılan "
+                            "veya yüklenen bir dosyaya - ulaşıyor. Kötü amaçlı yazılımlar asıl programlarını bu "
+                            "yolla gizler; tarayıcılar yalnızca kodlanmış hâlini görür. Bazı koruma araçları da "
+                            "kendi kodlarının şifresini aynı yolla çözer - bu yüzden bu bakılması gereken bir "
+                            "zincirdir, kanıt değildir."),
     "CHAIN-STEALER": ("Kimlik bilgisi hırsızı",
                       "Kimlik bilgisi / belirteç depolarını okuyor ve bunları dışarı göndermenin bir "
                       "yoluna sahip."),
@@ -1599,6 +1848,18 @@ SUPPRESSION_TR = {
         "Betiğin geçici klasördeki kendi kilit dosyası (oyunun aynı anda tek kopyası çalışsın diye)",
     "Loopback address (localhost)": "Geri döngü adresi (localhost)",
     "Not an address: there is no domain name in it": "Adres değil: içinde alan adı yok",
+    "Not a command: the four letters of the program name stand inside other bytes of a program or "
+    "of compressed data, with nothing of a command around them":
+        "Komut değil: program adının dört harfi bir programın ya da sıkıştırılmış verinin başka "
+        "baytlarının arasında duruyor, çevresinde komuta ait hiçbir şey yok",
+    "Not a command: the word stands only inside the code sections of a program, as a name or by "
+    "chance, with nothing of a command around it":
+        "Komut değil: sözcük yalnızca bir programın kod bölümlerinde, bir ad olarak ya da rastlantıyla "
+        "duruyor, çevresinde komuta ait hiçbir şey yok",
+    "Not an address: the name is an entry of a built-in public-suffix table, among thousands of "
+    "domain endings, with no address around it":
+        "Adres değil: bu ad, binlerce alan adı ekinin arasında, programın içindeki bir genel ek "
+        "tablosunun kaydı; çevresinde adres yok",
     "IL2CPP runtime: thread signalling (no other injection function is imported)":
         "IL2CPP çalışma zamanı: iş parçacığı sinyalleşmesi (başka enjeksiyon işlevi içe aktarılmıyor)",
     "Loopback / private-network address": "Geri döngü / özel ağ adresi",
@@ -1647,6 +1908,10 @@ _SUPPRESSION_PATTERNS = (
                 r"verified by SHA-256: (.*)$"),
      lambda m: "Motor / kütüphane temel dosyası: kaynakları (simgesi, sürüm bilgisi) farklı resmi Electron "
                "programı, kodu SHA-256 ile doğrulandı: %s" % m.group(1)),
+    (re.compile(r"^Engine / library baseline: official Unity player with other resources, code "
+                r"verified by SHA-256: (.*)$"),
+     lambda m: "Motor / kütüphane temel dosyası: kaynakları (simgesi, sürüm bilgisi) farklı resmi Unity "
+               "oynatıcısı, kodu SHA-256 ile doğrulandı: %s" % m.group(1)),
     (re.compile(r"^Engine / library baseline: (.+)$"),
      lambda m: "Motor / kütüphane temel dosyası: %s" % _BASELINE_TR.get(m.group(1), m.group(1))),
     (re.compile(r"^Official Ren'Py engine script, verified against the SDK: (.*)$"),
@@ -1855,7 +2120,27 @@ def _key(f: Finding) -> str:
         return "CHAIN-STEALER#APP"            # the chain across the members of an app (stealer.py)
     if f.rule_id in ("CHAIN-LOCAL-DROP", "CHAIN-REMOTE-CODE") and f.context.get("in_folder"):
         return f.rule_id + "#FOLDER"          # started through the written file's folder (2026-10-18)
+    if f.rule_id == "CHAIN-DECODE-RUN" and f.handler == "dotnet":
+        return "CHAIN-DECODE-RUN#CS"          # read from compiled C# (C5, 2026-11-09)
+    if f.rule_id == "SCRIPT-LIMIT-001" and f.context.get(PAYLOAD_NOTE):
+        return "SCRIPT-LIMIT-001#PAYLOAD"     # the payload reading failed or found more (R2b-1, S12)
+    if f.rule_id == "SCRIPT-LIMIT-001" and f.context.get(SCRIPT_CAP_NOTE):
+        return "SCRIPT-LIMIT-001#CAP"         # an Electron app past the window joins' cap (R2b-1, item 8)
     return f.rule_id
+
+
+# (R2b-1) the context marks of the two notes above (handlers/base.PAYLOAD_SAID, scanner._cap_notes)
+PAYLOAD_NOTE = "payload_reading_said"
+SCRIPT_CAP_NOTE = "script_cap"
+# their own advice, English and Turkish (advice.py's SCRIPT-LIMIT-001 text speaks of a script too long to follow)
+ADVICE_VARIANTS = {
+    "SCRIPT-LIMIT-001#PAYLOAD": (
+        "Part of what this script decodes was not looked at. Run it only if you trust where it came from.",
+        "Bu betiğin çözdüğü kodun bir bölümüne bakılmadı. Yalnızca geldiği kaynağa güveniyorsanız çalıştırın."),
+    "SCRIPT-LIMIT-001#CAP": (
+        "Information only: there is nothing to do because of this note.",
+        "Bilgi notu: bu not için bir şey yapmanız gerekmiyor."),
+}
 
 
 def title(f: Finding) -> str:
@@ -1870,6 +2155,12 @@ def title(f: Finding) -> str:
     return entry[0]
 
 
+# ENGINE-010 / ENGINE-011: the official engine program the finding names (its context "runtime"; sixth fix
+# session, one rule for every renamed engine)
+RUNTIME_PROGRAMS_TR = {"Electron": "resmi Electron çalışma ortamıdır", "NW.js": "resmi NW.js başlatıcısıdır",
+                       "Ren'Py": "resmi Ren'Py başlatma programıdır", "Unity": "resmi Unity oynatıcısıdır"}
+
+
 def reason(f: Finding) -> str:
     if _lang == "tr" and f.rule_id.startswith("YARA:"):
         return "'%s' adlı YARA imzasıyla eşleşti." % f.rule_id[5:]
@@ -1877,6 +2168,8 @@ def reason(f: Finding) -> str:
     if entry is None:
         return f.reason
     out = entry[1]
+    if f.rule_id in ("ENGINE-010", "ENGINE-011"):
+        out = out % RUNTIME_PROGRAMS_TR[f.context.get("runtime", "Electron")]
     for english, turkish in _REASON_SUFFIX_TR:
         if english in f.reason:
             out += turkish

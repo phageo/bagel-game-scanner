@@ -14,22 +14,24 @@ import sys
 import tempfile
 import threading
 import time
-from typing import Callable, Dict, List, Optional, Sequence, Tuple, Union
+from typing import Callable, Dict, Iterator, List, Optional, Sequence, Tuple, Union
 
-from . import (directx_official, electron_official, engine_hashes, inno_official, known_findings, library_hashes, localdrop,
-               npm_hashes, nsis_official, official, sideload, sigblock, stealer, trust)
+from . import (directx_official, electron_official, engine_hashes, inno_official, jsparse, known_findings, library_hashes,
+               localdrop, npm_hashes, nsis_official, official, origin, program_resources, sideload, sigblock, stealer,
+               models, reputation, staticonly, tiers, trust)
 from .chains import ChainEngine
 from .context import NPM_VERIFIED, SIGNED_BY_TRUSTED, TRUSTED_PUBLISHERS, ContextEngine, HashAllowlist
-from .dataflow import electron_ipc, electron_windows, remote, self_update, shared
+from .dataflow import decoderun, electron_ipc, electron_windows, exfil, exfil_cross, marshal_trace, remote, self_update, shared
 from .defender import Amsi, DefenderScan
 from .handlers import BaseHandler, containers, default_handlers, engine_files, renpy_engine
-from .handlers import text
-from .handlers.base import FLOW_CUT, FLOW_READ, LOCAL_DROP, LOCAL_DROP_PROVEN, TRACER_CUT
+from .handlers import native_pe, text
+from .handlers.electron import ASAR_HEADER
+from .handlers.base import FLOW_CUT, FLOW_READ, LOCAL_DROP, LOCAL_DROP_PROVEN, PAYLOAD_SAID, TRACER_CUT
 from .chains import WAS_CRITICAL
 from .handlers.text import OWN_STARTS, PACKAGE_SIGNER, TextHandler
 from .memory import MemoryCenter, fingerprint
 from .models import NOT_INSPECTED, TEXT_CUT, UNREAD_CONTENT, Category, FileContext, Finding, ScanReport, Severity
-from .pe import parse_pe, program_inside, resource_frame_key, resource_kinds, resources_of
+from .pe import parse_pe, program_inside, resource_differences, resource_frame_key, resource_kinds, resources_of
 from .quarantine import Quarantine, QuarantineError
 from .reputation import ReputationError, VirusTotalClient, findings_for
 from .rules import RuleEngine, forget_shared
@@ -81,6 +83,20 @@ ENGINE_PROGRAM_REASON = (
     "Games rarely change the engine's programs, so this is a visible note that the folder does not hide.")
 _MAX_ENGINE_PROGRAMS = 2000
 _MAX_ENGINES = 64
+# Ren'Py's icon tool pads the resource section with "RENPYVNE" up to this SDK (launcher/game/change_icon.py;
+# from 7.4.0 on with zero bytes): Scanner._renpy_program
+RENPY_PADDED_UNTIL = (7, 3, 5)
+
+
+def _version_tuple(text: str) -> Tuple[int, ...]:
+    """``"6.99.12.4"`` -> ``(6, 99, 12, 4)``; a part that is no number ends it."""
+    out = []
+    for part in text.split("."):
+        if not part.isdigit():
+            break
+        out.append(int(part))
+    return tuple(out)
+
 # ENGINE-009 (phageo, 2026-10-20, seventy-third message): a program or library (not a .node add-on) in
 # the folder of an app whose runtime - Electron's program, NW.js's launcher - is verified, that is in
 # no official table and carries no valid signature of a trusted publisher
@@ -169,23 +185,85 @@ def _own_files() -> frozenset:
     Self-exclusion is by content, not by location or name: a byte-identical
     copy of the scanner is skipped wherever it sits, and nothing else can
     hide by imitating its folder layout.
+
+    Not counted (2026-11-03): an empty file - its hash is every empty file's, so
+    one empty ``__init__.py`` would hide every empty input - and the developer
+    tools kept in a ``_tools`` folder (``tests/_tools``: compilers, Node.js with
+    its own Python helpers; never shipped, not the scanner's own code).
     """
     global _own_hashes
     if _own_hashes is None:
         found = set()
         for base, dirs, names in os.walk(_OWN_DIR):
-            dirs[:] = [d for d in dirs if d != "__pycache__"]
+            dirs[:] = [d for d in dirs if d not in ("__pycache__", "_tools")]
             for name in names:
                 if name.lower().endswith((".py", ".pyw", ".yar", ".yara")):
                     try:
                         with open(os.path.join(base, name), "rb") as fh:
-                            found.add(hashlib.sha256(fh.read()).hexdigest())
+                            data = fh.read()
                     except OSError:
-                        pass
+                        continue
+                    if data:
+                        found.add(hashlib.sha256(data).hexdigest())
         _own_hashes = frozenset(found)
     return _own_hashes
 _MAX_DEPTH = 4                      # nesting: installer > game archive > script table > script
 _MAX_SIGNED_MEMBER = 256 * 1024 * 1024   # an in-memory member whose signature is verified
+# (phase D, session R2, B1 - phageo 2026-11-15) an error while one member of a container is read no longer ends the
+# reading of the whole container: the member gets SCAN-ERR-001 (and a line in the report's errors, naming the member),
+# the container's other members are read, and what was found before the error is kept. An error of the container's
+# own member list (its reader failing between two members) is said on the container the same way. Off: as before
+# (the error ends the container's reading; the top-level file gets SCAN-ERR-001 and loses its findings).
+MEMBER_ERRORS_ISOLATED = True
+SCAN_ERROR_TITLE = "File could not be analysed"
+SCAN_ERROR_REASON = ("The scanner hit an error while analysing this file, so its "
+                     "contents were not inspected. Malformed files are sometimes "
+                     "crafted to break scanners.")
+MEMBER_LIST_ERROR = "the reading of its members stopped here: "
+# (phase D, session R2b-1, S03 - phageo 2026-11-17; a silent escape) a container that lies at the nesting limit
+# (_MAX_DEPTH) is not opened - until now without a word. Now it is asked for its first member only (nothing of it is
+# scanned or kept); when it holds one, the file gets ARC-002 (at least REVIEW). The limit itself is unchanged.
+# Off: as before (nothing is said).
+DEPTH_NOTE = True
+DEPTH_EVIDENCE = "nested more than %d levels deep: what this file holds was not inspected"
+# (phase D, session R2b-1 - phageo 2026-11-17; silent escapes, notes only)
+# S08: a folder Windows refuses to list (access, a path over the length limit) was skipped with everything below it,
+# and a file that could not be opened had only a line in the report's errors - now each gets ARC-002 (at least
+# REVIEW) as well. Only in the scan of one folder or file (a game): a PC-wide scan of several places (quick / full)
+# meets folders no user may list by design, and keeps the errors line only (R2b-1 review). Off: as before.
+UNREADABLE_SAID = True
+# S09: a single target (one file, or bytes scanned from memory) that no reader takes came out CLEAN - with the switch,
+# ARC-002. Built off in R2b-1 (an existing test expects nothing for such a file); ON since R2b-2 by phageo's word
+# (2026-11-17) - that test (YaraTests: "data/level.dat" without signatures) pins the switch off, its assertion unchanged.
+UNTAKEN_TARGET_SAID = True
+# (phase D, session R2b-2 - phageo 2026-11-17, answer to R2b-1) S04's notes (compiled Python that is not Python 2.7 and
+# no official file) are folded to one note per folder on disk, or per archive (the part of the path before the last
+# "!"), naming the number of files: a Ren'Py 8 game held 124-156 such notes. The verdict is the same (ARC-002 either
+# way); the first file's note stays and says the count. Off: one note per file, as R2b-1 built it.
+BYTECODE_NOTES_FOLDED = True
+BYTECODE_FOLDED = ("%d compiled Python files that are not Python 2.7 and no official file (Python runs them without "
+                   "their source) - %d bytes, not read - in %s: %s")
+# S10: a file named like a Windows program that does not begin like one (no "MZ") was not loaded on disk and was no
+# member of anything - now ARC-002, unless it begins like a program of another system (ELF, Mach-O also as a
+# universal "fat" file: those stay unsaid, as decided 2026-10-12) or is an official file. Off: as before.
+NOT_A_PROGRAM_SAID = True
+_PROGRAM_ENDINGS = frozenset({".exe", ".dll", ".scr", ".com", ".pif", ".cpl", ".sys", ".ocx", ".node", ".pyd", ".drv",
+                              ".efi"})
+# (a Java class file also begins with CAFEBABE - but that one is taken by its own handler: here the handler is None)
+_OTHER_SYSTEMS = (b"\x7fELF", b"\xfe\xed\xfa\xce", b"\xfe\xed\xfa\xcf", b"\xce\xfa\xed\xfe", b"\xcf\xfa\xed\xfe",
+                  b"\xca\xfe\xba\xbe", b"\xca\xfe\xba\xbf")
+S10_LOADED = "s10_loaded"           # FileContext.cache: loaded only for S10 (nothing is offered to localdrop)
+# (item 8 - phageo 2026-11-17) the Electron window / page joins keep only the first electron_windows.MAX_SCRIPTS
+# (4,000) scripts and pages of a scan; past that the app's picture is incomplete and nothing said so. Now one note per
+# app (SCRIPT-LIMIT-001, information only: no level, verdict or launch change). Off: as before.
+SCRIPT_CAP_SAID = True
+SCRIPT_CAP_NOTE = "script_cap"      # Finding.context: the item-8 note (i18n.SCRIPT_CAP_NOTE: its own texts)
+SCRIPT_CAP_EVIDENCE = ("more than %d scripts and pages in this scan: %d of this app's were not kept for the joins of "
+                       "its windows and pages - a window made in such a script is not known when a page is judged")
+SAID_UNREAD = "said_unread"         # FileContext.cache: the file's one finding says it was not read (S10)
+UNTAKEN_EVIDENCE = "no reader takes this kind of file: its content was not inspected"
+NOT_A_PROGRAM_EVIDENCE = ("named like a Windows program (%s) but it does not begin like one (an old DOS program, or "
+                          "something else under a program's name): what it holds was not inspected")
 IL2CPP_ENGINE = "Unity (IL2CPP)"
 COVERAGE = "SCAN-COVERAGE-001"
 LOW_COVERAGE = 0.10                 # under this share of read bytes a folder is never CLEAN
@@ -318,12 +396,14 @@ class Scanner:
         self._extensions = frozenset().union(*(h.extensions for h in self.handlers))
         self._magics = tuple(m for h in self.handlers for m in h.magics) + (b"MZ", EICAR[:8])
         self._executables: List[Dict[str, object]] = []
+        self._member_errors: List[Dict[str, str]] = []   # (B1) errors said on a member (_scan_error)
         self._engines: Dict[str, bool] = {}
         self._expanded = 0
         self._cancel: Optional[threading.Event] = None
         self._shared: List[shared.Entry] = []      # what the scripts of this scan share
         self._shared_cut = False
         self._importers: Dict[str, list] = {}      # module name -> the scripts that import it
+        self._scripts = marshal_trace.Kept()       # the scripts' texts, for _join_stored_code
         # Electron apps: what each script says about windows and messages, and the version of
         # each verified runtime program - joined after the scan (_join_windows)
         self._app_scripts: Dict[str, object] = {}
@@ -345,6 +425,14 @@ class Scanner:
         # ... and the app's scripts that name a browser's, Discord's or a wallet's store
         # (CHAIN-STEALER across the app; phageo, 2026-10-15, forty-ninth message)
         self._app_stores: Dict[str, Dict[str, List[str]]] = {}
+        # ... and the flows of the app's scripts from a call into a required module to the network (C1,
+        # dataflow/exfil.py): (app, script, sha256, path, flow), joined with the decrypting add-ons
+        self._app_exfil: List[tuple] = []
+        # ... and each app script's cross-file summary (exports, sink imports) for C1 part 2b
+        # (dataflow/exfil_cross.py): app -> {relpath: (exfil_cross.Summary, sha256, path)}
+        self._app_summaries: Dict[str, Dict[str, tuple]] = {}
+        # ... and the same for C3 (dataflow/decoderun.py): decoded data -> code across the app's files
+        self._app_decode: Dict[str, Dict[str, tuple]] = {}
         self._managed: list = []                   # what the .NET libraries of this scan share
         self._managed_cut = False
         self._forget_local()                        # (CHAIN-LOCAL-DROP proofs, SIDELOAD-001: _join_local)
@@ -362,12 +450,14 @@ class Scanner:
         ``extra`` are findings produced outside the file pipeline (autostart
         heuristics) that belong in the same report.
         """
+        staticonly.check_scanner(self)          # (a measurement runner: nothing but the scanner's own reading)
         targets = [os.path.abspath(target)] if isinstance(target, str) else \
             [os.path.abspath(t) for t in target]
         single = len(targets) == 1
         report = ScanReport(target=label or (targets[0] if single else "; ".join(targets)),
                             strict=self.context.strict)
         files: List[str] = []
+        self._walk_errors = []                   # (S08) folders that could not be listed
         for item in targets:
             if os.path.isfile(item):
                 files.append(item)
@@ -378,10 +468,15 @@ class Scanner:
         files = list(dict.fromkeys(files))
         root = targets[0] if single and os.path.isdir(targets[0]) else \
             os.path.dirname(targets[0]) if single else None
+        lone = single and os.path.isfile(targets[0])     # (S09) the scan of one file
         report.files_total = len(files)
         self._executables = []
+        self._member_errors = []                 # (B1) errors said on a member, for report.errors
         self._shared, self._shared_cut, self._importers = [], False, {}
+        self._scripts = marshal_trace.Kept()
         self._managed, self._managed_cut = [], False
+        self._origin_of = {}                     # relpath -> origin.Origin of every file read (origin.stamp)
+        self._app_cap = {}                       # (item 8) app root -> scripts / pages past the joins' cap
         self._forget_local()
         self._targets = [] if root else targets
         localdrop.begin()
@@ -410,6 +505,15 @@ class Scanner:
         changed = publishers_changed(self.context.trusted_publishers)
         if changed:
             report.notes.append(changed)
+        for exc in self._walk_errors if single else ():
+            # (S08) a folder that could not be listed: its files were never seen. Only in the scan of one folder: a
+            # PC-wide scan of several places meets folders no user may list by design (R2b-1 review) - as before
+            where = getattr(exc, "filename", None) or "?"
+            rel = (os.path.relpath(where, root) if root else where).replace(os.sep, "/")
+            report.errors.append({"file": rel, "error": "%s: %s" % (type(exc).__name__, exc)})
+            self._said_unread(report, on_findings, rel, "this folder could not be listed (%s): the files in it were "
+                                                        "not inspected" % type(exc).__name__)
+        self._walk_errors = []
         for done, path in enumerate(files, 1):
             if cancel is not None and cancel.is_set():
                 report.cancelled = True
@@ -418,24 +522,31 @@ class Scanner:
             rel = (os.path.relpath(path, root) if root else path).replace(os.sep, "/")
             self._note_engine(rel.lower())
             ctx = found = None
+            failed = False
             tick = self._ticker(progress, done - 1, report.files_total, rel)
             try:
                 ctx = self._load(path, rel, tick)
                 found = self._scan_ctx(ctx) if ctx is not None else None
             except Exception as exc:              # one bad file must not end the scan
+                failed = True
                 report.errors.append({"file": rel, "error": "%s: %s" % (type(exc).__name__, exc)})
+                if ctx is None and UNREADABLE_SAID and single:
+                    # (S08) the file could not even be opened: said (found stays None - the counters as before)
+                    self._said_unread(report, on_findings, rel, "the file could not be opened (%s): it was not "
+                                                                "inspected" % type(exc).__name__)
                 if ctx is not None:
                     # The file was read but analysing it failed. Say so in the
                     # results: a file built to break the scanner must not come
                     # out looking clean.
                     found = [Finding(
-                        rule_id="SCAN-ERR-001", title="File could not be analysed",
+                        rule_id="SCAN-ERR-001", title=SCAN_ERROR_TITLE,
                         category=Category.EVASION, severity=Severity.LOW, file=rel, line=None,
                         snippet=str(exc)[:200], evidence=type(exc).__name__, confidence=0.3,
-                        reason="The scanner hit an error while analysing this file, so its "
-                               "contents were not inspected. Malformed files are sometimes "
-                               "crafted to break scanners.", handler="scanner",
+                        reason=SCAN_ERROR_REASON, handler="scanner",
                         sha256=ctx.sha256, path=ctx.path, chainable=False)]
+            # (B1) the errors of members that were said on the member, the container read on
+            report.errors.extend(self._member_errors)
+            self._member_errors = []
             if found is not None and ctx.pe is not None and not ctx.truncated:
                 programs[rel.lower()] = rel       # a program that was read to its end
             if ctx is not None and (ctx.ext in _PACKAGE_EXTS or ctx.cache.get("containers")):
@@ -444,6 +555,20 @@ class Scanner:
                 report.bytes_total += ctx.size if ctx is not None else os.path.getsize(path)
             except OSError:
                 pass
+            if found is not None and ctx is not None and ctx.cache.get(SAID_UNREAD):
+                # (S10) its one finding says it was not read: counted as not read, as before the note
+                report.findings.extend(found)
+                if on_findings:
+                    on_findings(found)
+                found = None
+            elif found is None and lone and not failed and UNTAKEN_TARGET_SAID:
+                # (S09) the one file of this scan, and no reader takes it
+                try:
+                    size = ctx.size if ctx is not None else os.path.getsize(path)
+                except OSError:
+                    size = 0
+                if size > 0:
+                    self._said_unread(report, on_findings, rel, UNTAKEN_EVIDENCE, ctx)
             if found is None:
                 report.files_skipped += 1
                 try:
@@ -489,14 +614,25 @@ class Scanner:
             self._join_windows(report.findings)
             self._join_updates(report.findings)
             self._join_addons(report.findings)
+            self._join_cross(report.findings)
+            self._join_decode_cross(report.findings)
+            self._join_stored_code(report.findings)
             found = self._join_local(report.findings)
             if found and on_findings:
                 on_findings(found)
+            found = self._cap_notes(report.findings)   # (item 8; after every join)
+            if found and on_findings:
+                on_findings(found)
+        self._app_cap = {}
         self._forget_local()
         self._app_scripts, self._app_versions, self._app_files, self._app_kept = {}, {}, {}, 0
         self._app_libraries, self._app_pages, self._app_stores = {}, {}, {}
+        self._app_exfil = []
+        self._app_summaries = {}
+        self._app_decode = {}
         self._app_texts, self._app_cut, self._app_ipc, self._app_kept_text = {}, {}, {}, 0
         self._shared, self._shared_cut, self._importers = [], False, {}
+        self._scripts = marshal_trace.Kept()
         self._managed = []
         if single and root == targets[0] and not report.cancelled:
             self._coverage(report, unread, on_findings)
@@ -518,6 +654,8 @@ class Scanner:
             self._verify_executables(report, progress, on_findings, cancel)
         if self.auto_quarantine and self.quarantine is not None and not report.cancelled:
             self._isolate_threats(report)
+        self._fold_bytecode_notes(report.findings)
+        self._finish(report.findings)
         report.finished_at = time.time()
         if self.memory and not report.cancelled:
             self._remember_scan(report)
@@ -621,6 +759,19 @@ class Scanner:
             report.notes.append("Download-and-run across files: a limit was reached (%d scripts, %d "
                                 "chains, %.0f second) - not every pair of scripts was compared"
                                 % (shared.MAX_FILES, shared.MAX_LINKS, shared.MAX_SECONDS))
+
+    def _join_stored_code(self, findings: List[Finding]) -> None:
+        """``PY-OBF-003`` whose value is a parameter nothing in its file calls (phageo, 2026-10-31):
+        the callers in the other scripts of the same game decide (``dataflow/marshal_trace.py``). It
+        runs for a scan from memory too: an archive is a whole game, and the finding was CRITICAL
+        before the split."""
+        games: Dict[str, List[Finding]] = {}
+        for f in findings:
+            if f.context.get(marshal_trace.EDGES):
+                games.setdefault(self._game_root(f.file), []).append(f)
+        for game in sorted(games):
+            files = [file for file in self._scripts.files if self._game_root(file) == game]
+            marshal_trace.join(games[game], self._scripts, files)
 
     def _join_windows(self, findings: List[Finding]) -> None:
         """A page of an Electron app that loads a script by its address (phageo, 2026-10-14):
@@ -733,7 +884,9 @@ class Scanner:
             texts = {name: text for name, text in self._app_texts.items() if electron_windows.app_root(name) == root}
             mains = _main_scripts(self._app_files.get(root, {}).get("package.json"))
             why = self._app_cut.get(root, "")
+            # (a note of a silent-escape fix, R2b-1, is not counted here: it may set the verdict, nothing else)
             unread = next((f for f in findings if f.rule_id in UNREAD_CONTENT and not f.suppressed
+                           and not f.context.get(limits.SILENT_ESCAPE)
                            and electron_windows.app_root(f.file) == root), None)
             if unread is not None and not why:
                 why = "a part of the app could not be read (%s)" % unread.rule_id
@@ -809,7 +962,8 @@ class Scanner:
         marked = [f for f in findings if self_update.SELF_UPDATE in f.context]
         if not marked:
             return
-        cut = {f.file for f in findings if f.rule_id == TRACER_CUT}
+        # (an S12 note says only that a payload reading failed: the script was read to its end for the update)
+        cut = {f.file for f in findings if f.rule_id == TRACER_CUT and not f.context.get(PAYLOAD_SAID)}
         for f in marked:
             mark = f.context.pop(self_update.SELF_UPDATE)
             if f.rule_id != "CHAIN-REMOTE-CODE" or f.severity is not Severity.CRITICAL:
@@ -894,7 +1048,97 @@ class Scanner:
         for f in addons:
             f.evidence += "; scripts of the same package with a network call: %d" % len(
                 network.get(_package_root(f.file), ()))
+        findings.extend(self._addon_flows(findings, addons))
         findings.extend(stealer.chains(findings, self._app_stores, electron_windows.app_root))
+
+    def _addon_flows(self, findings: List[Finding], addons: List[Finding]) -> List[Finding]:
+        """C1 (``dataflow/exfil.py``): a script's flow from a call into a required module to a network call
+        becomes ``CHAIN-EXFIL`` (CRITICAL, MALICE) when that module is a decrypting add-on of the same app
+        (``ADDON-DECRYPT-001`` on it: what Windows keeps for the user, decrypted and sent out). The script
+        must be the app's own code (verified files are not read for flows at all)."""
+        if not (exfil.ON and self._app_exfil):
+            return []
+        out: List[Finding] = []
+        seen = {(f.file, f.line) for f in findings if f.rule_id == exfil.RULE}
+        for app, script, sha256, path, flow in self._app_exfil:
+            module = flow.kind.partition(":")[2]
+            for a in addons:
+                if (electron_windows.app_root(a.file) or "") != app or not exfil.matches_addon(module, a.file):
+                    continue
+                if (script, flow.line) in seen:
+                    break
+                seen.add((script, flow.line))
+                f = Finding(
+                    rule_id=exfil.RULE, title="Private data sent out", category=Category.CREDENTIALS,
+                    severity=Severity.CRITICAL, file=script, line=flow.line, snippet="",
+                    evidence=exfil.evidence(flow._replace(kind=exfil.DECRYPTED), addon=a.file),
+                    confidence=0.9, reason=exfil.REASON, handler="scanner", sha256=sha256, path=path,
+                    chainable=False, context={"exfil_kind": exfil.DECRYPTED, "addon": a.file})
+                out.append(f)
+                break
+        return out
+
+    def _join_cross(self, findings: List[Finding]) -> None:
+        """C1 part 2b (``dataflow/exfil_cross.py``): a private-data flow split over the files of one app -
+        one script reads a store (or captures the screen / clipboard) and exports it, another imports that
+        export and sends it out. Each becomes ``CHAIN-EXFIL`` on the sending script: CRITICAL (MALICE) for
+        a store, HIGH (CHAIN) for a capture. A flow whose source and sink both lie inside verified files is
+        MEDIUM, the libraries' own mechanism (rule 13's exception); a flow that crosses into or out of the
+        app's own code keeps its tier (phageo, 2026-11-04: origin proves origin, not intent)."""
+        if not (exfil.ON and exfil_cross.ON and self._app_summaries):
+            return
+        seen = {(f.file, f.line) for f in findings if f.rule_id == exfil.RULE}
+        for app, scripts in self._app_summaries.items():
+            info = {rel: triple for rel, triple in scripts.items()}
+            for flow in exfil_cross.join([triple[0] for triple in info.values()]):
+                if (flow.sink_file, flow.sink_line) in seen:
+                    continue
+                seen.add((flow.sink_file, flow.sink_line))
+                store = flow.kind in exfil.STORE_KINDS
+                sha256, path = info[flow.sink_file][1], info[flow.sink_file][2]
+                context = {"exfil_kind": flow.kind, "cross_file": flow.source_file}
+                if flow.both_verified:                     # the libraries' own mechanism: MEDIUM, tagged
+                    severity = Severity.MEDIUM
+                    context["library_mechanism"] = "a verified library"
+                    reason = exfil.REASON + LIBRARY_RELEASE_MECHANISM
+                else:
+                    severity = Severity.CRITICAL if store else Severity.HIGH
+                    reason = exfil.REASON
+                findings.append(Finding(
+                    rule_id=exfil.RULE, title="Private data sent out",
+                    category=Category.CREDENTIALS if store else Category.INPUT_CAPTURE,
+                    severity=severity, file=flow.sink_file, line=flow.sink_line, snippet="",
+                    evidence=exfil_cross.evidence(flow), confidence=0.9, reason=reason,
+                    handler="scanner", sha256=sha256, path=path, chainable=False, context=context))
+
+    def _join_decode_cross(self, findings: List[Finding]) -> None:
+        """C3 (``dataflow/decoderun.py``) across the files of one app, on C1 part 2b's module graph: one
+        script decodes, decompresses or decrypts data and exports it, another imports that export and
+        runs it as code. ``CHAIN-DECODE-RUN`` HIGH (CHAIN) on the running script; a flow whose two ends lie
+        inside verified files is MEDIUM, the libraries' own mechanism (rule 13's exception). A sink line
+        that already has the finding, or ``JS-OBF-001`` / ``DF-EXEC-001`` (HIGH or more), gets none."""
+        if not (decoderun.ON and decoderun.CROSS_ON and self._app_decode):
+            return
+        proven = BaseHandler._DECODE_RUN_PROVEN
+        seen = {(f.file, f.line) for f in findings if f.rule_id == decoderun.RULE or (
+            f.rule_id in proven and not f.suppressed and f.severity >= Severity.HIGH)}
+        for app, scripts in self._app_decode.items():
+            for flow in decoderun.join([triple[0] for triple in scripts.values()]):
+                if (flow.sink_file, flow.sink_line) in seen:
+                    continue
+                seen.add((flow.sink_file, flow.sink_line))
+                sha256, path = scripts[flow.sink_file][1], scripts[flow.sink_file][2]
+                context = {decoderun.KIND: flow.kind, "cross_file": flow.source_file}
+                severity, reason = Severity.HIGH, decoderun.REASON
+                if flow.both_verified:                     # the libraries' own mechanism: MEDIUM, tagged
+                    severity = Severity.MEDIUM
+                    context["library_mechanism"] = "a verified library"
+                    reason += LIBRARY_RELEASE_MECHANISM
+                findings.append(Finding(
+                    rule_id=decoderun.RULE, title=decoderun.TITLE, category=Category.OBFUSCATION,
+                    severity=severity, file=flow.sink_file, line=flow.sink_line, snippet="",
+                    evidence=decoderun.cross_evidence(flow), confidence=0.85, reason=reason,
+                    handler="scanner", sha256=sha256, path=path, chainable=False, context=context))
 
     def _forget_local(self) -> None:
         """What ``_join_local`` needs, emptied (a new scan, or the end of one)."""
@@ -909,6 +1153,13 @@ class Scanner:
         # programs of the scan that nothing verifies
         self._runtime_roots: Dict[str, str] = {}
         self._app_programs: List[dict] = []
+        # ENGINE-011 (2026-10-27, answer c): integrity records of matched Electron runtimes inside an
+        # installer or archive, and the checksums of the app archives of the scan (place -> SHA-256)
+        self._runtime_integrity: List[dict] = []
+        self._asar_headers: Dict[str, str] = {}
+        # ENGINE-010 / ENGINE-011 (sixth fix session, answer b): resource differences of matched Ren'Py
+        # start programs (the other engines' are the program handler's own findings)
+        self._runtime_changes: List[dict] = []
         # CHAIN-LOCAL-DROP-PLUS: the files on disk that are archives or installers, and the scan's
         # targets (a game root is one of them, or one of the targets)
         self._packages: set = set()
@@ -935,7 +1186,13 @@ class Scanner:
         sha = ctx.sha256
         if (engine_hashes.verified(sha) or electron_official.verified(sha) or inno_official.verified(sha)
                 or nsis_official.verified(sha) or library_hashes.verified(sha) or directx_official.verified(sha)
-                or ctx.baseline.startswith(_SIGNED) or self._renpy_program(ctx)):
+                or ctx.baseline.startswith(_SIGNED)):
+            return
+        if self._renpy_program(ctx):
+            changes = ctx.cache.get(native_pe.RUNTIME_CHANGES) if ctx.cache.get(native_pe.RUNTIME_NAME) == "Ren'Py" else None
+            if changes and len(self._runtime_changes) < _MAX_ENGINE_PROGRAMS:
+                self._runtime_changes.append({"file": ctx.relpath, "path": ctx.path, "sha256": sha,
+                                              "baseline": ctx.baseline, "handler": handler, "reasons": list(changes)})
             return
         self._engine_programs.append({"file": ctx.relpath, "root": root, "path": ctx.path, "sha256": sha,
                                       "baseline": ctx.baseline, "handler": handler,
@@ -988,6 +1245,61 @@ class Scanner:
         return out
 
     @staticmethod
+    def _place(relpath: str) -> str:
+        return relpath.replace("\\", "/").lower()
+
+    def _note_runtime_integrity(self, ctx: FileContext, handler: str) -> None:
+        """For ENGINE-011 (``_join_local``; phageo, 2026-10-27, answer c): the checksum of every app
+        archive of the scan by its place, and the integrity rows of a matched Electron runtime whose
+        app archive is another member of the same installer or archive (``native_pe._electron``)."""
+        header = ctx.cache.get(ASAR_HEADER)
+        if header and len(self._asar_headers) < _MAX_ENGINE_PROGRAMS:
+            self._asar_headers[self._place(ctx.relpath)] = header
+        rows = ctx.cache.get(native_pe.INTEGRITY_LATER)
+        if rows and len(self._runtime_integrity) < _MAX_ENGINE_PROGRAMS:
+            cut = max(ctx.relpath.rfind("/"), ctx.relpath.rfind("!")) + 1
+            self._runtime_integrity.append({"file": ctx.relpath, "folder": ctx.relpath[:cut], "rows": list(rows),
+                                            "path": ctx.path, "sha256": ctx.sha256, "baseline": ctx.baseline,
+                                            "handler": handler})
+
+    def _runtime_integrity_notes(self) -> List[Finding]:
+        """ENGINE-011 (MEDIUM, visible): an integrity record of a matched Electron runtime inside an
+        installer or archive whose checksum is not the one of the app archive it names in the same
+        installer or archive (the program's folder there), or which names one the scan did not read.
+        A record whose every checksum is that archive's adds nothing: the difference is proven."""
+        out: List[Finding] = []
+        for tag in self._runtime_integrity:
+            for name, value in tag["rows"]:
+                actual = self._asar_headers.get(self._place(tag["folder"] + name))
+                if actual == value:
+                    continue
+                reason = ("the integrity record's checksum is not the one of the app archive" if actual else
+                          "the integrity record names an app archive that is not at hand")
+                f = native_pe.runtime_change(tag["file"], "%s (%s, in the same installer or archive)" % (reason, name),
+                                             tag["handler"])
+                f.sha256, f.path = tag["sha256"], tag["path"]
+                ctx = FileContext(path=tag["path"], relpath=tag["file"], data=b"", size=0, sha256=tag["sha256"],
+                                  baseline=tag["baseline"])
+                self.context.evaluate_joined(f, ctx)
+                out.append(f)
+        return out
+
+    def _runtime_change_notes(self) -> List[Finding]:
+        """ENGINE-010 / ENGINE-011 (MEDIUM, visible; sixth fix session, answer b): one finding for each
+        resource difference of a renamed Ren'Py start program whose code is the SDK program's, that the
+        one resource rule does not allow (kept by ``_note_engine_program``)."""
+        out: List[Finding] = []
+        for tag in self._runtime_changes:
+            for reason in tag["reasons"]:
+                f = native_pe.runtime_change(tag["file"], reason, tag["handler"], "Ren'Py")
+                f.sha256, f.path = tag["sha256"], tag["path"]
+                ctx = FileContext(path=tag["path"], relpath=tag["file"], data=b"", size=0, sha256=tag["sha256"],
+                                  baseline=tag["baseline"])
+                self.context.evaluate_joined(f, ctx)
+                out.append(f)
+        return out
+
+    @staticmethod
     def _renpy_program(ctx: FileContext) -> Optional[str]:
         """Which official Ren'Py SDK program this one is apart from its resource section - the
         game's start program, renamed and with its own icon (phageo, 2026-10-18, sixty-second
@@ -995,16 +1307,35 @@ class Scanner:
         resources hold icons, icon groups, a version and a manifest and nothing else (no kind
         with a name, no program inside them), and nothing differs outside them: no signature,
         no appended data, no other byte (``pe.resource_frame_key``). None: not such a program -
-        the note stays. A program larger than what is loaded is not compared (the note stays)."""
+        the note stays. A program larger than what is loaded is not compared (the note stays).
+
+        Since 2026-10-27 (phageo: one resource rule for every renamed engine program) the
+        resources are judged per kind (``pe.resource_differences``): icons, icon groups and the
+        version may differ, the manifest only without elevation, any other kind not; bytes beside
+        the tree only as Ren'Py's own icon tool writes them (``launcher/game/change_icon.py`` of
+        the SDKs: a ``P`` before a resource's data, and up to Ren'Py 7.3.5 the word ``RENPYVNE``
+        repeated up to the section's alignment). A program without a record in
+        ``program_resources`` keeps the kinds rule above."""
         pe = ctx.pe
         if (pe is None or pe.is_dotnet or ctx.truncated or pe.has_signature or pe.overlay_size
                 or pe.entry_point not in engine_hashes.RENPY_PROGRAM_ENTRY_POINTS):
             return None
-        official = engine_hashes.verified_renpy_program(resource_frame_key(ctx.data, pe))
+        key = resource_frame_key(ctx.data, pe)
+        official = engine_hashes.verified_renpy_program(key)
         kinds = resource_kinds(ctx.data, pe) if official else None
-        if not kinds or not set(kinds) <= engine_hashes.RENPY_PROGRAM_KINDS \
-                or program_inside(resources_of(ctx.data, pe)):
+        if not kinds or program_inside(resources_of(ctx.data, pe)):
             return None
+        record = program_resources.record("RENPY", key)
+        if record is None:
+            return official if set(kinds) <= engine_hashes.RENPY_PROGRAM_KINDS else None
+        version = engine_hashes.ARCHIVES[engine_hashes.RENPY_PROGRAMS[key][1]][1]
+        reasons = resource_differences(ctx.data, pe, record, renpy_padding=True,
+                                       renpy_tail=_version_tuple(version) <= RENPY_PADDED_UNTIL)
+        if reasons:
+            # the decision in two (phageo, sixth fix session, answer b - one rule for every renamed
+            # engine): the code is the SDK program's, the match stands; each such difference is a
+            # visible ENGINE-010 / ENGINE-011 finding (_runtime_change_notes)
+            ctx.cache[native_pe.RUNTIME_CHANGES], ctx.cache[native_pe.RUNTIME_NAME] = reasons, "Ren'Py"
         return official
 
     def _note_sideload(self, ctx: FileContext, handler: str) -> None:
@@ -1101,6 +1432,8 @@ class Scanner:
             new.append(f)
         new += self._engine_program_notes()
         new += self._app_program_notes()
+        new += self._runtime_integrity_notes()
+        new += self._runtime_change_notes()
         new += self._local_combined(findings)
         findings.extend(new)
         return new
@@ -1222,33 +1555,141 @@ class Scanner:
 
     def scan_bytes(self, relpath: str, data: bytes, path: str = "") -> List[Finding]:
         """Scan in-memory content as if it were the file ``relpath``."""
+        staticonly.check_scanner(self)
         ctx = FileContext(path=path or relpath, relpath=relpath.replace("\\", "/"),
                           data=data, size=len(data), sha256=hashlib.sha256(data).hexdigest())
         self._match_everything = bool(len(self.rules.yara)) or (
             self.signatures is not None and self.signatures.count() > 0)
         self._shared, self._shared_cut, self._importers = [], False, {}    # one file: nothing to join it with
+        self._member_errors = []                 # (B1; no report here: the SCAN-ERR-001 note says it)
+        self._scripts = marshal_trace.Kept()
         self._managed, self._managed_cut = [], False
+        self._origin_of = {}
+        self._app_cap = {}
         self._forget_local()
         localdrop.begin()
         self._app_scripts, self._app_versions, self._app_files, self._app_kept = {}, {}, {}, 0
         self._app_libraries, self._app_pages, self._app_stores = {}, {}, {}
+        self._app_exfil = []
+        self._app_summaries = {}
+        self._app_decode = {}
         self._app_texts, self._app_cut, self._app_ipc, self._app_kept_text = {}, {}, {}, 0
-        found = self._scan_ctx(ctx) or []
+        found = self._scan_ctx(ctx)
+        if found is None and data and UNTAKEN_TARGET_SAID:
+            # (S09) no reader takes it: said, never CLEAN
+            found = [self._unread_note(ctx.relpath, UNTAKEN_EVIDENCE, ctx)]
+            self.context.evaluate(found[0], ctx)
+        found = found or []
         self._join_windows(found)          # (an installer or archive holds a whole app)
         self._join_updates(found)
         self._join_addons(found)
+        self._join_cross(found)
+        self._join_decode_cross(found)
+        self._join_stored_code(found)
         self._join_local(found)
+        self._cap_notes(found)             # (item 8; after every join)
+        self._fold_bytecode_notes(found)
         self._forget_local()
+        self._scripts = marshal_trace.Kept()
         self._app_scripts, self._app_versions, self._app_files, self._app_kept = {}, {}, {}, 0
         self._app_libraries, self._app_pages, self._app_stores = {}, {}, {}
+        self._app_exfil = []
+        self._app_summaries = {}
+        self._app_decode = {}
         self._app_texts, self._app_cut, self._app_ipc, self._app_kept_text = {}, {}, {}, 0
+        self._finish(found)
         return found
 
+    def _finish(self, findings: List[Finding]) -> None:
+        """The last step of every scan (``scan`` and ``scan_bytes``), after every chain and join: where
+        each finding stands (gamescan/origin.py; information only), then the tier cap - the one place
+        where a rule's level is capped by what it proves (gamescan/tiers.py; phase B, 2026-11-02)."""
+        origin.stamp(findings, self._origin_of)
+        self._origin_of = {}
+        exfil.prove_stealers(findings, electron_windows.app_root)   # (C1: a proven flow -> MALICE)
+        tiers.cap(findings)
+
     # -- internals -------------------------------------------------------------
+    @staticmethod
+    def _unread_note(file: str, evidence: str, ctx: Optional[FileContext] = None) -> Finding:
+        """(R2b-1) ``ARC-002`` made by the scanner itself: content that was not read (rule 15: at least REVIEW).
+        Marked as a note of a silent-escape fix (``limits.SILENT_ESCAPE``)."""
+        return limits.mark(Finding(
+            rule_id="ARC-002", title="Archive could not be fully inspected", category=Category.EVASION,
+            severity=Severity.LOW, file=file, line=None, snippet="", confidence=0.3, handler="scanner",
+            evidence=evidence, reason=NOT_INSPECTED, sha256=ctx.sha256 if ctx is not None else "",
+            path=ctx.path if ctx is not None else "", chainable=False))
+
+    def _said_unread(self, report: ScanReport, on_findings: Optional[FindingsFn], file: str, evidence: str,
+                     ctx: Optional[FileContext] = None) -> None:
+        """(S08 / S09) An ``ARC-002`` straight into the report, for a file or folder no reading came to. With the
+        file's ``ctx`` it is judged like any note (the user's own allowlist); without, what past marks say."""
+        note = self._unread_note(file, evidence, ctx)
+        if ctx is not None:
+            self.context.evaluate(note, ctx)
+        else:
+            self.context.remember(note)
+        report.findings.append(note)
+        if on_findings:
+            on_findings([note])
+
+    def _note_cap(self, relpath: str) -> None:
+        """(item 8) A script or page of an Electron app that the window joins do not keep (the scan's cap)."""
+        cap = self.__dict__.setdefault("_app_cap", {})
+        root = electron_windows.app_root(relpath) or ""
+        cap[root] = cap.get(root, 0) + 1
+
+    def _cap_notes(self, findings: List[Finding]) -> List[Finding]:
+        """(item 8) One information note per app whose scripts or pages passed the joins' cap - made after every
+        join, so it changes nothing they decide. Appended to ``findings``; the new notes are returned."""
+        cap, self._app_cap = self.__dict__.get("_app_cap") or {}, {}
+        out = []
+        for root in sorted(cap):
+            note = Finding(rule_id=TRACER_CUT, title="App's windows judged from part of its scripts",
+                           category=Category.OBFUSCATION, severity=Severity.LOW, file=root or ".", line=None,
+                           snippet="", confidence=0.3, handler="scanner",
+                           evidence=SCRIPT_CAP_EVIDENCE % (electron_windows.MAX_SCRIPTS, cap[root]),
+                           reason="This app holds more scripts than the scanner joins to judge its windows and "
+                                  "pages. Each script was read by the ordinary rules; only the picture of which "
+                                  "window shows which page is incomplete. Information only: it sets no level.",
+                           chainable=False, information=True)
+            note.context[SCRIPT_CAP_NOTE] = True     # (its own texts: i18n._key)
+            out.append(limits.mark(note))
+        findings.extend(out)
+        return out
+
+    @staticmethod
+    def _fold_bytecode_notes(findings: List[Finding]) -> None:
+        """(S04, R2b-2) One note per folder / archive for the active S04 notes of a scan (``findings`` changed in
+        place): the first one of each place stays and names how many files there were; places with one file keep
+        their note as it is. Notes a user's own mark has hidden are left as they are."""
+        if not BYTECODE_NOTES_FOLDED:
+            return
+        from .handlers.renpy import UNREAD_BYTECODE
+        places: Dict[str, List[Finding]] = {}
+        for f in findings:
+            if f.rule_id == "ARC-002" and UNREAD_BYTECODE in f.context and not f.suppressed:
+                name = f.file.replace("\\", "/")
+                place = name.rsplit("!", 1)[0] if "!" in name else (posixpath.dirname(name) or ".")
+                places.setdefault(place, []).append(f)
+        dropped = set()
+        for place, notes in places.items():
+            if len(notes) < 2:
+                continue
+            names = [posixpath.basename(n.file.replace("\\", "/").rsplit("!", 1)[-1]) for n in notes]
+            shown = ", ".join(names[:5]) + (" and %d more" % (len(names) - 5) if len(names) > 5 else "")
+            first = notes[0]
+            first.evidence = BYTECODE_FOLDED % (len(notes), sum(int(n.context[UNREAD_BYTECODE]) for n in notes),
+                                                place, shown)
+            dropped.update(id(n) for n in notes[1:])
+        if dropped:
+            findings[:] = [f for f in findings if id(f) not in dropped]
+
     def _walk(self, root: str, cancel: Optional[threading.Event] = None) -> List[str]:
         out = []
         skip = os.path.normcase(self.quarantine.directory) if self.quarantine else None
-        for base, dirs, names in os.walk(root):
+        errors = self.__dict__.setdefault("_walk_errors", [])
+        for base, dirs, names in os.walk(root, onerror=errors.append if UNREADABLE_SAID else None):
             if cancel is not None and cancel.is_set():
                 break
             dirs[:] = sorted(d for d in dirs if d not in _SKIP_DIRS
@@ -1288,6 +1729,7 @@ class Scanner:
         """Read + hash a file, or return None when nothing could want it."""
         if os.path.islink(path):
             return None
+        only_s10 = False
         with open(path, "rb") as fh:
             ext = os.path.splitext(rel)[1].lower()
             if (ext not in self._extensions and not self._match_everything
@@ -1299,7 +1741,9 @@ class Scanner:
                 fh.seek(0)
                 if not sniff.unread_kind(fh.read(sniff.UNREAD_HEAD)) and (
                         fh.seek(0, 2) > text.MAX_TEXT or not text.is_text(self._sample(fh))):
-                    return None
+                    if not (NOT_A_PROGRAM_SAID and ext in _PROGRAM_ENDINGS):
+                        return None
+                    only_s10 = True                 # (S10: loaded only to be said - nothing else is done with it)
             total = fh.seek(0, 2)
             fh.seek(0)
             digest, chunks, kept, size = hashlib.sha256(), [], 0, 0
@@ -1315,9 +1759,12 @@ class Scanner:
                     chunks.append(block)
                     kept += len(block)
         data = b"".join(chunks)[:self.max_bytes]
-        return FileContext(path=path, relpath=rel, data=data, size=size,
-                           sha256=digest.hexdigest(), truncated=size > len(data),
-                           cancel=self._cancel, progress=tick if size > _LARGE else None)
+        ctx = FileContext(path=path, relpath=rel, data=data, size=size,
+                          sha256=digest.hexdigest(), truncated=size > len(data),
+                          cancel=self._cancel, progress=tick if size > _LARGE else None)
+        if only_s10:
+            ctx.cache[S10_LOADED] = True
+        return ctx
 
     def _scan_ctx(self, ctx: FileContext, depth: int = 0) -> Optional[List[Finding]]:
         """Findings for one file (None = nothing applies to it). Every limit a format
@@ -1336,20 +1783,109 @@ class Scanner:
         if ctx.baseline.startswith((engine_hashes.VERIFIED, library_hashes.VERIFIED)) \
                 or engine_hashes.verified(ctx.sha256) or electron_official.verified(ctx.sha256):
             return []
-        said ={f.rule_id for f in findings if f.file == ctx.relpath}
+        # (R2b-1) the notes of the silent-escape fixes come after, and never take the place of, the notes of before:
+        # the limits of before are said exactly as before, as if no such note existed; then those of the fixes
+        mine = [f for f in findings if f.file == ctx.relpath]
+        said = {f.rule_id for f in mine if not f.context.get(limits.SILENT_ESCAPE)}
         out: List[Finding] = []
         for reader, what in reached:
             rule, title = limits.RULES[reader]
-            if rule in said or len(out) >= 3:
+            if isinstance(what, limits.SaidNote) or rule in said or len(out) >= 3:
                 continue
             said.add(rule)
-            note = Finding(rule_id=rule, title=title, category=Category.EVASION, severity=Severity.LOW,
-                           file=ctx.relpath, line=None, snippet="", confidence=0.3, handler="scanner",
-                           evidence="a limit of the reader was reached: %s" % what[:200],
-                           reason=limits.REASON, sha256=ctx.sha256, path=ctx.path, chainable=False)
-            self.context.evaluate(note, ctx)
-            out.append(note)
+            out.append(self._limit_note(ctx, rule, title, what))
+        said |= {f.rule_id for f in mine}
+        for reader, what in reached:
+            rule, title = limits.RULES[reader]
+            if isinstance(what, limits.SaidNote) and rule not in said:
+                said.add(rule)
+                out.append(limits.mark(self._limit_note(ctx, rule, title, what)))
         return out
+
+    def _limit_note(self, ctx: FileContext, rule: str, title: str, what: str) -> Finding:
+        note = Finding(rule_id=rule, title=title, category=Category.EVASION, severity=Severity.LOW,
+                       file=ctx.relpath, line=None, snippet="", confidence=0.3, handler="scanner",
+                       evidence="a limit of the reader was reached: %s" % what[:200],
+                       reason=limits.REASON, sha256=ctx.sha256, path=ctx.path, chainable=False)
+        self.context.evaluate(note, ctx)
+        return note
+
+    def _scan_error(self, ctx: FileContext, exc: BaseException, where: str = "") -> Finding:
+        """(B1) ``SCAN-ERR-001`` on a member whose reading raised ``exc`` - or, with ``where``, on a container whose
+        member list stopped - and the same line in the report's errors (``fp_benchmark``'s ``errors`` column)."""
+        text = "%s%s" % (where, exc)
+        self._member_errors.append({"file": ctx.relpath, "error": "%s: %s" % (type(exc).__name__, text)})
+        return Finding(rule_id="SCAN-ERR-001", title=SCAN_ERROR_TITLE, category=Category.EVASION,
+                       severity=Severity.LOW, file=ctx.relpath, line=None, snippet=text[:200],
+                       evidence=type(exc).__name__, confidence=0.3, reason=SCAN_ERROR_REASON, handler="scanner",
+                       sha256=ctx.sha256, path=ctx.path, chainable=False)
+
+    def _members_said(self, ctx: FileContext, sources, findings: List[Finding]) -> Iterator[FileContext]:
+        """(B1) The members of ``ctx`` from each of ``sources`` in turn. When a source raises between two members
+        (its reader failed), that is said on ``ctx`` (:meth:`_scan_error`, into ``findings``) and the next source
+        is read: what was found so far is kept. Only ``Exception``: the runners' guards (``BaseException``) pass."""
+        for source in sources:
+            members = iter(source)
+            while True:
+                try:
+                    child = next(members)
+                except StopIteration:
+                    break
+                except MemoryError:
+                    raise                           # (as before: the runners say "not enough memory")
+                except Exception as exc:
+                    findings.append(self._scan_error(ctx, exc, MEMBER_LIST_ERROR))
+                    break
+                yield child
+
+    def _holds_members(self, ctx: FileContext, handler) -> bool:
+        """(S03) Does ``ctx`` - a file at the nesting limit, which is not opened - hold members? Each of its member
+        sources is asked for its **first** member only; that member is let go unscanned, the source is closed, and
+        nothing it offered on the way is kept (``localdrop.paused``). A source that fails counts as holding
+        something (its reader did not get through it), and so does a container with no member a reader takes that
+        has something to say of its own (``after_expand``). ``MemoryError`` and the runners' guards pass."""
+        if (self._cancel is not None and self._cancel.is_set()) or self._expanded > _MAX_EXPANDED:
+            return False                           # (the unpacked-size guard of the scan holds for the look too)
+        held = False
+        # (R2b-1 review) the look says nothing of its own: a reader limit reached while it looks is no limit of this
+        # file's reading (limits.quiet), and what it unpacks counts toward the scan's unpacked-size guard
+        with localdrop.paused(), limits.quiet():
+            sources = [handler.expand]
+            if ctx.pe is not None:
+                sources.append(sigblock.children)
+            for make in sources:
+                members = None
+                try:
+                    members = iter(make(ctx))
+                    first = next(members, None)
+                except MemoryError:
+                    raise
+                except Exception:
+                    first, held = None, True
+                if first is not None:
+                    held = True
+                    self._expanded += first.size
+                    containers.release(first)
+                close = getattr(members, "close", None)
+                if close is not None:
+                    try:
+                        close()
+                    except MemoryError:
+                        raise
+                    except Exception:             # (as in the member loop: an error while it is let go is not raised)
+                        pass
+                if held:
+                    break
+            if not held:
+                # no member a reader would take - but perhaps something the container itself would have said
+                # (a member of a kind nobody reads, a part that could not be unpacked): that counts too
+                try:
+                    held = bool(handler.after_expand(ctx))
+                except MemoryError:
+                    raise
+                except Exception:
+                    held = True
+        return held
 
     def _correlate(self, findings: List[Finding], ctx: FileContext) -> List[Finding]:
         """The chains of one file: of its active findings and - for a file trusted for its
@@ -1411,6 +1947,16 @@ class Scanner:
     def _scan_one(self, ctx: FileContext, depth: int = 0) -> Optional[List[Finding]]:
         if ctx.sha256 in _own_files():
             return []       # the scanner's own rule definitions look like what it hunts
+        if ctx.cache.get(S10_LOADED):
+            # (S10) a file on disk that was loaded only to be said: nothing else is done with it (no engine, app or
+            # local-drop note sees it - as before, when it was not loaded); no reader takes it (_load: neither its
+            # name, nor its first bytes, nor text)
+            ctx.cache[SAID_UNREAD] = True
+            if ctx.size <= 0 or bytes(ctx.data[:4]).startswith(_OTHER_SYSTEMS) or official.exact(ctx.sha256):
+                return None
+            note = self._unread_note(ctx.relpath, NOT_A_PROGRAM_EVIDENCE % ctx.ext, ctx)
+            self.context.evaluate(note, ctx)
+            return [note]
         if not ctx.truncated:
             localdrop.offer(ctx.relpath, ctx.data)     # (perhaps the file a script decodes: _join_local)
         self._note_engine_text(ctx)                    # (the version an engine says it is: ENGINE-008)
@@ -1438,7 +1984,17 @@ class Scanner:
             # of an engine the scanner does not know - handlers/text.py; phageo, 2026-10-12)
             handler = self._text
         known = self._known_malware(ctx)
+        not_a_program = handler is None and NOT_A_PROGRAM_SAID and ctx.size > 0 and ctx.ext in _PROGRAM_ENDINGS \
+            and not bytes(ctx.data[:4]).startswith(_OTHER_SYSTEMS) and not official.exact(ctx.sha256)
         if handler is None and not self._match_everything and not known:
+            if not_a_program:
+                # (S10) named like a Windows program, and no reader takes it: said. A file of the scan itself still
+                # counts as not read, as before the note (SAID_UNREAD; R2b-1 review, round 2)
+                note = self._unread_note(ctx.relpath, NOT_A_PROGRAM_EVIDENCE % ctx.ext, ctx)
+                self.context.evaluate(note, ctx)
+                if depth == 0:
+                    ctx.cache[SAID_UNREAD] = True
+                return [note]
             return None
         name = handler.name if handler else "signatures"
         ctx.baseline = next(filter(None, (h.baseline_reason(ctx) for h in self.handlers)), "")
@@ -1486,6 +2042,10 @@ class Scanner:
                 kept = row
         findings = known + (handler.scan_file(ctx, self.rules, kept=kept, keep=self._keeper(ctx, handler))
                             if handler else [])
+        if not_a_program:                              # (S10, when signatures read every file: said all the same)
+            findings.append(self._unread_note(ctx.relpath, NOT_A_PROGRAM_EVIDENCE % ctx.ext, ctx))
+        # where this file stands, from what the scan knows of it now (gamescan/origin.py; information only)
+        self.__dict__.setdefault("_origin_of", {})[ctx.relpath] = origin.of_file(ctx, _SIGNED)
         cut = ctx.cache.get(TEXT_CUT)
         if cut:
             # the text was larger in memory than one text may be (models.MAX_DECODED): read up to there
@@ -1497,6 +2057,9 @@ class Scanner:
                          "a character in memory, more than the %d MB one text may take [cause: memory]"
                          % (cut[0], cut[1], cut[2], cut[3] >> 20),
                 reason=NOT_INSPECTED, chainable=False))
+        script = ctx.cache.pop(marshal_trace.TEXT, None)
+        if script is not None:                         # (held here, not with the file's notes)
+            self._scripts.add(ctx.relpath, script, ctx.ext in handler.store_scripts)
         names, imported = ctx.cache.get("shared_names"), ctx.cache.get("imported")
         if names or imported:
             tag = {"handler": handler, "path": ctx.path, "sha256": ctx.sha256,
@@ -1520,6 +2083,8 @@ class Scanner:
         script = ctx.cache.get("electron_script")
         if script is not None and len(self._app_scripts) < electron_windows.MAX_SCRIPTS:
             self._app_scripts[ctx.relpath] = script    # an Electron app's windows and messages
+        elif script is not None and SCRIPT_CAP_SAID:   # (item 8) not kept: counted for the app's note
+            self._note_cap(ctx.relpath)
         text = ctx.cache.pop("electron_text", None)    # (held here, not with the file's notes)
         if text is not None or ctx.cache.get("electron_big"):
             root = electron_windows.app_root(ctx.relpath) or ""
@@ -1539,9 +2104,32 @@ class Scanner:
                 kinds = stealer.store_kinds(ctx.text())    # a browser's, Discord's or a wallet's store
                 if kinds:
                     self._app_stores.setdefault(app, {})[ctx.relpath] = kinds
+        flows = ctx.cache.get(exfil.CACHE)             # (C1: a module's result sent out - joined in _join_addons)
+        if flows and handler is not None:
+            app = electron_windows.app_root(ctx.relpath) or ""
+            for flow in flows:
+                if len(self._app_exfil) < exfil.MAX_KEPT:
+                    self._app_exfil.append((app, ctx.relpath, ctx.sha256, ctx.path, flow))
+        summary = ctx.cache.get(exfil.SUMMARY)         # (C1 part 2b: joined across files in _join_cross)
+        if summary is not None and handler is not None and electron_windows.app_root(ctx.relpath) is not None:
+            app = electron_windows.app_root(ctx.relpath)
+            scripts = self._app_summaries.setdefault(app, {})
+            if len(scripts) < exfil_cross.MAX_SCRIPTS:
+                exports, sink_imports, verified = summary
+                scripts[ctx.relpath] = (exfil_cross.Summary(ctx.relpath, exports, sink_imports, verified),
+                                        ctx.sha256, ctx.path)
+        summary = ctx.cache.get(decoderun.SUMMARY)     # (C3: joined across files in _join_decode_cross)
+        if summary is not None and handler is not None and electron_windows.app_root(ctx.relpath) is not None:
+            scripts = self._app_decode.setdefault(electron_windows.app_root(ctx.relpath), {})
+            if len(scripts) < exfil_cross.MAX_SCRIPTS:
+                exports, sink_imports, verified = summary
+                scripts[ctx.relpath] = (exfil_cross.Summary(ctx.relpath, exports, sink_imports, verified),
+                                        ctx.sha256, ctx.path)
         loaded = ctx.cache.get("page_scripts")
         if loaded is not None and len(self._app_pages) < electron_windows.MAX_SCRIPTS:
             self._app_pages[ctx.relpath] = loaded      # ... and the scripts a page of it loads
+        elif loaded is not None and SCRIPT_CAP_SAID:
+            self._note_cap(ctx.relpath)
         if ctx.pe is not None and electron_official.PROGRAM_VERIFIED in ctx.baseline or (
                 ctx.pe is not None and ctx.name.lower().endswith(".exe") and electron_official.verified(ctx.sha256)):
             stated = _ELECTRON_VERSION.search(ctx.baseline) or _ELECTRON_VERSION.search(
@@ -1605,12 +2193,15 @@ class Scanner:
         if ctx.is_pe:
             self._note_engine_program(ctx, name)   # (ENGINE-008: _join_local)
             self._note_app_program(ctx, name)      # (ENGINE-009: _join_local)
+        self._note_runtime_integrity(ctx, name)    # (ENGINE-011, integrity inside an archive: _join_local)
         if ctx.is_pe and depth == 0:
             self._executables.append({"file": ctx.relpath, "path": ctx.path,
                                       "sha256": ctx.sha256, "baseline": bool(ctx.baseline)})
         if handler and depth < _MAX_DEPTH:
-            for child in itertools.chain(handler.expand(ctx),
-                                         sigblock.children(ctx) if ctx.pe is not None else ()):
+            sources = [handler.expand(ctx), sigblock.children(ctx) if ctx.pe is not None else ()]
+            members = self._members_said(ctx, sources, findings) if MEMBER_ERRORS_ISOLATED \
+                else itertools.chain(*sources)
+            for child in members:
                 self._expanded += child.size
                 ctx.cache["streamed"] = True       # an opened container is read from disk
                 if self._expanded > _MAX_EXPANDED or (self._cancel is not None
@@ -1646,12 +2237,34 @@ class Scanner:
                             reason=NOT_INSPECTED,
                             sha256=child.sha256, path=ctx.path, chainable=False))
                     findings.extend(found)
+                except Exception as exc:
+                    if not MEMBER_ERRORS_ISOLATED or isinstance(exc, MemoryError):
+                        raise
+                    # (B1) this member could not be read: said on it; the container's other members are read
+                    findings.append(self._scan_error(child, exc))
                 finally:
                     containers.release(child)             # the temporary file of a large member
+            # (R2 review) the member generators end here, before after_expand, as the unnamed iterator of before did
+            # at a break: what a reader says in its ``finally`` (Ren'Py's unread .rpa members) reaches the notes
+            for iterator in [members] + sources:
+                close = getattr(iterator, "close", None)
+                if close is not None:
+                    try:
+                        close()
+                    except Exception:             # (as before: an error while a generator was let go was not raised)
+                        pass
             for f in handler.after_expand(ctx):
                 f.handler, f.sha256, f.path = name, ctx.sha256, ctx.path
                 self.context.evaluate(f, ctx)
                 findings.append(f)
+        elif handler is not None and DEPTH_NOTE and self._holds_members(ctx, handler):
+            # (S03) too deep to be opened, and it holds something: said
+            note = Finding(
+                rule_id="ARC-002", title="Archive could not be fully inspected", category=Category.EVASION,
+                severity=Severity.LOW, file=ctx.relpath, line=None, snippet="", confidence=0.3, handler=name,
+                evidence=DEPTH_EVIDENCE % _MAX_DEPTH, reason=NOT_INSPECTED,
+                sha256=ctx.sha256, path=ctx.path, chainable=False)
+            findings.append(limits.mark(note))     # (made like the unpacked-size note above)
         if official.exact(ctx.sha256):
             # byte for byte a file of an official distribution: its content is known, so it gets
             # no "could not be read" or packed-program note of its own (phageo, 2026-10-17,
@@ -1719,6 +2332,8 @@ class Scanner:
 
     def _open_amsi(self, report: ScanReport) -> Optional[Amsi]:
         """The AMSI session to use for this scan, or None (with an INFO note)."""
+        if models.STATIC_ONLY:                   # (check_scanner refused one already given)
+            return None
         if self._amsi is False or self._amsi is None:
             return self.rules.amsi if getattr(self.rules.amsi, "available", False) else None
         if self._amsi is True:
@@ -1809,10 +2424,11 @@ class Scanner:
             if rep.is_clean(self.context.vt_min_age_days):
                 clean += 1
                 exe["clean"] = True
-                weak = [f for f in same if not f.suppressed and f.severity <= Severity.MEDIUM]
-                self.context.apply_reputation(same, rep)
-                for f in weak:
-                    self.context.learn(f, True, "virustotal", 0.5)
+                if reputation.CLEAN_HIDES_WEAK:      # (off since 2026-11-10: evidence, not proof)
+                    weak = [f for f in same if not f.suppressed and f.severity <= Severity.MEDIUM]
+                    self.context.apply_reputation(same, rep)
+                    for f in weak:
+                        self.context.learn(f, True, "virustotal", 0.5)
             elif rep.malicious >= 5:
                 for f in same:
                     if not f.suppressed and f.category is not Category.REPUTATION:
@@ -1838,7 +2454,8 @@ class Scanner:
                 report.notes.append("Not quarantined automatically (system or program "
                                     "location): %s" % found[0].file)
                 continue
-            if found[0].sha256 in clean and worst < Severity.CRITICAL:
+            if reputation.CLEAN_SPARES_QUARANTINE and found[0].sha256 in clean and worst < Severity.CRITICAL:
+                # (off since 2026-11-15, phageo: a clean VirusTotal result keeps no file out of quarantine)
                 report.notes.append("Not quarantined (VirusTotal knows it as clean): %s"
                                     % found[0].file)
                 continue

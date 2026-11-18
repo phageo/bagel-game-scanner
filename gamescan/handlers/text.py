@@ -23,7 +23,7 @@ import hashlib
 import os
 from typing import Iterable, List
 
-from .. import localdrop, trust
+from .. import localdrop, msichain, trust
 from ..models import FileContext, Finding
 from ..rules import RuleEngine
 from ..unpack import sniff
@@ -37,6 +37,7 @@ _LEFT_OUT = frozenset({"URL-001"})      # an address by itself, in a text file
 # what an MSI member is handed (UnreadFormatHandler.expand; read in Scanner._scan_one)
 PACKAGE_SIGNER = "package_signer"       # who validly signed the package or cabinet it came from
 OWN_STARTS = "msi_own_starts"           # (the package's signer, lines that start its own files, lines)
+MSI_WATCH = "msi_watch"                 # what the members add up to (msichain.Watch)
 
 
 def is_text(data: bytes) -> bool:
@@ -252,10 +253,18 @@ class UnreadFormatHandler(BaseHandler):
             # beside it is judged by its own (phageo, 2026-10-19)
             signer = engine_files.package_signer(ctx) if msi.SIGNATURE in db.streams else None
             beside: dict = {}
+            # what the members add up to (phageo, 2026-10-31; msichain.py). "Unsigned": no signature,
+            # or one Windows refused on a file on disk; a memory-only scan cannot check one
+            unsigned = msi.SIGNATURE not in db.streams or (ctx.on_disk and not signer)
+            watch = msichain.Watch(contents.auto_started() if unsigned else ())
+            ctx.cache[MSI_WATCH] = watch
             for name, data in contents.members(policy.want):
                 if ctx.cancelled:
                     break
-                if policy.settle(name, data):
+                left_out = len(policy.unread_members)
+                kept = policy.settle(name, data)
+                watch.note(name, data, unread=len(policy.unread_members) > left_out)
+                if kept:
                     member = containers.child(ctx, name, data)
                     where, path = contents.origin
                     shared = signer if where == msi.EMBEDDED else None
@@ -306,5 +315,7 @@ class UnreadFormatHandler(BaseHandler):
         """The "could not be read" notes of a package: a cabinet compressed with LZX or
         Quantum, one that is missing, a member over the memory limit, a storage inside it ..."""
         problems = ctx.cache.pop("msi_problems", [])
-        return [self._note(ctx, "Windows Installer package", problem[:300]) for problem in
-                list(dict.fromkeys(problems))[:8]]
+        watch = ctx.cache.pop(MSI_WATCH, None)
+        return ([self._note(ctx, "Windows Installer package", problem[:300]) for problem in
+                 list(dict.fromkeys(problems))[:8]]
+                + (msichain.findings(watch, ctx, self.make) if watch is not None else []))

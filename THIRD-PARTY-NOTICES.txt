@@ -24,6 +24,13 @@ Not in this repository, fetched at build time by tools/fetch.py (each by its SHA
     (embeddable package; tkinter and         notices of its parts                 (python/); the package's
     Tcl/Tk from the full package)            (python/LICENSE.txt)                 own notices list them
   Tcl/Tk 8.6                               Tcl/Tk licence (BSD-style)           shipped in the package
+  tree-sitter 0.25.2 and                   MIT (each wheel's own LICENSE)       shipped in the package
+    tree-sitter-javascript 0.25.0                                                (python/tree_sitter,
+    (the JavaScript parser of the JS                                             python/tree_sitter_javascript);
+    group; pinned wheels of                                                      gamescan/jsparse.py loads it
+    tools/manifest_spike.json)                                                   behind a switch and only
+                                                                                 builds a syntax tree - the
+                                                                                 bytes are never run (rule 2)
   Inno Setup 6.7.3 (Jordan Russell,        Inno Setup License                   builds the installer; the
     Martijn Laan)                                                                 installer's setup program
                                                                                   is Inno Setup's own
@@ -31,4 +38,4 @@ Not in this repository, fetched at build time by tools/fetch.py (each by its SHA
                                            License                              never shipped
 
 The built package carries its own THIRD-PARTY-NOTICES.txt (written by tools/build_package.py)
-with the full list of what python.org's Python incorporates.
+with the full list of what python.org's Python incorporates and the tree-sitter wheels' licences.

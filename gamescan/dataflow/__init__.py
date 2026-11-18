@@ -26,6 +26,7 @@ from .values import MAX_DEPTH, Clock, Resolved, powershell_encoded
 __all__ = ["Analysis", "Resolved", "analyse", "LANGUAGES"]
 
 LANGUAGES = ("python", "renpy", "js", "ruby", "powershell", "batch")
+MAX_PAYLOADS = 40                # decoded payloads of one reading that the rules read (the rest: Analysis.dropped)
 
 _RISKY_COMMAND = re.compile(
     _IND[0])
@@ -46,6 +47,7 @@ class Analysis:
     opaque: int = 0                 # process launches whose command could not be read
     error: str = ""                  # internal failure of the resolver (never of the scan)
     cut: str = ""                    # the limit this reading stopped at ("": it read to the end)
+    dropped: int = 0                 # (S12) decoded payloads past the 40th, which are not scanned
 
 
 def _reportable(hit: Resolved) -> bool:
@@ -122,6 +124,7 @@ def analyse(text: str, language: str) -> Analysis:
     # the steps are the limit (a count: the same file, the same answer), the clock is an
     # emergency brake; whichever stopped the reading, it is said (SCRIPT-LIMIT-001)
     out.cut = clock.stopped
+    out.dropped = max(0, len(out.payloads) - MAX_PAYLOADS)
     del out.resolved[200:]
-    del out.payloads[40:]
+    del out.payloads[MAX_PAYLOADS:]
     return out

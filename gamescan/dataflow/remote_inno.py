@@ -21,6 +21,13 @@ a variable has the text it was given last on the way. A procedure of the
 script that is called is read at the call, with what it is handed. Jumps are
 not followed; what a function of Inno Setup returns is not known, except for
 the few that hand a text on (``ExpandConstant`` ...).
+
+A function of the script has every value its code can give it: ``Result := 'a'``
+in one branch and ``'b'`` in another are two values, and a call hands on both
+(``_Choices``; phageo, 2026-11-02, round-4 bug 2). A download from such a call
+counts once per value, so an address is the official one only when every value
+is. An empty text names nothing to fetch and is no value; a value that is not
+known makes the whole result not known. A plain variable keeps the last text.
 """
 from __future__ import annotations
 from ..indicators import strings as _indicator_strings   # strings as data: indicators.py
@@ -43,10 +50,14 @@ _MAX_DOWNLOADS = 256
 _MAX_STARTS = 4096
 _MAX_HITS = 8
 _MAX_TEXT = 2048                # a text that was put together
+_MAX_CHOICES = 8                # values of one function's result; more: not known
 _MAX_GLOBALS = 10_000
 _MAX_COPIES = 8                 # [Files] rows that copy one downloaded file
 _PARAMETERS = 16                # places below a procedure that is read by itself
 HOLE = OPEN + CLOSE             # a part that is only known when the installer runs
+# a function's result has all its values (_Choices). A switch by phageo's gate rule: off if it
+# drops a malicious verdict without an official-hash reason.
+FOLLOW_RESULTS = True
 
 NO_CODE, READ, UNREAD = "none", "read", "unread"
 ROW = "[Run]"                   # the ``sink`` of a hit whose start is a row, not an instruction
@@ -85,6 +96,7 @@ class Download(NamedTuple):
     kind: str               # remote | unresolved | local
     address: str
     saved: str              # where it is written ("" = not known)
+    choice: bool = False    # one of the values of a function's result: found() keeps it
 
 
 class Start(NamedTuple):
@@ -105,6 +117,35 @@ class Found(NamedTuple):
 class _Ref(NamedTuple):
     """A place handed on instead of its value: a result, a ``var`` parameter."""
     place: int              # a place on the stack (0 and up) or a variable of the script (below 0)
+
+
+class _Choices(str):
+    """The values a function's result can have (two or more, none empty). As a plain text it is the
+    first of them; what can use them all asks ``_each``."""
+    values: Tuple[str, ...]
+
+    def __new__(cls, values: Sequence[str]) -> "_Choices":
+        self = super().__new__(cls, values[0])
+        self.values = tuple(values)
+        return self
+
+
+def _each(value: Optional[str]) -> Tuple[Optional[str], ...]:
+    return value.values if isinstance(value, _Choices) else (value,)
+
+
+def _many(values: Sequence[Optional[str]]) -> Optional[str]:
+    """One value for ``values``: a text, ``_Choices``, or None when one of them is not known or
+    there are too many. An empty text names nothing and counts only when nothing else is there."""
+    texts: Dict[str, None] = {}
+    for value in values:
+        if value is None:
+            return None
+        texts.update(dict.fromkeys(_each(value)))
+    named = [text for text in texts if text]
+    if len(named) > _MAX_CHOICES:
+        return None
+    return _Choices(named) if len(named) > 1 else named[0] if named else ""
 
 
 def _same(text: str) -> str:
@@ -137,11 +178,17 @@ def _kind(address: str) -> str:
     return REMOTE if _ADDRESS.match(address) and HOLE not in address and "{" not in address else UNRESOLVED
 
 
-def _join(left: Optional[str], right: Optional[str]) -> Optional[str]:
+def _join_one(left: Optional[str], right: Optional[str]) -> Optional[str]:
     if left is None and right is None:
         return None
     text = (HOLE if left is None else left) + (HOLE if right is None else right)
     return _HOLES.sub(HOLE, text)[:_MAX_TEXT]
+
+
+def _join(left: Optional[str], right: Optional[str]) -> Optional[str]:
+    if not isinstance(left, _Choices) and not isinstance(right, _Choices):
+        return _join_one(left, right)
+    return _many([_join_one(one, other) for one in _each(left) for other in _each(right)])
 
 
 def _library(name: str) -> str:
@@ -169,6 +216,22 @@ def names_download(script: ifps.Script) -> bool:
     return False
 
 
+class _Result:
+    """What a function's code gives its result, while the function is read at a call. A value that
+    the next one replaces with no jump between them is not returned (``Result := Result + 'x'``)."""
+
+    def __init__(self, place: Optional[int]) -> None:
+        self.place = place
+        self.values: List[Optional[str]] = []
+        self.kept = True
+
+    def given(self, value: Optional[str]) -> None:
+        if self.values and not self.kept:
+            self.values.pop()
+        self.values.append(value)
+        self.kept = False
+
+
 class _Flow:
     def __init__(self, script: ifps.Script) -> None:
         self.script = script
@@ -178,6 +241,7 @@ class _Flow:
         self.downloads: Dict[Tuple[int, str, str], Download] = {}
         self.starts: Dict[Tuple[int, str], Start] = {}
         self.first: Dict[int, int] = {}                     # procedure -> the number of its first instruction
+        self.result: Optional[_Result] = None               # the function whose result is being read
         count = 0
         for procedure in script.procedures:
             self.first[procedure.index] = count + 1
@@ -218,6 +282,8 @@ class _Flow:
             place = held.place
         if place is None:
             return
+        if self.result is not None and place == self.result.place:
+            self.result.given(value)
         if place < 0:
             if -1 - place in self.variables or len(self.variables) < _MAX_GLOBALS:
                 self.variables[-1 - place] = value
@@ -311,9 +377,35 @@ class _Flow:
                 height = len(self.stack) - (1 if c == ifps.POP_GOTO else 2 if c == ifps.POP2_GOTO else 0)
                 heights.setdefault(op.number, height)
                 loose = c in (ifps.GOTO, ifps.POP_GOTO, ifps.POP2_GOTO)
+                self.branch()
             elif c == ifps.RETURN:
                 loose = True
+                self.branch()
+            elif c in (ifps.PUSH_HANDLER, ifps.POP_HANDLER):
+                self.branch()
         del self.stack[base:]
+
+    def branch(self) -> None:
+        """The value of the result so far can be what the function returns."""
+        if self.result is not None:
+            self.result.kept = True
+
+    def function(self, procedure: ifps.Procedure, target: _Ref, depth: int) -> None:
+        """Read a function of the script at its call: every value its code gives the result."""
+        place: Optional[int] = target.place
+        for _ in range(4):
+            held = self.held(place)
+            if not isinstance(held, _Ref):
+                break
+            place = held.place
+        outer, self.result = self.result, _Result(place)
+        try:
+            self.walk(procedure, len(self.stack), depth + 1)
+            values = self.result.values
+        finally:
+            self.result = outer
+        if values:
+            self.put(place, _many(values))
 
     def call(self, number: int, index: int, base: int, depth: int, result: bool, pops: int) -> None:
         if not 0 <= number < len(self.script.procedures):
@@ -330,7 +422,10 @@ class _Flow:
         places = [first - i for i in range(max(0, min(count, _MAX_ARGUMENTS, first - base + 1)))]
         if not procedure.external:
             if depth + 1 < _MAX_DEPTH and procedure.code:
-                self.walk(procedure, len(self.stack), depth + 1)        # read with what it is handed
+                if target is not None and FOLLOW_RESULTS:
+                    self.function(procedure, target, depth)
+                else:
+                    self.walk(procedure, len(self.stack), depth + 1)    # read with what it is handed
             else:
                 self.forget(places, target)
             return
@@ -357,8 +452,8 @@ class _Flow:
 
         if name in _HAND_ON:
             value = text(0)
-            if name == "ADDBACKSLASH" and value is not None and not value.endswith("\\"):
-                value += "\\"
+            if name == "ADDBACKSLASH" and value is not None:
+                value = _many([one if one.endswith("\\") else one + "\\" for one in _each(value)])
             return value
         if name == "FORMAT":
             return None if text(0) is None else _HOLES.sub(HOLE, _FORMAT.sub(HOLE, text(0)))[:_MAX_TEXT]
@@ -377,25 +472,35 @@ class _Flow:
         elif name in _STARTS:
             program, parameters = (text(i) for i in _STARTS[name])
             if program is not None or parameters is not None:
-                self.start(_SPELLED.get(name, name), index,
-                           " ".join(HOLE if part is None else part for part in (program, parameters)).strip())
+                for first_part in _each(program):
+                    for second_part in _each(parameters):
+                        self.start(_SPELLED.get(name, name), index,
+                                   " ".join(HOLE if part is None else part
+                                            for part in (first_part, second_part)).strip())
         elif procedure.library and _LIBRARY_START.search(procedure.function):
             known = [a for a in arguments if a]
             if known:
-                self.start("%s %s" % (procedure.library, procedure.function), index, " ".join(known))
+                at = next((i for i, a in enumerate(known) if isinstance(a, _Choices)), 0)
+                for one in _each(known[at]):
+                    self.start("%s %s" % (procedure.library, procedure.function), index,
+                               " ".join(known[:at] + [one] + known[at + 1:]))
         return None
 
     def download(self, what: str, index: int, arguments: List[Optional[str]], where: Tuple[int, int],
                  folder: str) -> None:
-        at = next((i for i, a in enumerate(arguments) if a is not None and _ADDRESS.match(a)), where[0])
+        at = next((i for i, a in enumerate(arguments)
+                   if a is not None and any(_ADDRESS.match(one) for one in _each(a))), where[0])
         address = arguments[at] if at < len(arguments) and arguments[at] is not None else ""
         name_at = where[1] + (at - where[0])
         saved = arguments[name_at] if 0 <= name_at < len(arguments) and arguments[name_at] is not None else ""
-        if saved and folder and "\\" not in saved and "/" not in saved:
-            saved = folder + saved              # a bare name: Inno Setup saves into its temporary folder
-        key = (index, address, saved)
-        if key not in self.downloads and len(self.downloads) < _MAX_DOWNLOADS:
-            self.downloads[key] = Download(what, index, _kind(address), address, saved)
+        if len(self.downloads) >= _MAX_DOWNLOADS:
+            return
+        many = isinstance(address, _Choices) or isinstance(saved, _Choices)
+        for one in _each(address):              # (all of them or none: never only the official ones)
+            for name in _each(saved):
+                if name and folder and "\\" not in name and "/" not in name:
+                    name = folder + name        # a bare name: Inno Setup saves into its temporary folder
+                self.downloads.setdefault((index, one, name), Download(what, index, _kind(one), one, name, many))
 
     def start(self, what: str, index: int, command: str, library: bool = False) -> None:
         key = (index, command)
@@ -408,7 +513,7 @@ class _Flow:
         at an instruction, the readings of that instruction that did not get one
         are left out - and so are the starts with a part missing where a whole
         command line was read."""
-        resolved = {d.index for d in self.downloads.values() if d.kind != UNRESOLVED}
+        resolved = {d.index for d in self.downloads.values() if d.kind != UNRESOLVED and not d.choice}
         downloads = [d for d in self.downloads.values() if d.kind != UNRESOLVED or d.index not in resolved]
         whole = {s.index for s in self.starts.values() if HOLE not in s.command}
         starts = [s for s in self.starts.values() if HOLE not in s.command or s.index not in whole]
@@ -480,14 +585,19 @@ def analyse(block: bytes, rows: Optional[Sequence] = None,
             starts.append(Start(ROW, -row[0], ("%s %s" % (row[1], row[2])).strip()))
         hits: List[Hit] = []
         for start in starts:
+            tied = None                 # the download instruction this start is tied to
             for download in downloads:
                 if download.kind == LOCAL or start.index == download.index:
+                    continue
+                if tied is not None and (not download.choice or download.index != tied):
                     continue
                 if any(_named_in(place, start.command)
                        for place in [download.saved] + _copies(download.saved, files or ())):
                     hits.append(Hit("dropper", start.index, start.what, download.what, download.index,
                                     download.kind, download.address, download.saved))
-                    break
+                    tied = download.index
+                    if not download.choice:     # (a function's other values count too: all must be official)
+                        break
             if len(hits) >= _MAX_HITS:
                 break
         # the command lines, in their order: the instructions first, then the rows

@@ -642,6 +642,37 @@ class Contents:
                 return self.format(known[name])
         return None
 
+    def auto_started(self) -> List[str]:
+        """The members - as :meth:`members` names them - the package starts by itself: a custom
+        action that runs a program (from the ``File`` or ``Binary`` table, or a command line /
+        a property that names an installed file), scheduled in a sequence table, so nobody has
+        to ask for it. Conditions are not judged (mechanism A, phageo, 2026-10-31)."""
+        scheduled = set()
+        for table in ("InstallUISequence", "InstallExecuteSequence"):
+            if table in self.db.tables:
+                scheduled.update(str(row["Action"]) for row in self._rows(table)
+                                 if row.get("Action") is not None and row.get("Sequence") is not None)
+        installed = {path.lower(): self.files[key] for key, path in self.file_paths.items()}
+        found: List[str] = []
+        for row in self._ordered():
+            kind = int(row.get("Type") or 0) & 0x3F
+            if str(row.get("Action")) not in scheduled or kind in _ACTION_SETS or kind & 0x07 != 2:
+                continue
+            source = kind & 0x30
+            src = "" if row.get("Source") is None else str(row.get("Source"))
+            if source == 0x10:
+                name = self.files.get(src)
+            elif source == 0x00:
+                name = "%s/%s" % (BINARY, _part(src))
+                name += "" if name.lower().endswith(".exe") else ".exe"
+            elif source == 0x20:
+                name = installed.get(_program(self.format(str(row.get("Target") or ""))).lower())
+            else:
+                name = installed.get((self.value(src) or "").strip('" ').lower())
+            if name and name not in found:
+                found.append(name)
+        return found
+
     # -- the members ------------------------------------------------------------------------------
     def members(self, want: Callable[[str, int], bool]) -> Iterator[Tuple[str, bytes]]:
         """Every member ``want(name, size)`` accepts, one at a time, each in memory."""

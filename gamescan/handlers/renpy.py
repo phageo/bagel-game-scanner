@@ -11,12 +11,12 @@ import re
 import zlib
 from typing import Iterable, List
 
-from .. import localdrop
-from ..dataflow import remote_py
+from .. import compiled_hashes, localdrop
+from ..dataflow import marshal_trace, remote_py
 from ..models import NOT_INSPECTED, Category, FileContext, Finding, Severity
 from ..rules import RuleEngine
 from ..unpack import limits, pycalls, pyo, rpyc
-from . import renpy_engine
+from . import containers, renpy_engine
 from .base import BaseHandler
 
 _SOURCE = frozenset({".rpy", ".rpym", ".py", ".pyw"})
@@ -38,6 +38,18 @@ _NETWORK_CALL = (_IND[1])
 _USES_NETWORK = re.compile(_NETWORK_CALL + r"|://", re.I)       # in code: an address counts too
 _NAMES_NETWORK = re.compile(_NETWORK_CALL, re.I)                # in dialogue and names: calls only
 _MAX_MEMBER = 32 * 1024 * 1024
+# (phase D, session R2b-1 - phageo 2026-11-17; silent escapes. Notes only: nothing new is read.)
+# S04: compiled Python that is not Python 2.7 (every Python 3 ".pyc") and is no official file is not read - and now
+# that is said (ARC-002, at least REVIEW): Python runs such a file without its source. Off: nothing is said.
+UNREAD_BYTECODE_NOTE = True
+UNREAD_BYTECODE = "unread_bytecode"     # (S04) Finding.context mark of such a note: folded per folder by the scanner
+# S06: an .rpa member the archive's reader does not hand on although it is, by its ending or its first bytes, a
+# program, a script or an archive (compiled Python, ".zip", ".lnk", ".hta" ...; a member that begins like a container)
+# is said (ARC-002). It is not read here (phageo's principle for the session: a note, no new reading). Off: silent.
+RPA_MEMBERS_SAID = True
+# S13: an .rpa member stored in several pieces - only its first piece is read, as if it were the whole member - is
+# said. The first piece is still read as before (nothing found there may be lost). Off: nothing is said.
+RPA_PIECES_SAID = True
 _MAX_INDEX = 64 * 1024 * 1024          # compressed archive index
 _MAX_MEMBERS = 50_000
 
@@ -298,8 +310,21 @@ class RenPyHandler(BaseHandler):
         is reported as not read. (Python 3 files that are not official ones
         are not read yet.)"""
         state = renpy_engine.compiled_status(ctx)
-        if state in (renpy_engine.VERIFIED, renpy_engine.LEFTOVER) or not pyo.is_python2(ctx.data):
+        if state in (renpy_engine.VERIFIED, renpy_engine.LEFTOVER):
             return self.changed_compiled_file(ctx)
+        if not pyo.is_python2(ctx.data):
+            out = self.changed_compiled_file(ctx)
+            # (an official compiled file of a listed SDK, wherever it lies, is known content: no note)
+            if UNREAD_BYTECODE_NOTE and ctx.size > 0 and not compiled_hashes.verified(ctx.sha256):
+                # (S04) not read, and said. (ARC-002, not EXEC-FMT-001: that rule's texts name Java.)
+                note = self.make(ctx, "ARC-002", "Archive could not be fully inspected", Category.EVASION,
+                                 Severity.LOW, NOT_INSPECTED,
+                                 "%s: compiled Python that is not Python 2.7 and no official file (Python runs it "
+                                 "without its source) - %d bytes, not read" % (ctx.name, ctx.size), 0.3)
+                note.chainable = False
+                note.context[UNREAD_BYTECODE] = ctx.size
+                out = out + [limits.mark(note)]
+            return out
         listing = None if ctx.truncated else pycalls.rebuild(ctx.data)
         out = self.changed_compiled_file(ctx, listing)
         if out:
@@ -334,8 +359,9 @@ class RenPyHandler(BaseHandler):
         ctx.cache["runs_text"] = _RUNS_TEXT.search(text) is not None
         ctx.cache["decodes_text"] = _DECODES_TEXT.search(text) is not None
         ctx.cache["uses_network"] = _USES_NETWORK.search(text) is not None
+        ctx.cache[marshal_trace.TEXT] = text
         return (self.changed_engine_file(ctx)
-                + rules.scan(text, "python", ctx, self.name, comment_style="python")
+                + marshal_trace.split(rules.scan(text, "python", ctx, self.name, comment_style="python"), text)
                 + self.entropy_literals(ctx, text, "python")
                 + self.resolve_payloads(ctx, rules, text, language))
 
@@ -378,8 +404,9 @@ class RenPyHandler(BaseHandler):
             ctx.cache["decodes_text"] = _DECODES_TEXT.search(code) is not None
             ctx.cache["uses_network"] = (_USES_NETWORK.search(code) is not None
                                          or _NAMES_NETWORK.search(strings) is not None)
+            ctx.cache[marshal_trace.TEXT] = code
             return (self.changed_engine_file(ctx)
-                    + rules.scan(code, "python", ctx, self.name, comment_style="python")
+                    + marshal_trace.split(rules.scan(code, "python", ctx, self.name, comment_style="python"), code)
                     + self.entropy_literals(ctx, code, "python")
                     + self.resolve_payloads(ctx, rules, code, "python")
                     + rules.scan(strings, "python", ctx, self.name, numbered=False)
@@ -394,6 +421,8 @@ class RenPyHandler(BaseHandler):
         # every one of these ways out was silent.
         unread = ctx.cache.setdefault("rpa_unread", [])
         large = 0
+        others: List[str] = []          # (S06) members of a telling kind that this reader does not hand on
+        pieces: List[str] = []          # (S13) members stored in several pieces (the first three are named)
         try:
             # (an archive that is itself a member of another archive is only in memory - or in
             # a temporary file of its own. Until 2026-10-12 the path was opened whatever it
@@ -426,9 +455,13 @@ class RenPyHandler(BaseHandler):
                     if isinstance(prefix, str):
                         prefix = prefix.encode("latin-1")
                     fh.seek(off)
-                    head = (prefix + fh.read(2))[:2]
+                    begin = (prefix + fh.read(8 if RPA_MEMBERS_SAID else 2))[:8]
+                    head = begin[:2]
                     ext = "." + name.rsplit(".", 1)[-1].lower() if "." in name else ""
                     if ext not in _MEMBER_EXTS and head != b"MZ":
+                        if RPA_MEMBERS_SAID and (ext in containers.SAID_MEMBER_EXTS
+                                                 or begin[:max(length, 0)].startswith(containers.CONTAINER_MAGICS)):
+                            others.append(name)         # (S06) said in the archive's note; not read here
                         if localdrop.wanted(name, length):
                             # perhaps the file a script decodes (CHAIN-LOCAL-DROP; Scanner._join_local):
                             # kept in memory, bounded - pictures and sound are not
@@ -440,6 +473,10 @@ class RenPyHandler(BaseHandler):
                         if large == 1:
                             unread.append("%s: larger than %d MB, not read" % (name[:120], _MAX_MEMBER >> 20))
                         continue
+                    if RPA_PIECES_SAID and len(chunks) > 1 and len(pieces) < 3:
+                        # (S13) only its first piece is read, as before (so nothing found there is lost) - and
+                        # now it is said that the rest of the member was not
+                        pieces.append("%s: stored in %d pieces, only the first was read" % (name[:120], len(chunks)))
                     fh.seek(off)
                     data = prefix + fh.read(length - len(prefix))
                     yield FileContext(path=ctx.path, relpath="%s!%s" % (ctx.relpath, name),
@@ -450,13 +487,21 @@ class RenPyHandler(BaseHandler):
             # damaged or unknown archive layout
             unread.append("the archive could not be read to its end (%s)" % type(exc).__name__)
         finally:
+            # (R2b-1: said after the five notes of before - after_expand - so that none of those is pushed out)
+            said = ctx.cache.setdefault("rpa_said", []) if others or pieces else []
+            if others:
+                said.append(containers.SAID_MEMBERS % (len(others), ", ".join(n[:120] for n in others[:5])))
+            said.extend(pieces)
             if large > 1:
                 unread.append("%d more members larger than %d MB were not read" % (large - 1, _MAX_MEMBER >> 20))
 
     def after_expand(self, ctx: FileContext) -> List[Finding]:
+        old = ctx.cache.pop("rpa_unread", [])[:5]
         out = [self.make(ctx, "ARC-002", "Archive could not be fully inspected", Category.EVASION,
                          Severity.LOW, NOT_INSPECTED, note[:300], 0.3)
-               for note in ctx.cache.pop("rpa_unread", [])[:5]]
-        for note in out:
+               for note in old + ctx.cache.pop("rpa_said", [])]
+        for number, note in enumerate(out):
             note.chainable = False
+            if number >= len(old):
+                limits.mark(note)                   # (R2b-1: a note of a silent-escape fix)
         return out

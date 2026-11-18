@@ -113,6 +113,23 @@ def entries(stream: BinaryIO) -> List[Entry]:
     return out
 
 
+def header_sha256(stream: BinaryIO) -> str:
+    """SHA-256 of the archive's list of files, as its text stands in the archive - what
+    Electron's integrity record of the archive holds (``gamescan.pe.resource_differences``).
+    ``stream`` must start at the archive. Raises :class:`AsarError`."""
+    import hashlib
+    head = stream.read(16)
+    if not looks_like(head):
+        raise AsarError("not an asar archive of the known layout (encrypted, or another format)")
+    length = struct.unpack_from("<IIII", head)[3]
+    if length > _MAX_HEADER:
+        raise AsarError("a list of files larger than %d MB" % (_MAX_HEADER >> 20))
+    raw = stream.read(length)
+    if len(raw) != length:
+        raise AsarError("the archive is cut short (its list of files does not fit)")
+    return hashlib.sha256(raw).hexdigest()
+
+
 def read(stream: BinaryIO, entry: Entry):
     """The content of one file of the archive (``bytes``, or a
     :class:`spool.Blob` when it is large)."""

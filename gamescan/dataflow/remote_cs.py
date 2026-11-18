@@ -47,6 +47,7 @@ _IND = _indicator_strings("gamescan/dataflow/remote_cs.py")
 import re
 from typing import Dict, FrozenSet, Iterable, List, NamedTuple, Optional, Set, Tuple
 
+from ..fixlog import note as _fix_note
 from ..unpack import dotnet_il as il
 
 READ, UNREAD = "read", "not read"
@@ -95,6 +96,21 @@ _LOAD_TWO = re.compile(r"^(?:System\.Reflection\.Assembly::LoadModule"
                        r"|System\.Activator::(?:CreateInstanceFrom|CreateComInstanceFrom))$")
 _LOAD_BY_ADDRESS = re.compile(r"^System\.Reflection\.Assembly::(?:LoadFrom|UnsafeLoadFrom)$")
 _START = re.compile(r"^System\.Diagnostics\.Process::Start$")
+# False-DANGEROUS audit B3 (phageo, 2026-11-17, session R2b-2): at ``Process.Start(program, arguments)`` (the two-text
+# form) whose program is a text written in the code and no script runtime or system runner (``remote._INTERPRETERS``:
+# cmd, powershell, mshta, rundll32, msiexec ...), a download that reaches only the arguments is data handed to a
+# program - "argument" (CHAIN-REMOTE-ARG, HIGH), as in the other languages. A program that is not written out, a
+# runtime, or a written file in the arguments: as before (CRITICAL). Only the download reading, only inside one method
+# (an argument of the method that reaches the start keeps the old reading across methods), not the start-info object
+# (its program, set by FileName, is not followed: as before). Off: as before.
+ARGUMENT_SPLIT = True
+_PATH_PARTS = re.compile(r"[\\/]")
+# the script runtimes of the other readers (remote._INTERPRETERS), read from the same stored strings - not imported:
+# this reader does not depend on the JavaScript reading (gamescan/cache.py keys a kept reading by what it imports)
+_INTERPRETERS = frozenset(_indicator_strings("gamescan/dataflow/remote.py")[0].split())
+_SHARES = ("\\\\", "//")                 # a network share's path
+# (B3, reviewer) Windows programs that run, open or install what their arguments name, beside remote._INTERPRETERS
+_RUNS_ARGUMENTS = frozenset(_IND[5].split())
 _START_NATIVE = re.compile(_IND[4])
 _WRITE_ALL = re.compile(r"^System\.IO\.File::(?:WriteAll|AppendAll)\w+$")
 _MOVE = re.compile(r"^System\.IO\.File::(?:Move|Copy|Replace)$")
@@ -118,7 +134,8 @@ EMPTY: FrozenSet[tuple] = frozenset()
 
 
 class Hit(NamedTuple):
-    how: str                # "loader" (the download is loaded / started) or "dropper" (written, then started)
+    how: str                # "loader" (the download is loaded / started), "dropper" (written, then started) or
+                            # "argument" (B3: only the arguments of a program written in the code)
     source: str             # "WebClient::DownloadData"
     sink: str               # "Assembly::Load"
     where: str              # "Game.Updater::Run" - the method that holds the sink
@@ -464,6 +481,34 @@ class _Trace:
         if key not in self.state.hits and len(self.state.hits) < MAX_HITS:
             self.state.hits[key] = Hit(how, source, sink, self.where, self.address)
 
+    splits_arguments = True                             # (B3: the download reading; not the decoded-data one)
+
+    def _fixed_program(self, tags: FrozenSet[tuple]) -> bool:
+        """(B3) Is ``tags`` a program written in the code - texts only, none of them a script runtime or system
+        runner, nothing downloaded, written, handed in or given back by another program?"""
+        texts = [t[1] for t in tags if t[0] == TEXT]
+        if not texts or any(t[0] not in (TEXT, ORIGIN) for t in tags) or self.dropped(tags):
+            return False
+        for text in texts:
+            plain = text.strip().strip('"').strip()
+            word = _PATH_PARTS.split(plain)[-1].lower()
+            # only a program file ("x.exe") on this PC: a script, a document, an address (also a network share), a
+            # bare name or an environment variable is opened through whatever runs it - as before; nor a program
+            # that runs what its arguments say (the shared list, and the C# reader's own: _RUNS_ARGUMENTS)
+            if not word.endswith(".exe") or "%" in plain or "://" in plain or plain.startswith(_SHARES) \
+                    or word[:-4] in _INTERPRETERS or word[:-4] in _RUNS_ARGUMENTS:
+                return False
+        return True
+
+    def argument(self, tags: FrozenSet[tuple], sink: str) -> None:
+        """(B3) ``tags`` are only the arguments of a written program that is started: a download there is data
+        handed to it ("argument"); anything else in them (a written file, an argument of this method) as before."""
+        download = _youngest(tags, DL)
+        if download is not None and download[2] <= MAX_DEPTH:
+            self.hit("argument", download[1], sink)
+            _fix_note("B3")
+        self.reaches(frozenset(t for t in tags if t[0] != DL), sink, 0)
+
     def reaches(self, tags: FrozenSet[tuple], sink: str, depth: int) -> None:
         """``tags`` are handed to something that loads or starts them (``sink``), over
         ``depth`` hand-overs between methods from here on."""
@@ -567,13 +612,15 @@ class _Trace:
             elif code == 0x8E:                                      # ldlen: a number
                 self.pop()
                 self.push(EMPTY)
+            elif self.other(ins):
+                pass
             else:
                 _size, pops, pushes = il.OPCODES[code]
                 if pops == 1 and pushes == 1:
                     pass                                            # a conversion, a cast: the same value
                 elif pops == 2 and pushes == 1 and (0x58 <= code <= 0x64 or 0xD6 <= code <= 0xDB):
                     second, first = self.full(self.pop()), self.full(self.pop())    # a ^ key: still that data
-                    self.push(frozenset(t for t in first | second if t[0] in _COUNTED))
+                    self.push(self.combine(ins, first | second))
                 elif pops == 1 and pushes == 2:
                     top = self.pop()
                     self.push(top)
@@ -588,6 +635,44 @@ class _Trace:
                 saved[goes] = list(self.stack)
             if code in il.ENDS:
                 self.stack, dead = [], True
+
+    # -- what a reading of another kind changes (dataflow/decode_cs.py); here: the download reading ---------
+    def combine(self, ins: il.Instruction, operands: FrozenSet[tuple]) -> FrozenSet[tuple]:
+        """What an arithmetic / bit operation on ``operands`` gives: the counted marks they carry."""
+        return frozenset(t for t in operands if t[0] in _COUNTED)
+
+    def other(self, ins: il.Instruction) -> bool:
+        """An instruction this reading handles itself (True); the download reading has none."""
+        return False
+
+    def finish(self, name: str, callee: il.Callee, result: Set[tuple]) -> Set[tuple]:
+        """What a call gives back, last word of the reading (the download reading: as it is)."""
+        return result
+
+    def sink_label(self, name: str, callee: il.Callee, native: str) -> str:
+        """How a load / start is named in what is found ("" = the call is none)."""
+        return _short(name) if _LOAD.match(name) or _START.match(name) else \
+            native if native and _START_NATIVE.match(native) else ""
+
+    def sources(self, name: str, args: List[FrozenSet[tuple]], full: List[FrozenSet[tuple]],
+                result: Set[tuple]) -> bool:
+        """The value a call makes: a download (into ``result``, into a buffer it is handed, or written
+        to the file its second argument names). True when the call is known by name."""
+        addresses = [t[1] for tags in full for t in tags if t[0] == TEXT and _REMOTE.match(t[1])]
+        local = bool(addresses) and all(_LOCAL.match(a) for a in addresses)
+        if _SOURCE.match(name):
+            if not local:
+                result.add((DL, _short(name), 0))
+            return True
+        if _SOURCE_TO_FILE.match(name):
+            if not local and len(args) > 1:
+                self.drop(args[1], _short(name))
+            return True
+        if _SOURCE_INTO.match(name):
+            for tags in args:
+                self.taint(tags, _short(name))
+            return True
+        return False
 
     def call(self, code: int, callee: il.Callee) -> None:
         state = self.state
@@ -604,15 +689,20 @@ class _Trace:
 
         # -- a start or a load: does what it is given come from the network? ------------------
         native = self.module.imported(callee.own) if callee.own else ""
-        sink = _short(name) if _LOAD.match(name) or _START.match(name) else \
-            native if native and _START_NATIVE.match(native) else ""
+        sink = self.sink_label(name, callee, native)
         if sink:
             known = True
             before = len(state.hits)
             loads = _LOAD.match(name) or sink.lower().startswith("loadlibrary")
             chooses = everything if not loads else full[:2] if _LOAD_TWO.match(name) else full[:1]
+            split = (ARGUMENT_SPLIT and self.splits_arguments and not loads and _START.match(name)
+                     and callee.params == 2 and self._fixed_program(full[0]))
+            if split:
+                chooses = [full[0]]                     # (B3) the program; its arguments below
             for tags in chooses:
                 self.reaches(tags, sink, 0)
+            if split:
+                self.argument(full[1], sink)
             if len(state.hits) == before and _LOAD_BY_ADDRESS.match(name):
                 remote = min((t[1] for tags in full[:1] for t in tags
                               if t[0] == TEXT and _REMOTE.match(t[1]) and not _LOCAL.match(t[1])), default=None)
@@ -621,20 +711,8 @@ class _Trace:
                     self.hit("loader", "the address it is given", sink)
 
         # -- a download ---------------------------------------------------------------------
-        addresses = [t[1] for tags in full for t in tags if t[0] == TEXT and _REMOTE.match(t[1])]
-        local = bool(addresses) and all(_LOCAL.match(a) for a in addresses)
-        if _SOURCE.match(name):
+        if self.sources(name, args, full, result):
             known = True
-            if not local:
-                result.add((DL, _short(name), 0))
-        elif _SOURCE_TO_FILE.match(name):
-            known = True
-            if not local and len(args) > 1:
-                self.drop(args[1], _short(name))
-        elif _SOURCE_INTO.match(name):
-            known = True
-            for tags in args:
-                self.taint(tags, _short(name))
 
         # -- a file that is written ---------------------------------------------------------
         if _WRITE_ALL.match(name) and len(args) > 1:
@@ -696,7 +774,9 @@ class _Trace:
                     source = state.drops.get((target, number))
                     if source:                          # the method writes a download to the path it is handed
                         self.drop(raw[number], source)
-                for number, kind, path in state.writes.get(target, ()):
+                # (a copy, in a fixed order: a method that calls itself adds to its own list while
+                # it is read here - what is added is read when the method is traced again)
+                for number, kind, path in sorted(state.writes.get(target, ())):
                     if number < len(passed):            # the method writes this argument to a file
                         if kind == "p" and path < len(passed):
                             self.written(raw[path], [_handed(passed[number])])
@@ -761,7 +841,7 @@ class _Trace:
             self.serial -= 1
             self.boxes[self.serial] = set()
             result.add((BOX, self.serial))
-        self.push(frozenset(result))
+        self.push(frozenset(self.finish(name, callee, result)))
 
 
 def _named(name: str) -> bool:
@@ -790,14 +870,35 @@ def _wanted(module: il.Module, official: bool = False) -> bool:
     return False
 
 
-def analyse(data: bytes, pe, official: bool = False) -> Found:
+class Reading:
+    """What one kind of reading looks for: the download reading here; the decode reading of
+    :mod:`gamescan.dataflow.decode_cs` (C5) changes the sources and the trace."""
+    trace = _Trace
+
+    def wanted(self, module: il.Module, official: bool) -> bool:
+        return _wanted(module, official)
+
+    def source(self, name: str) -> bool:
+        """Does a call of ``name`` make a value this reading follows?"""
+        return bool(_SOURCE.match(name) or _SOURCE_TO_FILE.match(name) or _SOURCE_INTO.match(name))
+
+    def source_in(self, code: List[il.Instruction]) -> bool:
+        """... or does the method make one without a call?"""
+        return False
+
+
+DOWNLOADS = Reading()
+
+
+def analyse(data: bytes, pe, official: bool = False, kind: Reading = DOWNLOADS) -> Found:
     """The download-and-run chains in the methods of one managed program, and what
     it leaves for the chain across programs. ``official``: the file is verified to be
-    a file of an official engine package (see :func:`_wanted`)."""
+    a file of an official engine package (see :func:`_wanted`). ``kind``: what is followed
+    (the downloads; :mod:`gamescan.dataflow.decode_cs` follows decoded data)."""
     try:
         module = il.Module(data, pe)
         identity = Shares({}, {}, {}, {}, module.assembly_name(), module.forwarded())
-        if not _wanted(module, official):
+        if not kind.wanted(module, official):
             return Found([], READ, shares=identity)
         budget = _Budget()
         # every method's instructions; which methods name a download or a start
@@ -821,12 +922,14 @@ def analyse(data: bytes, pe, official: bool = False) -> Found:
             budget.take(len(code))
             bodies[method.row] = (method, code)
             families.setdefault(module.family(method.type_row), []).append(method.row)
+            if kind.source_in(code):
+                net.add(method.row)
             for ins in code:
                 if ins.code not in (il.CALL, il.CALLVIRT, il.NEWOBJ, il.LDFTN, il.LDVIRTFTN):
                     continue
                 callee = module.callee(ins.operand)
                 name = callee.name
-                if _SOURCE.match(name) or _SOURCE_TO_FILE.match(name) or _SOURCE_INTO.match(name):
+                if kind.source(name):
                     net.add(method.row)
                 elif _LOAD.match(name) or _START.match(name) or (
                         callee.own and _START_NATIVE.match(module.imported(callee.own))):
@@ -869,7 +972,7 @@ def analyse(data: bytes, pe, official: bool = False) -> Found:
                 for row in todo:
                     method, code = bodies[row]
                     budget.take(len(code))
-                    _Trace(state, method, code).run()
+                    kind.trace(state, method, code).run()
             if state.traced == reading:
                 break
             reading = set(state.traced)

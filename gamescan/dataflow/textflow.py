@@ -217,6 +217,77 @@ def module_spans(code: str) -> List[Tuple[int, int, int]]:
     return shared("modules", code, find)
 
 
+# an ES module import of a whole module (phageo, 2026-10-26): ``import * as x from "m"`` and
+# ``import x from "m"`` (also ``import x, {...} from`` / ``import x, * as y from``) give ``x``
+# the module ``m``, as ``x = require("m")`` does - in the text with the strings' insides blanked,
+# so an import written inside a quoted text or a comment is none
+_ESM_IMPORT = re.compile(
+    r"(?<![\w$.])import\s+(?:\*\s*as\s+([A-Za-z_$][\w$]*)|([A-Za-z_$][\w$]*))"
+    r"(?:\s*,\s*(?:\*\s*as\s+([A-Za-z_$][\w$]*)|\{[^{}]{0,400}\}))?\s*from\s*([\"'])")
+_MAX_IMPORTS = 10_000
+
+
+def esm_imports(code: str) -> List[Tuple[int, str, str, int]]:
+    """``(position of "import", bound name, module, position of the module's quote)`` for every
+    import of a whole module in ``code`` (comments blanked): :data:`_ESM_IMPORT`; ``node:`` is
+    left out of the module's name. Found once per text and shared by its readings; at most
+    ``_MAX_IMPORTS``. Named imports (``import {exec} from``) are not among them."""
+    def find() -> List[Tuple[int, str, str, int]]:
+        if "import" not in code:
+            return []
+        from .remote import _MASKS, _blank             # (remote imports this module)
+        bare = shared("bare", code, lambda: _MASKS["c"].sub(_blank, code))
+        out: List[Tuple[int, str, str, int]] = []
+        for m in _ESM_IMPORT.finditer(bare):
+            quote = m.end() - 1
+            close = code.find(code[quote], quote + 1, quote + 202)
+            if close < 0 or "\n" in code[quote + 1:close]:
+                continue
+            module = code[quote + 1:close]
+            module = module[5:] if module.startswith("node:") else module
+            for name in (m.group(1), m.group(2), m.group(3)):
+                if name and name != "from":
+                    out.append((m.start(), name, module, quote))
+            if len(out) >= _MAX_IMPORTS:
+                break
+        return out
+    return shared("esm_imports", code, find)
+
+
+# an ES module's named import (phageo, 2026-10-26, third fix session): ``import { exec } from "m"``
+# (also ``import x, { exec } from``) is read exactly like ``const { exec } = require("m")`` - the text
+# between the braces as the CommonJS readings take it, ``a as b`` written as its CommonJS form ``a: b``
+_ESM_NAMED = re.compile(
+    r"(?<![\w$.])import\s*(?:[A-Za-z_$][\w$]*\s*,\s*)?\{([^{}=;]{1,200})\}\s*from\s*([\"'])")
+_ESM_AS = re.compile(r"([A-Za-z_$][\w$]*)\s+as\s+([A-Za-z_$][\w$]*)")
+
+
+def esm_named_imports(code: str) -> List[Tuple[int, str, str, int]]:
+    """``(position of "import", the text between the braces in its CommonJS form, module,
+    position of the module's quote)`` for every named import in ``code`` (in the text the
+    other imports are found in: :func:`esm_imports`): :data:`_ESM_NAMED`; ``node:`` is left
+    out of the module's name. Found once per text and shared by its readings; at most
+    ``_MAX_IMPORTS``."""
+    def find() -> List[Tuple[int, str, str, int]]:
+        if "import" not in code:
+            return []
+        from .remote import _MASKS, _blank             # (remote imports this module)
+        bare = shared("bare", code, lambda: _MASKS["c"].sub(_blank, code))
+        out: List[Tuple[int, str, str, int]] = []
+        for m in _ESM_NAMED.finditer(bare):
+            quote = m.end() - 1
+            close = code.find(code[quote], quote + 1, quote + 202)
+            if close < 0 or "\n" in code[quote + 1:close]:
+                continue
+            module = code[quote + 1:close]
+            module = module[5:] if module.startswith("node:") else module
+            out.append((m.start(), _ESM_AS.sub(r"\1: \2", m.group(1)), module, quote))
+            if len(out) >= _MAX_IMPORTS:
+                break
+        return out
+    return shared("esm_named_imports", code, find)
+
+
 class _Sites:
     """Which calls of a text are looked at (phageo, 2026-10-15, forty-eighth message): at most
     ``_MAX_SITES`` in each module function of a bundle - the code outside them counts as one
@@ -812,6 +883,15 @@ class TextFlow:
                 for m in re.finditer(r"\{([^{}=;]{1,200})\}\s*=(?!=)", self.code):
                     for inner in re.findall(r"[A-Za-z_$][\w$]*", m.group(1)):
                         unpacked.setdefault(inner, []).append((m.start(), "." + inner, m.end()))
+                # import * as cp from "child_process" / import cp from "child_process": the
+                # module, as cp = require("child_process") (_value_at; phageo, 2026-10-26)
+                for at, bound, _module, quote in esm_imports(self.code):
+                    unpacked.setdefault(bound, []).append((at, "import", quote))
+                # import { exec } from "child_process": as const { exec } = require(...) - each name
+                # of the braces the member of that name (phageo, 2026-10-26, third fix session)
+                for at, inner_text, _module, quote in esm_named_imports(self.code):
+                    for inner in re.findall(r"[A-Za-z_$][\w$]*", inner_text):
+                        unpacked.setdefault(inner, []).append((at, "import." + inner, quote))
                 self._unpacked = self._parse.unpacked = unpacked
             if name in self._unpacked:
                 found = sorted(found + self._unpacked[name])
@@ -897,6 +977,12 @@ class TextFlow:
             value, _ = self.ternary(start)
             if definition[1].startswith("."):
                 value = self.member(value, definition[1][1:])
+            elif definition[1] == "import":            # the quoted name of the module: the module
+                value = (Ref(value[5:] if value.startswith("node:") else value, False)
+                         if isinstance(value, str) else hole(name))
+            elif definition[1].startswith("import."):  # ... and a named import: its member
+                value = (self.member(Ref(value[5:] if value.startswith("node:") else value, False),
+                                     definition[1][7:]) if isinstance(value, str) else hole(name))
         finally:
             self._paren = saved
             self._active.discard(start)
@@ -1380,6 +1466,13 @@ class TextFlow:
         for m in find_all(self._JS_ALIAS, self.code):
             defined += 1
             aliases += [m.group(1)] if m.group(1) else re.findall(r"[A-Za-z_$][\w$]*", m.group(2))
+        imported = [(quote, bound) for _at, bound, module, quote in esm_imports(self.code)
+                    if module == "child_process"]           # import * as cp / import cp from "child_process"
+        # import { exec } from "child_process": its names, as for { exec } = require(...)
+        named = [(quote, inner) for _at, text, module, quote in esm_named_imports(self.code)
+                 if module == "child_process" for inner in re.findall(r"[A-Za-z_$][\w$]*", text)]
+        defined += len({quote for quote, _bound in imported + named})      # (one statement, one use)
+        aliases += [bound for _quote, bound in imported + named]
         if self._module_uses("child_process") != defined + direct:
             self.opaque += 1
         for alias in dict.fromkeys(aliases):

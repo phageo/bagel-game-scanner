@@ -44,9 +44,10 @@ import dataclasses
 from dataclasses import dataclass
 from typing import Any, Dict, List, NamedTuple, Optional, Tuple
 
+from ..fixlog import note as _fix_note
 from ..rules import _MASKS, QuotedText, _MAX_PLACES, find_all as _find, quoted_text, shared, text_places
 from . import values as V
-from .textflow import JS_MAX_SOURCE as MAX_SOURCE, TextFlow
+from .textflow import JS_MAX_SOURCE as MAX_SOURCE, TextFlow, esm_imports, esm_named_imports
 from .values import Budget, Clock, Sym, show
 
 MAX_STEPS = 600_000             # character / occurrence steps of the flow analysis per file
@@ -253,6 +254,20 @@ def _functions_in(bare: str):
 
 
 _ACCESS = re.compile(r"\.\s*(?:responseText|responseXML|responseBody|responseStream|response)\b(?!\s*=(?!=))")
+# False-DANGEROUS audit B2 (phageo, 2026-11-17, session R2b-2): a response read through ``this`` or the event's
+# ``target`` / ``currentTarget`` inside a function written as the handler of one request object (``x.onload =
+# function``, ``x.onreadystatechange = ...``, ``x.onloadend = ...``, ``x.addEventListener("load", ...)``) is that
+# object's response - its own ``open``, wherever that stands. Until then the nearest ``open`` written before the
+# read was taken (else the first of the file), so a handler written before its own ``open`` could be tied to another
+# request. In every other case (an object opened more than once or never, another receiver) the old choice stays.
+# Off: the old choice always.
+OWN_HANDLER = True
+# (the owner's name begins the chain: not cut out of "w[0].x" or "g().x" - reviewer, R2b-2)
+_HANDLER_PROPERTY = re.compile(r"(?<![\w$.\])])(%s(?:\s*\.\s*%s)*)\s*\.\s*on(?:load|loadend|readystatechange)\s*=\s*\Z"
+                               % (_ID, _ID))
+_HANDLER_LISTENER = re.compile(r"""(?<![\w$.\])])(%s(?:\s*\.\s*%s)*)\s*\.\s*addEventListener\s*\(\s*(['"])"""
+                               r"""(?:load|loadend|readystatechange)\2\s*,\s*\Z""" % (_ID, _ID))
+_EVENT_TARGET = re.compile(r"(%s)\.(?:target|currentTarget)\Z" % _ID)
 _XHR_OPEN = re.compile(r"\.\s*open\s*\(")
 _NET_ALIAS = re.compile(r"""(?<![\w$.])(%s)\s*=\s*(?:nw\s*\.\s*)?require\s*\(\s*['"](?:node:)?(?:%s)['"]\s*\)(?!\s*\.)"""
                         % (_ID, _NET_MODULES))
@@ -262,6 +277,7 @@ _NET_CALL = re.compile(r"(?<![\w$.])fetch\s*\(|(?<![\w$])(?:window|self|globalTh
                        r"|(?<![\w$.])(?:\$|jQuery)\s*\.\s*(?:get|post|ajax|getJSON)\s*\("
                        r"|(?<![\w$.])axios(?:\s*\.\s*(?:get|post|request))?\s*\("
                        r"|(?<![\w$.])new\s+(?:WebSocket|EventSource)\s*\(")
+_NET_NAME = re.compile(r"(?:%s)\Z" % _NET_MODULES)            # the name of an imported module (esm_imports)
 _CP_ALIAS = re.compile(r"""(?<![\w$.])(%s)\s*=\s*(?:nw\s*\.\s*)?require\s*\(\s*['"](?:node:)?child_process['"]\s*\)(\s*\.\s*(?:%s)\b)?"""
                        % (_ID, _SPAWN))
 _CP_UNPACK = re.compile(r"""\{([^{}=;]{1,200})\}\s*=\s*(?:nw\s*\.\s*)?require\s*\(\s*['"](?:node:)?child_process['"]\s*\)""")
@@ -1418,13 +1434,21 @@ class RemoteFlow:
             start, receiver = self._callee(self._back(m.start() - 1)) if m.start() else (0, "")
             if not receiver:
                 continue
+            own = self._own_request(start, receiver) if OWN_HANDLER else None
             same = [o for o in self.opens if o[1] == receiver] or self.opens
             before = [o for o in same if o[0] <= start]
             chosen = before[-1] if before else (same[0] if same else None)
+            if own is not None:
+                if own is not chosen:
+                    _fix_note("B2")               # (another request than before: for the gate, gamescan/fixlog.py)
+                chosen = own
             src = chosen[2] if chosen else Source("XMLHttpRequest", start, UNRESOLVED, "")
             seeds.append((start, m.end(), src, -1))
         aliases = {m.group(1) for m in _find(_NET_ALIAS, code) if self._real(m.start())} \
             if "require" in code else set()
+        # import * as https from "https" / import axios from "axios": the module, as with require
+        # (phageo, 2026-10-26)
+        aliases |= {bound for _at, bound, module, _q in esm_imports(code) if _NET_NAME.match(module)}
         calls = [m for m in _find(_NET_CALL, bare)]
         if "require" in code:
             calls += [m for m in _find(_NET_INLINE, code) if self._real(m.start())]
@@ -1449,6 +1473,49 @@ class RemoteFlow:
                 self._callbacks(opener + 1, b - 1, src)
             self._chain(b, src)
             self._consume(a, src)
+
+    def _own_request(self, pos: int, receiver: str):
+        """(B2) The one ``open`` of the request object whose handler reads its response at ``pos`` through
+        ``receiver`` (``this`` in a ``function`` - not an arrow, whose ``this`` is the outer one's - or the
+        handler's first parameter's ``target`` / ``currentTarget``) - or None: the old choice is made."""
+        f = self._inner(pos)
+        if f is None:
+            return None
+        if receiver == "this":
+            if not self.bare.startswith("function", f.start):
+                return None
+        else:
+            event = _EVENT_TARGET.match(receiver)
+            if event is None or not f.params or f.params[0] != event.group(1):
+                return None
+        before = self.code[max(0, f.start - 200):f.start]
+        m = _HANDLER_PROPERTY.search(before) or _HANDLER_LISTENER.search(before)
+        if m is None:
+            return None
+        owner = re.sub(r"\s+", "", m.group(1))
+        # (reviewer, R2b-2) only where the handler surely belongs to that one object - else the old choice:
+        # a plain name (no "this.x"); no other handler slot assigned the same function ("b.onload = a.onload =
+        # function"); the function not bound or called on another object; that object's handler never read as a
+        # value (handed to another object); the object opened once, in the scope the handler stands in, and the
+        # name not given another value between the two.
+        if not _IDENT.fullmatch(owner) or re.search(r"(?<![=!<>])=\s*\Z", before[:m.start()]):
+            return None
+        if re.match(r"[\s})]*\.\s*(?:bind|call|apply)\b", self.bare[f.b:f.b + 80]):
+            return None
+        if re.search(r"(?<![\w$.])%s\s*\.\s*on(?:load|loadend|readystatechange)\b(?!\s*=(?!=))" % re.escape(owner),
+                     self.bare) or re.search(r"""(?<![\w$.])%s\s*\[\s*['"`]on(?:load|loadend|readystatechange)['"`]\s*\]"""
+                                             % re.escape(owner), self.code):
+            return None
+        own = [o for o in self.opens if o[1] == owner]
+        if len(own) != 1:
+            return None
+        opened = own[0][0]
+        if self._scope(owner, opened) != self._scope(owner, f.start):
+            return None
+        a, b = sorted((opened, f.start))
+        if re.search(r"(?<![\w$.])%s\s*=(?!=)" % re.escape(owner), self.bare[a:b]):
+            return None
+        return own[0]
 
     # -- sinks -------------------------------------------------------------------------------
     def _remote_literal(self) -> str:
@@ -1827,6 +1894,18 @@ class RemoteFlow:
         for m in _find(_CP_INLINE, code):
             if self._real(m.start()):
                 out.append((m.start(), m.end() - 1, "child_process"))
+        # import * as cp from "child_process" / import cp from "child_process": the module, as
+        # cp = require("child_process") (phageo, 2026-10-26)
+        modules |= {bound for _at, bound, module, _q in esm_imports(code) if module == "child_process"}
+        # import { spawn as run } from "child_process": as { spawn: run } = require(...) (phageo,
+        # 2026-10-26, third fix session)
+        for _at, text, module, _q in esm_named_imports(code):
+            if module == "child_process":
+                for part in text.split(","):
+                    words = _IDENT.findall(part)
+                    if words and words[0] in _SPAWN.split("|"):
+                        names.add(words[-1])
+                        self._cp_methods[words[-1]] = words[0]
         if modules:
             rx = re.compile(r"(?<![\w$.])(?:%s)\s*\.\s*(?:%s)\s*\(" % ("|".join(map(re.escape, sorted(modules))), _SPAWN))
             out += [(m.start(), m.end() - 1, "child_process") for m in _find(rx, bare)]
@@ -3329,6 +3408,7 @@ class RemoteFlow:
         # most files neither request anything nor load a script: they cost one look
         if not (_ACCESS.search(bare) or _NET_CALL.search(bare) or _LOADER.search(bare) or _JQ_LOAD.search(bare)
                 or ("require" in code and (_NET_ALIAS.search(code) or _NET_INLINE.search(code)))
+                or ("import" in code and any(_NET_NAME.match(m) for _a, _b, m, _q in esm_imports(code)))
                 or ("createElement" in code and _SCRIPT_NEW.search(code))):
             return []
         if not self._has_sink():

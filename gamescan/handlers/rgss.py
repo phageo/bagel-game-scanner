@@ -12,7 +12,7 @@ from ..dataflow import remote_rb
 from ..models import NOT_INSPECTED, Category, FileContext, Finding, Severity
 from ..pe import extract_strings
 from ..rules import RuleEngine
-from ..unpack import rgss, spool
+from ..unpack import limits, rgss, spool
 from . import containers
 from .base import BaseHandler
 from .media import EXTENSIONS as MEDIA_EXTS
@@ -21,6 +21,14 @@ _ARCHIVES = frozenset({".rgssad", ".rgss2a", ".rgss3a"})
 _DATA = frozenset({".rxdata", ".rvdata", ".rvdata2"})
 _MEMBER_EXTS = _DATA | frozenset({
     ".rb", ".exe", ".dll", ".scr", ".com", ".bat", ".cmd", ".ps1", ".vbs", ".js", ".lnk"})
+# (phase D, session R2b-1 - phageo 2026-11-17; silent escapes. Notes only: nothing new is read.)
+# S06: a member of an RGSS archive that is neither a script / data / program by its ending nor a picture or sound, but
+# is - by its ending (containers.SAID_MEMBER_EXTS) or by its first bytes (a program or a container under another
+# name) - something that runs or holds files, is said (ARC-002). It is not read. Off: silent, as before.
+MEMBERS_SAID = True
+# S13: a read error that ends the archive's member loop is said (ARC-002). Off: the loop ends without a word.
+READ_ERROR_SAID = True
+_SAID = "member_said"                # FileContext.cache: the notes of S06 / S13 (after_expand)
 _MAX_TOTAL = 8 << 30                 # scripts, data and programs of one archive
 _MAX_MEMBERS = 5000
 _MAX_MEDIA_MEMBERS = 20_000
@@ -279,6 +287,26 @@ class RgssHandler(BaseHandler):
                         ctx.cache.setdefault("member_errors", []).append(
                             "more than %d picture / sound members: %d were not inspected"
                             % (_MAX_MEDIA_MEMBERS, left_media))
+                    if MEMBERS_SAID:
+                        # (S06) said before the first member is handed out; at most rgss.MAX_ENTRIES looks of
+                        # 16 bytes each
+                        others = []
+                        for entry in entries:
+                            ext = ext_of(entry)
+                            if ext in _MEMBER_EXTS or ext in MEDIA_EXTS:
+                                continue
+                            telling = ext in containers.SAID_MEMBER_EXTS
+                            if not telling and entry.size >= 2:
+                                try:
+                                    begin = next(iter(rgss.entry_pieces(stream, entry, 16)), b"")
+                                except (rgss.RgssError, OSError):   # (the look never ends the archive's reading)
+                                    begin = b""
+                                telling = bytes(begin[:8]).startswith(containers.CONTAINER_MAGICS)
+                            if telling:
+                                others.append(entry.name)
+                        if others:
+                            ctx.cache.setdefault(_SAID, []).append(containers.SAID_MEMBERS % (
+                                len(others), ", ".join(name[:120] for name in others[:5])))
                     for entry in ordered:
                         if ext_of(entry) in MEDIA_EXTS:
                             if media_total + entry.size > _MAX_MEDIA_TOTAL:
@@ -297,7 +325,10 @@ class RgssHandler(BaseHandler):
                         if ext_of(entry) not in MEDIA_EXTS:
                             total += entry.size
                         yield containers.child(ctx, entry.name, data)
-            except OSError:
+            except OSError as exc:
+                if READ_ERROR_SAID:                 # (S13) the members after this point were not read: said
+                    ctx.cache.setdefault(_SAID, []).append(
+                        "the archive could not be read to its end (%s)" % type(exc).__name__)
                 return
         elif _SCRIPTS_FILE.search(ctx.key):
             scripts = self._scripts(ctx)
@@ -318,8 +349,13 @@ class RgssHandler(BaseHandler):
         if skipped:
             notes.append("%d script / data / program member(s) beyond the %d GB budget were not inspected"
                          % (skipped, _MAX_TOTAL >> 30))
-        return [self.make(ctx, "ARC-002", "Archive could not be fully inspected", Category.EVASION,
-                          Severity.LOW, NOT_INSPECTED, note[:300], 0.3) for note in notes[:5]]
+        # (R2b-1: the notes of S06 / S13 come after the five of before, so that none of those is pushed out)
+        old = notes[:5]
+        out = [self.make(ctx, "ARC-002", "Archive could not be fully inspected", Category.EVASION,
+                         Severity.LOW, NOT_INSPECTED, note[:300], 0.3) for note in old + ctx.cache.pop(_SAID, [])]
+        for note in out[len(old):]:
+            limits.mark(note)                       # (R2b-1: a note of a silent-escape fix)
+        return out
 
     @staticmethod
     def _child(ctx: FileContext, name: str, data: bytes) -> FileContext:

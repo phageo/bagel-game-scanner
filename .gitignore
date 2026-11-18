@@ -1,22 +1,47 @@
+# The public repository holds only what the app needs to run and to be built, plus README.md and
+# LICENSE (phageo, 2026-11-18). Everything else stays on the build PC: it is ignored here by default
+# and only the whitelist below is let in. (Ignored on purpose, among others: CLAUDE.md, CHANGELOG.md,
+# CONTRIBUTING.md, SECURITY.md, .github/, .claude/, docs/ - with docs/memory/ and docs/benchmark/ -,
+# tests/, yara_rules/ and the tools that are not listed.)
+/*
+!/README.md
+!/LICENSE
+!/THIRD-PARTY-NOTICES.txt
+!/.gitignore
+!/.gitattributes
+!/GameSafetyScanner.pyw
+!/Run Scanner.bat
+!/gamescan/
+
+# assets: the two icon pictures only
+!/assets/
+/assets/*
+!/assets/icon/
+/assets/icon/*
+!/assets/icon/bagel_ai.png
+!/assets/icon/bagel_pixel.png
+
+# tools: the build and package tools only
+!/tools/
+/tools/*
+!/tools/build_package.py
+!/tools/fetch.py
+!/tools/source_form.py
+!/tools/move_indicators.py
+!/tools/indicator_select.bin
+!/tools/build_launcher.py
+!/tools/launcher/
+!/tools/build_installer.py
+!/tools/build_icon.py
+!/tools/manifest_package.json
+!/tools/manifest_spike.json
+
 # Python caches (they hold absolute paths of the PC that ran the code)
 __pycache__/
 *.py[co]
 
-# built locally or by the workflow, never committed
+# built locally, never committed
 /tools/launcher/Bagel.exe
-/build/
-/dist/
-/inputs/
 *.zip
 *-setup.exe
-
-# outside files: compilers of the installer tests, official archives (tools/fetch.py)
-/tests/_tools/
-/engine_archives/
-
-# what tools/build_icon.py writes beside its pictures
-/assets/icon/bagel_256_clean.png
-
-# samples and benchmark results are never part of this repository
-/docs/benchmark/
 *.csv

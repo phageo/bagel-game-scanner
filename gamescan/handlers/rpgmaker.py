@@ -99,4 +99,13 @@ class RpgMakerHandler(BaseHandler):
             out += self.resolve_payloads(ctx, rules, text, "js",
                                          chain_text=self.page_scripts(text) if large else None)
             out += self.antimalware(ctx, rules, text, "JavaScript")
+        if ctx.ext in (".js", ".mjs", ".cjs"):
+            # an obfuscator's string table: its texts put back and the script read once more (C2)
+            out += self.string_table(ctx, rules, text, out)
+            # private data followed into a network call, on the text with its table put back (C1);
+            # decoded / decrypted data followed into code (C3) - both on one parse of the text
+            trees: dict = {}
+            out += self.private_data_flow(ctx, text, trees)
+            out += self.decoded_code_flow(ctx, text, out, trees)
+            trees.clear()
         return out

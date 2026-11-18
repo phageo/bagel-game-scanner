@@ -12,7 +12,7 @@ import traceback
 from tkinter import filedialog, font as tkfont, messagebox, simpledialog, ttk
 from typing import List, Optional
 
-from . import (export, i18n, launcher, models, selfcheck, settings as settings_store, shellmenu,
+from . import (causes, export, i18n, launcher, models, selfcheck, settings as settings_store, shellmenu,
                system)
 from .context import RESOLVED_FP, ContextEngine, HashAllowlist
 from .defender import DefenderScan
@@ -401,6 +401,10 @@ class App(tk.Tk):
         self.verdict_plain = tk.Label(self.verdict, text="", font=(FONT, 11, "bold"), fg=TEXT,
                                       bg=PANEL, anchor="w")
         self.verdict_plain.pack(anchor="w", fill="x", padx=14)
+        # why SUSPICIOUS / DANGEROUS: the cause classes' titles (gamescan/causes.py; 2026-10-29)
+        self.verdict_why = tk.Label(self.verdict, text="", font=(FONT, 9), fg=TEXT, bg=PANEL, anchor="w",
+                                    justify="left")
+        self.verdict_why.pack(anchor="w", fill="x", padx=14)
         self.verdict_sub = tk.Label(self.verdict, text=t("Choose a game folder or file to scan"),
                                     font=(FONT, 9), fg=MUTED, bg=PANEL, anchor="w")
         self.verdict_sub.pack(anchor="w", fill="x", padx=14, pady=(0, 9))
@@ -709,6 +713,7 @@ class App(tk.Tk):
         self.bar.set(self._progress, ACCENT)
         self.verdict_title.configure(text=t("SCANNING"), fg=ACCENT_HI)
         self.verdict_plain.configure(text="")
+        self.verdict_why.configure(text="")
         sub = self._scan_label or self.path_var.get()
         if self._scan_note and not self._scan_label:
             sub = self._scan_note + "  ·  " + sub
@@ -818,6 +823,7 @@ class App(tk.Tk):
             b.enable(True)
         self.verdict_title.configure(text=t("ERROR"), fg=SEV_COLOR["CRITICAL"])
         self.verdict_plain.configure(text="")
+        self.verdict_why.configure(text="")
         self.verdict_sub.configure(text=t("The scan stopped unexpectedly"))
         self.status.configure(text="")
         self._set_detail([(t("Scan failed\n"), "h"), (trace, "mono")])
@@ -830,6 +836,8 @@ class App(tk.Tk):
         name, detail = i18n.verdict(report)
         self.verdict_title.configure(text=name, fg=color)
         self.verdict_plain.configure(text=i18n.plain_verdict(report), fg=TEXT)
+        why = [i18n.cause(cause)[0] for cause, _found in causes.explain(report)]
+        self.verdict_why.configure(text="%s: %s" % (t("Why this result"), "; ".join(why)) if why else "")
         engines = ", ".join(report.engines) or t("no known engine detected")
         self.verdict_sub.configure(text=t("%s  ·  risk %d/100  ·  %s", detail,
                                           report.risk_score, engines))

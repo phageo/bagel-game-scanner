@@ -202,6 +202,19 @@ def binary(ctx: FileContext, description: str) -> str:
     return why
 
 
+# reasons of :func:`structure` / :func:`binary` that say only that the file could not be *compared* with the
+# component - it is packed, or its headers / metadata cannot be read - not that anything in it contradicts the
+# official file (phageo, 2026-11-03, phase C0: on a library the launcher then asks for the typed word instead
+# of refusing; a wrong self-name, missing exports, a foreign signature stay a real imitation)
+UNPROVEN = ("it is packed (", "its headers cannot be read", "its assembly metadata cannot be read")
+UNPROVEN_MARK = "engine_unproven"          # the mark on such an ENGINE-001 of a library (finding context)
+
+
+def unproven(problem: str) -> bool:
+    """Does ``problem`` only say that the file could not be compared (packed / unreadable)?"""
+    return problem.startswith(UNPROVEN)
+
+
 def structure(ctx: FileContext, description: str) -> str:
     """"" if the program is at least *built* like the engine component its name
     claims (identity in the export table, the component's exports, or imports

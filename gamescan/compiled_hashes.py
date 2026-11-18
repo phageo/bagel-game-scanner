@@ -34,6 +34,11 @@ CONTENT = _TABLES['CONTENT']
 # at all): SHA-256 of the file -> (path in the SDK, indexes into ARCHIVES)
 FILES = _TABLES['FILES']
 
+# compiled Python inside the eggs of the SDKs (lib/<platform>/eggs/*.egg), by the SHA-256
+# of the file only (phageo, 2026-10-26: only exact bytes are proof) -> (<path of the egg
+# in the SDK>!<path in the egg>, indexes into ARCHIVES)
+EGGS = _TABLES['EGGS']
+
 # a Python 2.7 source without comments and spacing (gamescan.unpack.pytokens.token_key)
 # -> the compiled files beside it in the SDKs, without their line numbers
 # (pyo.content_key(data, lines=False)). Keys made by the tokenizer of the Python that
@@ -43,13 +48,15 @@ SOURCES = _TABLES['SOURCES']
 
 def _entry(sha256: str, content_key: Optional[str]):
     entry = CONTENT.get(content_key) if content_key else None
-    return entry if entry is not None else FILES.get((sha256 or "").lower())
+    if entry is None:
+        entry = FILES.get((sha256 or "").lower())
+    return entry if entry is not None else EGGS.get((sha256 or "").lower())
 
 
 def verified(sha256: str, content_key: Optional[str] = None) -> Optional[str]:
     """Which official compiled file this is (None: not in the tables): by what
     it contains (``gamescan.unpack.pyo.content_key``) or by the SHA-256 of the
-    file."""
+    file (also a file inside one of the SDKs' eggs: ``EGGS``)."""
     entry = _entry(sha256, content_key)
     if entry is None:
         return None

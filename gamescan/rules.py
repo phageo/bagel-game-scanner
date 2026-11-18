@@ -10,12 +10,14 @@ _IND = _indicator_strings("gamescan/rules.py")
 
 import bisect
 import collections
+import copy
 import itertools
 import re
 import threading
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, FrozenSet, Iterable, List, Optional, Tuple
 
+from .fixlog import note as _fix_note
 from .models import PACKED, STATEMENT, Category as C, FileContext, Finding, Severity as S
 from .yara import YaraRuleSet
 
@@ -734,7 +736,9 @@ DEFAULT_RULES: List[Rule] = [
        "A sensitive function is looked up by a name assembled from pieces, so "
        "the real call never appears in the file.", 0.55, PY),
     _R("PY-OBF-001", "Execution of decoded/decompressed payload", C.OBFUSCATION, S.CRITICAL,
-       r"(?:exec|eval)\s*\([^\n]*(?:b(?:64|32|16|85)decode|decompress|fromhex|unhexlify|marshal\.loads|codecs\.decode|\[::-1\]|chr\s*\()",
+       r"(?:exec|eval)\s*\([^\n]*(?:b(?:64|32|16|85)decode|decompress|fromhex|unhexlify|marshal\.loads|codecs\.decode|\[::-1\]|chr\s*\()"
+       # (Python 2's statement form; phageo, 2026-10-31 - dataflow/marshal_trace.py reads both forms)
+       r"|(?<![\w.])exec[ \t]+marshal\.loads\s*\(",
        "Decodes a hidden payload and executes it in one step - the classic "
        "obfuscated-loader pattern.", 0.9, PY),
     _R("PY-OBF-002", "Payload decoding primitive", C.OBFUSCATION, S.MEDIUM,
@@ -777,7 +781,10 @@ DEFAULT_RULES: List[Rule] = [
        "is eval), which hides it from anyone reading or scanning the code.",
        0.5, JS, max_per_file=3, tags=(CALL,)),
     _R("JS-PROC-001", "Child process spawning (Node.js)", C.PROCESS, S.HIGH,
-       r"""require\s*\(\s*['"`](?:node:)?child_process['"`]\s*\)|process\.mainModule\.require|process\.binding\s*\(|\.(?:execSync|spawnSync|execFileSync)\s*\(""",
+       # (since 2026-10-26 also the ES module form - default, namespace and named imports:
+       # `import cp from`, `import * as cp from`, `import { exec } from "child_process"`; phageo)
+       r"""require\s*\(\s*['"`](?:node:)?child_process['"`]\s*\)|process\.mainModule\.require|process\.binding\s*\(|\.(?:execSync|spawnSync|execFileSync)\s*\("""
+       r"""|(?<![\w$.])import(?:\s+|(?=[{*]))(?:[\w$]+\s*,?\s*)?(?:\*\s*as\s+[\w$]+|\{[^{}]{0,2000}\})?\s*from\s*['"](?:node:)?child_process['"]""",
        "Gains the ability to start arbitrary programs on the PC. Game plugins "
        "almost never need this.", 0.7, JS, tags=(CALL,)),
     _R("JS-PROC-002", "Windows Script Host / ActiveX automation", C.PROCESS, S.HIGH,
@@ -1008,6 +1015,108 @@ DEFAULT_RULES: List[Rule] = [
 ]
 
 
+# -- reading fixes of the one-statement rules (false-DANGEROUS audit B4-B7; phageo, 2026-11-17, session R2b-2) ------
+# A longer name was read as "eval" / "exec" / "Function" / "-e". Each fix is a second form of its rule, used while its
+# switch is on (RuleEngine.scan picks it for the default rule object); off = the old form, the very same matches.
+# Level, tier and texts are the rule's own - nothing else changes.
+# B4: "literal_eval(...)" runs no code (the premise is disproven): no PY-OBF-001 there. Other longer names stay (a
+# malicious script can wrap a real exec in its own function).
+LITERAL_EVAL_NOT_RUN = True
+# B5: JS-OBF-001's "eval" / "Function" are whole names (not "callFunction", "isFunction", "my_eval"); a dot before
+# still counts ("window.eval"), and the constructors that run code are named: AsyncFunction, GeneratorFunction,
+# AsyncGeneratorFunction.
+JS_RUN_WHOLE_NAME = True
+# B6: RB-OBF-001 / RB-OBF-002's "eval" is not part of a longer word ("retrieval", "medieval", "evaluate",
+# "eval_order"); "instance_eval", "class_eval", "module_eval", "Kernel.eval" still count.
+RB_EVAL_WHOLE_NAME = True
+# B7: SH-OBF-001 is an encoded PowerShell command: "-e" not right after a letter, digit or "-", and the run after it
+# starts as Base64 that decodes to 16-bit text, mostly plain characters (what PowerShell's -EncodedCommand takes). A long
+# plain path after a file test "-e" or another program's "-e" option decodes to noise: no finding.
+SH_ENCODED_CHECKED = True
+
+_B64_RUN = re.compile(r"[A-Za-z0-9+/]{40,}={0,2}\Z")
+_ENCODED_LOOKED_AT = 64                  # Base64 characters decoded to look at the text (16 characters of it)
+
+
+def _encoded_command(match: "re.Match[str]") -> bool:
+    """(B7) Is the run of an ``SH-OBF-001`` match Base64 of 16-bit text, mostly plain characters? Only its first
+    ``_ENCODED_LOOKED_AT`` characters are decoded (bounded), in whole groups of four."""
+    import base64
+    import binascii
+    run = _B64_RUN.search(match.group(0))
+    if run is None:
+        return False
+    # (no test of the run's whole length: a command broken by a batch "^" or joined from quoted pieces ends a run
+    # at any length - the decoded start decides; reviewer, R2b-2)
+    head = run.group(0)[:_ENCODED_LOOKED_AT].rstrip("=")
+    head = head[:len(head) - len(head) % 4]
+    try:
+        raw = base64.b64decode(head + "=" * (-len(head) % 4), validate=True)
+    except (binascii.Error, ValueError):
+        return False
+    units = [raw[i:i + 2] for i in range(0, len(raw) - 1, 2)]
+    plain = sum(1 for u in units if u[1] == 0 and (32 <= u[0] < 127 or u[0] in (9, 10, 13)))
+    return len(units) >= 8 and plain * 10 >= len(units) * 8
+
+
+def _fixed(rule_id: str, pattern: str, accept: Optional[Callable[["re.Match[str]"], bool]] = None) -> Rule:
+    base = next(r for r in DEFAULT_RULES if r.id == rule_id)
+    fixed = Rule(base.id, base.title, base.category, base.severity, pattern, base.reason, base.confidence,
+                 base.languages, base.ignore_case, base.tags, base.min_hits, base.max_per_file, base.chainable)
+    fixed.accept = accept
+    return fixed
+
+
+_PY_OLD = next(r for r in DEFAULT_RULES if r.id == "PY-OBF-001").pattern
+_RB1_OLD = next(r for r in DEFAULT_RULES if r.id == "RB-OBF-001").pattern
+_RB2_OLD = next(r for r in DEFAULT_RULES if r.id == "RB-OBF-002").pattern
+_SH_OLD = next(r for r in DEFAULT_RULES if r.id == "SH-OBF-001").pattern
+_RB_EVAL = _IND[30]
+# rule id -> (switch name, the default rule object, its fixed form)
+_FIXED: Dict[str, Tuple[str, Rule, Rule]] = {}
+for _id, _switch, _form in (
+        ("PY-OBF-001", "LITERAL_EVAL_NOT_RUN",
+         _fixed("PY-OBF-001", _PY_OLD.replace(r"(?:exec|eval)\s*\(", r"(?<!literal_)(?:exec|eval)\s*\(", 1))),
+        ("JS-OBF-001", "JS_RUN_WHOLE_NAME",
+         _fixed("JS-OBF-001", r"(?<![\w$])(?:eval|Function|AsyncFunction|GeneratorFunction|AsyncGeneratorFunction)"
+                              r"\s*\(\s*(?:window\.)?(?:atob|unescape|decodeURIComponent|String\.fromCharCode|"
+                              r"Buffer\.from|LZString\.decompress\w*)\s*\(")),
+        ("RB-OBF-001", "RB_EVAL_WHOLE_NAME", _fixed("RB-OBF-001", _RB1_OLD.replace("eval", _RB_EVAL, 1))),
+        ("RB-OBF-002", "RB_EVAL_WHOLE_NAME", _fixed("RB-OBF-002", _RB2_OLD.replace("eval", _RB_EVAL, 1))),
+        ("SH-OBF-001", "SH_ENCODED_CHECKED",
+         _fixed("SH-OBF-001", "(?<![A-Za-z0-9-])" + _SH_OLD, _encoded_command))):
+    _FIXED[_id] = (_switch, next(r for r in DEFAULT_RULES if r.id == _id), _form)
+
+
+def _count_refused(old: Rule, fixed: Rule, text: str, places) -> None:
+    """(for the gate, gamescan/fixlog.py) How many matches the old form makes that the fixed form does not - counted
+    under the fix's audit name. Read only when the old form can match at all (its literals are in the text)."""
+    if old.needles is not None and not places.has(old.needles):
+        return
+    before = sum(1 for m in itertools.islice(old.regex.finditer(text), _MAX_MATCHES) if m.end() > m.start())
+    accept = getattr(fixed, "accept", None)
+    after = sum(1 for m in itertools.islice(fixed.regex.finditer(text), _MAX_MATCHES)
+                if m.end() > m.start() and (accept is None or accept(m)))
+    _fix_note(_AUDIT_NAME[old.id], before - after)
+
+
+_AUDIT_NAME = {"PY-OBF-001": "B4", "JS-OBF-001": "B5", "RB-OBF-001": "B6", "RB-OBF-002": "B6", "SH-OBF-001": "B7"}
+
+
+def current(rule: Rule) -> Rule:
+    """The form of ``rule`` a scan uses now: the fixed form of B4-B7 while its switch is on - for the default rule
+    and any copy of it (same id and pattern); a rule of another pattern given by a caller is used as given. A copy
+    that searches without start texts (``starts`` None) gets the fixed form without them too."""
+    fix = _FIXED.get(rule.id)
+    if fix is None or not globals()[fix[0]] or (fix[1] is not rule and rule.pattern != fix[1].pattern):
+        return rule
+    fixed = fix[2]
+    if rule.starts is None and fixed.starts is not None:
+        fixed = copy.copy(fixed)
+        fixed.starts = None
+    return fixed
+
+
 class RuleEngine:
     """Applies :class:`Rule` objects to text and produces raw findings."""
 
@@ -1091,10 +1200,20 @@ class RuleEngine:
         places = _Places(text, lowered)
         texts: Optional[QuotedText] = None           # (read when the first call-site rule matches)
         for rule in rules:
+            fixed = current(rule)                # (B4-B7: the fixed form while its switch is on)
+            if fixed is not rule:
+                _count_refused(rule, fixed, text, places)
+            rule = fixed
             if rule.needles is not None and not places.has(rule.needles):
                 continue                         # a required literal is absent: cannot match
             # (tried only where a match can begin, when that is known - the same matches)
-            found = places.matches(rule) if rule.starts is not None else None
+            accept = getattr(rule, "accept", None)
+            if accept is not None:
+                # (B7: what the pattern alone cannot tell - checked BEFORE the match limit, so that matches it
+                # refuses cannot use up the limit and hide a real one behind them; reviewer, R2b-2)
+                found = itertools.islice((m for m in rule.regex.finditer(text) if accept(m)), _MAX_MATCHES)
+            else:
+                found = places.matches(rule) if rule.starts is not None else None
             if found is None:
                 found = itertools.islice(rule.regex.finditer(text), _MAX_MATCHES)
             hits = [m for m in found if m.end() > m.start()]

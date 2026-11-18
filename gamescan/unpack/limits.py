@@ -61,6 +61,8 @@ RULES = {
     "dotnet-il": ("DN-IL-001", ".NET library's code could not be fully read"),
     "il2cpp": ("IL2CPP-META-001", "IL2CPP metadata could not be read"),
     "screnc": ("ENC-SCRIPT-001", "Encoded script could not be decoded"),
+    # the texts pulled out of a program or of unpacked data (pe.extract_strings) were cut short
+    "strings": ("ARC-002", "Archive could not be fully inspected"),
 }
 REASON = ("The reader for this kind of file stopped at one of its limits - more entries, a larger "
           "table or deeper nesting than it reads - so part of the file was not inspected. A file "
@@ -76,6 +78,28 @@ def _stack() -> list:
     except AttributeError:
         _state.stack = []
         return _state.stack
+
+
+# (phase D, session R2b-1 - phageo 2026-11-17: "a fix adds a note, never more") the notes of the session's silent-escape
+# fixes are marked: Finding.context[SILENT_ESCAPE]. A marked note sets the verdict like any note of its rule, and
+# nothing else reads it - the Electron message reading (Scanner._ipc) does not count it as "a part of the app was not
+# read", and it never takes the place of a note of before (Scanner._limit_notes). Texts that become such notes are
+# SaidNote strings.
+SILENT_ESCAPE = "silent_escape_note"
+
+
+class SaidNote(str):
+    """A note text of a silent-escape fix (R2b-1): the finding made of it is marked ``SILENT_ESCAPE``."""
+
+
+def said(text: str) -> "SaidNote":
+    return SaidNote(text)
+
+
+def mark(finding):
+    """Mark ``finding`` as a note of a silent-escape fix (and give it back)."""
+    finding.context[SILENT_ESCAPE] = True
+    return finding
 
 
 def hit(reader: str, what: str) -> str:

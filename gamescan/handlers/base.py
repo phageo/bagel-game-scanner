@@ -6,8 +6,8 @@ _IND = _indicator_strings("gamescan/handlers/base.py")
 import re
 from typing import FrozenSet, Iterable, List, Optional, Tuple
 
-from .. import dataflow, electron_official, engine_hashes, inno_official, known_findings, library_hashes, localdrop, redist
-from ..dataflow import _RISKY_COMMAND, electron_windows, remote, remote_inno, remote_nsis, remote_py, remote_rb, remote_sh, remote_vbs, self_update, shared, values
+from .. import dataflow, electron_official, engine_hashes, inno_official, jsparse, known_findings, library_hashes, localdrop, redist
+from ..dataflow import _RISKY_COMMAND, decoderun, electron_windows, exfil, jsstrings, remote, remote_inno, remote_nsis, remote_py, remote_rb, remote_sh, remote_vbs, self_update, shared, values
 from ..defender import AMSI_DETECTED
 from ..entropy import HIGH as HIGH_ENTROPY, high_entropy_literals, profile
 from ..models import Category, FileContext, Finding, Severity
@@ -20,6 +20,21 @@ _PE_EXTENSIONS = frozenset({
     ".sfx",     # self-extractor modules (7-Zip, WinRAR)
     ".tmp",     # installers unpack their helper programs as .tmp
 })
+# Endings a known toolchain gives its Windows *libraries* (phageo, 2026-11-02, origin-tag session; round-4
+# diagnosis: lime.ndll on HO4-02): Haxe's hxcpp, NME, Lime and OpenFL load their native extensions as
+# ``.ndll`` - a Windows library under that ending is what the toolchain ships, no disguise. Only a library
+# image (the PE's DLL flag): a program image under such an ending is still NAME-002, and so is a file
+# that is no readable PE. Switched off (False) if a malicious verdict drops by it (the gate's rule).
+TOOLCHAIN_LIBRARY_ENDINGS = {".ndll": "native library of Haxe (hxcpp / NME / Lime / OpenFL)"}
+TOOLCHAIN_LIBRARY_ENDINGS_ON = True
+
+
+def _toolchain_library(ctx: FileContext) -> bool:
+    """A Windows library under an ending its toolchain gives libraries (``TOOLCHAIN_LIBRARY_ENDINGS``)."""
+    return (TOOLCHAIN_LIBRARY_ENDINGS_ON and ctx.ext in TOOLCHAIN_LIBRARY_ENDINGS
+            and ctx.pe is not None and bool(ctx.pe.is_dll))
+
+
 _DOUBLE_EXT = re.compile(
     r"\.(?:png|jpe?g|gif|bmp|txt|pdf|docx?|xlsx?|mp[34]|ogg|wav|zip|rar|7z|json|rpy|sav|save)"
     r"\.(?:exe|scr|com|pif|bat|cmd|vbs|js|lnk|ps1|hta)$")
@@ -60,6 +75,13 @@ _INLINE = (
      re.compile(r"(?s)\s*(\S+)\s+(?:\S+\s+){0,6}?(-c)\s+(\S.*)\Z")),
 )
 REMOTE_ARGUMENT = "CHAIN-REMOTE-ARG"    # downloaded data is an argument of a program that is started
+REMOTE_ARGUMENT_TITLE = "Attack chain: Downloaded data handed to a program"
+REMOTE_ARGUMENT_REASON = (
+    "This file requests data from an address and hands what comes back to a program it "
+    "starts - as an argument, in the environment or as the folder to work in. The "
+    "program itself is not downloaded and no shell reads the text, so what was "
+    "downloaded is not run as code here; what the started program does with it "
+    "decides. Look at which program is started and what it is given.")
 # a file of the game read, decoded, written or unpacked, and started - no download (phageo, 2026-10-17)
 LOCAL_DROP = "CHAIN-LOCAL-DROP"
 LOCAL_DROP_TITLE = "Attack chain: File of the game decoded, written and started"
@@ -89,6 +111,12 @@ REDIST_NOTE = "INST-REDIST-001"     # an installer downloads and runs an officia
 INSTALLER_NOTE = "  [in the installer's instructions]"
 INSTALLER_UNREAD = "INNO-CODE-001"  # an Inno Setup installer's [Code] / [Run] rows were not read to the end
 TRACER_CUT = "SCRIPT-LIMIT-001"     # the download-and-run reading of a script stopped at a limit that is a count
+# (phase D, session R2b-1, S12 - phageo 2026-11-17; a silent escape) the payload reading (dataflow.analyse) that fails,
+# or finds more decoded payloads than the rules read (dataflow.MAX_PAYLOADS), is said: SCRIPT-LIMIT-001, marked
+# PAYLOAD_SAID - a note only, which marks nothing as "not read to its end" (BaseHandler._payload_reading_said).
+# Off: silent, as before.
+PAYLOAD_READING_SAID = True
+PAYLOAD_SAID = "payload_reading_said"   # Finding.context / FileContext.cache: the S12 note
 # marks of a file's data-flow reading, for chains of nearness it disproves (chains.NO_FLOW):
 # the JavaScript reading ran, and a reading stopped at a limit or failed (also where no note
 # is made - an official or published file)
@@ -106,6 +134,7 @@ LOCAL_BLOB_TRACED = (" What this loads is a blob: or data: address made from a t
                      "network, a file from elsewhere or a page of the app - so the level is lowered, also "
                      "where the rest of the script was not read to its end.")
 ENCODED_UNREAD = "ENC-SCRIPT-001"   # a Script Encoder block (.vbe / .jse / #@~^) could not be decoded
+STRING_TABLE_UNREAD = "JS-OBF-005"  # an obfuscator's string table not fully resolved (C2; information)
 # a lock file directly in the temporary folder: no sub-folder, no wild card, and an
 # extension nothing runs (parts in ‹› are only known at run time)
 OWN_LOCK_PATH = re.compile(r"(?i)%te?mp%[\\/]+(?:[^\\/%:*?\"<>|‹›]|‹[^›]*›)+\.(?:lock|pid)")
@@ -278,12 +307,13 @@ class BaseHandler:
         script's string building, decoding and variable passing are undone,
         and run the ordinary rules over any code that was hidden that way."""
         result = dataflow.analyse(text, language)
+        said = self._payload_reading_said(ctx, result) if PAYLOAD_READING_SAID else []
         seen = ctx.cache.setdefault("dataflow", {"commands": [], "opaque": 0})
         seen["commands"] += result.commands
         seen["opaque"] += result.opaque
         if language in ("python", "renpy"):
             seen.setdefault("own_locks", set()).update(self._own_locks(text, result.resolved))
-        out = [self._resolved(ctx, hit, language) for hit in result.resolved]
+        out = [self._resolved(ctx, hit, language) for hit in result.resolved] + said
         if result.cut:
             # this reading stopped at its step limit (or at its emergency brake): said, as
             # for the tracers below (phageo, 2026-10-12) - one note per file
@@ -639,6 +669,41 @@ class BaseHandler:
             out.append(f)
         return out
 
+    def _payload_reading_said(self, ctx: FileContext, result) -> List[Finding]:
+        """(S12) ``SCRIPT-LIMIT-001`` when the payload reading (``dataflow.analyse``) failed, or found more decoded
+        payloads than the rules read - until 2026-11-17 both were silent. Only the error's type name is said. A note
+        only (``PAYLOAD_SAID`` in its context): unlike :meth:`tracer_cut` it marks nothing as "not read to its end"
+        (``FLOW_CUT`` / ``tracer_cut`` stay as they were), so no other finding's level moves (phageo's rule for the
+        session: a note, never more). One per file; a later reason is added to it. None for official files, as there."""
+        reasons = []
+        if result.error:
+            reasons.append("the reading of what reaches exec / the shell failed (%s)" % result.error.split(":", 1)[0])
+        if result.dropped:
+            reasons.append("%d decoded payload(s) after the first %d were not scanned"
+                           % (result.dropped, dataflow.MAX_PAYLOADS))
+        if not reasons:
+            return []
+        told = ctx.cache.get(PAYLOAD_SAID)
+        if told is not None:
+            for reason in reasons:
+                if reason not in told.evidence:
+                    told.evidence += "; also: %s" % reason
+            return []
+        if self.official_script(ctx) \
+                or ctx.baseline.startswith((engine_hashes.VERIFIED, library_hashes.VERIFIED)) \
+                or engine_hashes.verified(ctx.sha256) \
+                or electron_official.verified(ctx.sha256):
+            return []
+        note = self.make(
+            ctx, TRACER_CUT, "Decoded code of a script not read in full", Category.OBFUSCATION, Severity.LOW,
+            "The scanner undoes a script's string building and decoding to see what reaches exec, the shell or the "
+            "network. For this script that reading failed or found more decoded code than it scans, so part of it "
+            "was not looked at. The ordinary rules read the whole file as usual.", "; ".join(reasons), 0.3)
+        note.chainable = False
+        note.context[PAYLOAD_SAID] = True
+        ctx.cache[PAYLOAD_SAID] = note
+        return [note]
+
     def tracer_cut(self, ctx: FileContext, limit: str) -> List[Finding]:
         """SCRIPT-LIMIT-001: the reading that follows a download to where it is run
         stopped at a limit in this script - one note for every tracer (JavaScript, Python,
@@ -707,6 +772,158 @@ class BaseHandler:
             ctx.cache["decoded_script"] = True
         return decoded, notes
 
+    def string_table(self, ctx: FileContext, rules: RuleEngine, text: str, found: List[Finding]) -> List[Finding]:
+        """C2 (phase C, JS group; :mod:`gamescan.dataflow.jsstrings`): an obfuscator's string table
+        rebuilt without running anything, and the script read once more as it reads with its texts
+        put back. ``found`` is what the script's own text gave - it stays as it is; added is only
+        what the resolved text shows and the original did not, each marked ``resolved`` in its
+        evidence (:data:`jsstrings.MARK`) and context (:data:`jsstrings.RESOLVED`).
+
+        A table that could not be fully resolved gets a note (``JS-OBF-005``, LOW, information); a
+        script the syntax-tree parser refused (size, nodes, its far time cap) gets the tracer's limit
+        note with :data:`jsparse.FALLBACK_NOTE`. Official and verified files are not read again:
+        what those do is known (as for SCRIPT-LIMIT-001)."""
+        if self.official_script(ctx) \
+                or ctx.baseline.startswith((engine_hashes.VERIFIED, library_hashes.VERIFIED)) \
+                or engine_hashes.verified(ctx.sha256) or electron_official.verified(ctx.sha256):
+            return []
+        res = jsstrings.resolve(text)
+        if res is None:
+            return []
+        if res.limit:
+            return self.tracer_cut(ctx, jsparse.FALLBACK_NOTE % res.limit)
+        out: List[Finding] = []
+        if res.needs_note:
+            note = self.make(
+                ctx, STRING_TABLE_UNREAD, "String table not fully resolved", Category.OBFUSCATION, Severity.LOW,
+                "This script hides its texts in a table that a small decoder reads while it runs (an "
+                "obfuscator's string table). The scanner rebuilds those texts without running the script; "
+                "here some of them could not be rebuilt, so what those parts call or send was not seen.",
+                res.evidence(), 0.3)
+            note.chainable = False
+            # (only a table no decoder it reads uses: information - no verdict, no launch; phageo, 2026-11-08)
+            note.information = res.information
+            out.append(note)
+        if res.text is None:
+            return out
+        ctx.cache[jsstrings.CACHE] = res                 # (for the readers of C1 / C3)
+        saved = ctx.cache
+        # the second reading must not add to what the first one counted (commands, starts, limits)
+        ctx.cache = {k: v for k, v in saved.items() if k != "dataflow"}
+        try:
+            extra = rules.scan(res.text, "js", ctx, self.name, comment_style="c", quoted=True)
+            extra += self.resolve_payloads(ctx, rules, res.text, "js")
+        finally:
+            second, ctx.cache = ctx.cache, saved
+            for key in ("tracer_cut", FLOW_CUT, PAYLOAD_SAID):   # a limit the second reading reached is told once
+                if key in second and key not in saved:
+                    saved[key] = second[key]
+
+        def key(f: Finding):
+            match = f.context.get("match")
+            return (f.rule_id, match.lower()) if isinstance(match, str) else (f.rule_id, f.line, f.evidence)
+
+        known = {key(f) for f in found}
+        for f in extra:
+            k = key(f)
+            if k in known:
+                continue
+            known.add(k)
+            f.evidence += jsstrings.MARK
+            f.context[jsstrings.RESOLVED] = res.resolved
+            out.append(f)
+        return out
+
+    def private_data_flow(self, ctx: FileContext, text: str, trees: Optional[dict] = None) -> List[Finding]:
+        """C1 (phase C, JS group, part 2; :mod:`gamescan.dataflow.exfil`): private data followed from
+        where the script reads it - a browser's, Discord's or a wallet's store; behind its own switch the
+        clipboard or the screen - into a call that sends it over the network. ``CHAIN-EXFIL``: CRITICAL
+        (MALICE) for a store, HIGH (CHAIN) for the clipboard or the screen. The text read is the script
+        with its string table put back (C2) when it has one. Flows from a call into a required module
+        are kept for the scanner (:data:`exfil.CACHE`): only when that module is the app's decrypting
+        add-on (``ADDON-DECRYPT-001``) do they become a finding (``Scanner._join_addons``). The
+        cross-file summary (exports, sink imports) is kept for ``Scanner._join_cross`` (C1 part 2b).
+        Official engine builds and the verified Electron runtime are not read (programs, not app code);
+        verified npm / library files **are** read now (phageo, 2026-11-04): a flow wholly inside one is
+        MEDIUM (rule 13's exception, lowered where every reading is), a flow crossing into or out of
+        the app's code keeps its tier. Adds only; a reading that stops at a limit adds nothing.
+        ``trees``: one parse of the text for C1 and C3 (``exfil.parse_shared``)."""
+        if self.official_script(ctx) \
+                or ctx.baseline.startswith(engine_hashes.VERIFIED) \
+                or engine_hashes.verified(ctx.sha256) or electron_official.verified(ctx.sha256):
+            return []
+        res = ctx.cache.get(jsstrings.CACHE)
+        resolved = res is not None and bool(res.text)
+        found = exfil.analyse(res.text if resolved else text, trees)
+        if found is None:
+            return []
+        if found.limit:
+            ctx.cache[exfil.LIMIT] = found.limit             # (for the diagnosis tools; no note: adds nothing)
+        if found.addon_flows:
+            ctx.cache[exfil.CACHE] = list(found.addon_flows)
+        if found.exports or found.sink_imports:
+            verified = ctx.baseline.startswith(library_hashes.VERIFIED)
+            ctx.cache[exfil.SUMMARY] = (found.exports, found.sink_imports, verified)
+        out: List[Finding] = []
+        for flow in found.flows:
+            store = flow.kind in exfil.STORE_KINDS
+            f = self.make(
+                ctx, exfil.RULE, "Private data sent out",
+                Category.CREDENTIALS if store else Category.INPUT_CAPTURE,
+                Severity.CRITICAL if store else Severity.HIGH, exfil.REASON,
+                exfil.evidence(flow) + (jsstrings.MARK if resolved else ""), 0.9, line=flow.line)
+            f.chainable = False
+            f.context["exfil_kind"] = flow.kind
+            if resolved:
+                f.context[jsstrings.RESOLVED] = res.resolved
+            out.append(f)
+        return out
+
+    # a decode -> run already proven at that line by a rule of its own (one statement, or the resolved value)
+    _DECODE_RUN_PROVEN = frozenset({"JS-OBF-001", "DF-EXEC-001"})
+
+    def decoded_code_flow(self, ctx: FileContext, text: str, found: List[Finding],
+                          trees: Optional[dict] = None) -> List[Finding]:
+        """C3 (phase C, JS group, part 3; :mod:`gamescan.dataflow.decoderun`): data the script decodes,
+        decompresses or decrypts, followed without its value into code - ``eval``, ``new Function``, the
+        ``vm`` module, a file written from it and then loaded or started, ``child_process``.
+        ``CHAIN-DECODE-RUN`` HIGH (tier CHAIN, cause ``DECODE-AND-RUN``). The text read is the script with
+        its string table put back (C2). ``found``: what the script gave so far - a sink line where
+        ``JS-OBF-001`` / ``DF-EXEC-001`` (HIGH or more) already stands gets no second finding. The
+        cross-file summary is kept for ``Scanner._join_decode_cross``. Official engine builds and the
+        verified Electron runtime are not read; verified npm / library files are (a flow wholly inside one
+        is MEDIUM - the scanner's rule-13 exception for ``CHAIN-*`` there). Adds only."""
+        if self.official_script(ctx) \
+                or ctx.baseline.startswith(engine_hashes.VERIFIED) \
+                or engine_hashes.verified(ctx.sha256) or electron_official.verified(ctx.sha256):
+            return []
+        res = ctx.cache.get(jsstrings.CACHE)
+        resolved = res is not None and bool(res.text)
+        got = decoderun.analyse(res.text if resolved else text, trees,
+                                cross=electron_windows.app_root(ctx.relpath) is not None)
+        if got is None:
+            return []
+        if got.limit:
+            ctx.cache[decoderun.LIMIT] = got.limit           # (for the diagnosis tools; no note: adds nothing)
+        if got.exports or got.sink_imports:
+            verified = ctx.baseline.startswith(library_hashes.VERIFIED)
+            ctx.cache[decoderun.SUMMARY] = (got.exports, got.sink_imports, verified)
+        proven = {f.line for f in found if f.rule_id in self._DECODE_RUN_PROVEN and not f.suppressed
+                  and f.severity >= Severity.HIGH and f.line}
+        out: List[Finding] = []
+        for flow in got.flows:
+            if flow.line in proven:
+                continue
+            f = self.make(ctx, decoderun.RULE, decoderun.TITLE, Category.OBFUSCATION, Severity.HIGH,
+                          decoderun.REASON, decoderun.evidence(flow) + (jsstrings.MARK if resolved else ""),
+                          0.85, line=flow.line)
+            f.chainable = False
+            f.context[decoderun.KIND] = flow.kind
+            if resolved:
+                f.context[jsstrings.RESOLVED] = res.resolved
+            out.append(f)
+        return out
+
     def vbscript_code(self, ctx: FileContext, text: str, wrapped: bool = False) -> List[Finding]:
         """CHAIN-REMOTE-CODE in VBScript (:mod:`gamescan.dataflow.remote_vbs`): what the
         script downloads and then runs - as code (``Execute``), or as a file it wrote and
@@ -714,7 +931,7 @@ class BaseHandler:
         The command lines the script starts (``WScript.Shell`` ``Run`` / ``Exec``,
         ``ShellExecute``) are PowerShell or batch themselves: the shell chain reads them,
         as for the other languages."""
-        found = remote_vbs.analyse(text, wrapped=wrapped)
+        found = remote_vbs.analyse(text, wrapped=wrapped, page=wrapped and ctx.ext in (".html", ".htm"))
         out = self._remote_findings(ctx, found.hits)
         if found.commands:
             out += self._remote_findings(ctx, remote_sh.analyse_commands(found.commands),
@@ -840,14 +1057,8 @@ class BaseHandler:
                 # downloaded is an argument, the environment or the folder - data handed to a
                 # program, not a program (phageo, 2026-10-14). HIGH, never part of a chain.
                 f = self.make(
-                    ctx, REMOTE_ARGUMENT, "Attack chain: Downloaded data handed to a program", Category.CHAIN,
-                    Severity.HIGH,
-                    "This file requests data from an address and hands what comes back to a program it "
-                    "starts - as an argument, in the environment or as the folder to work in. The "
-                    "program itself is not downloaded and no shell reads the text, so what was "
-                    "downloaded is not run as code here; what the started program does with it "
-                    "decides. Look at which program is started and what it is given.",
-                    flow, 0.5, line=decoded_at or hit.line, snippet=flow)
+                    ctx, REMOTE_ARGUMENT, REMOTE_ARGUMENT_TITLE, Category.CHAIN, Severity.HIGH,
+                    REMOTE_ARGUMENT_REASON, flow, 0.5, line=decoded_at or hit.line, snippet=flow)
                 f.chainable = False
                 out.append(f)
                 continue
@@ -1049,13 +1260,20 @@ class BaseHandler:
         mismatch = ctx.cache.get("engine_mismatch")
         if mismatch and not ctx.baseline:           # (not if a valid signature vouches for it)
             program = ctx.is_pe
-            out.append(self.make(
+            fake = self.make(
                 ctx, "ENGINE-001", "Named like an engine file, but not built like one",
                 Category.EVASION, Severity.MEDIUM if program else Severity.LOW,
                 "The file has the name and place of a component of the game engine, which "
                 "would exempt it from most checks - but its content does not have that "
                 "component's structure. It is therefore judged like any other file.",
-                "expected: %s; but %s" % mismatch, 0.5 if program else 0.3))
+                "expected: %s; but %s" % mismatch, 0.5 if program else 0.3)
+            from . import engine_files
+            library = ctx.pe.is_dll if ctx.pe is not None else ctx.ext in (".dll", ".pyd")
+            if program and library and engine_files.unproven(mismatch[1]):
+                # packed or unreadable: nothing contradicts the official file, it only could not be compared
+                # (the launcher asks for the typed word instead of refusing - phageo, 2026-11-03)
+                fake.context[engine_files.UNPROVEN_MARK] = True
+            out.append(fake)
         if _DOUBLE_EXT.search(ctx.name):
             out.append(self.make(
                 ctx, "NAME-001", "Deceptive double extension", Category.EVASION,
@@ -1066,7 +1284,7 @@ class BaseHandler:
                 ctx, "NAME-004", "Program hidden among game assets", Category.EVASION,
                 Severity.MEDIUM, "An executable or script sits in a folder that should only "
                 "hold images, audio, saves or data.", ctx.relpath, 0.5))
-        if ctx.is_pe and ctx.ext not in _PE_EXTENSIONS:
+        if ctx.is_pe and ctx.ext not in _PE_EXTENSIONS and not _toolchain_library(ctx):
             out.append(self.make(
                 ctx, "NAME-002", "Disguised executable", Category.EVASION, Severity.HIGH,
                 "The file contains a Windows program but its extension (%s) says "

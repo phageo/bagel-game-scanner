@@ -410,6 +410,21 @@ def installed_texts(header: bytes) -> FrozenSet[str]:
     return frozenset(out)
 
 
+# (phase D, session R2b-1, S11 - phageo 2026-11-17; a silent escape) the files the installer's script names (its
+# "File" instructions) whose data the reader never reached - the data ended early, a block size did not fit, or the
+# reader misread a variant - are said (a reading-limit note: ARC-002). Until then the loops ended without a word.
+# Off: as before.
+UNREACHED_FILES_SAID = True
+
+
+def _unreached(names: Dict[int, str], visited: set) -> None:
+    """(S11) Say the files of ``names`` whose data block no loop of :func:`members` came to."""
+    missed = sorted(offset for offset in names if offset not in visited)
+    if UNREACHED_FILES_SAID and missed:
+        limits.hit("nsis", limits.said("%d file(s) the installer's script names were not found in its data (%s): "
+                                       "not read" % (len(missed), ", ".join(names[offset][-80:] for offset in missed[:3]))))
+
+
 def members(stream: BinaryIO, policy,
             tick: Optional[Callable[[float], None]] = None) -> Iterator[Tuple[str, bytes]]:
     """``(name, data)`` for the installer script and every data block the
@@ -440,6 +455,7 @@ def members(stream: BinaryIO, policy,
         or (word & 0x80000000 and 28 + 4 + (word & 0x7FFFFFFF) <= end))
     count = 0
     names: Dict[int, str] = {}
+    visited: set = set()                                    # (S11) data offsets a loop came to
 
     def name_of(offset: int, content: bytes) -> str:
         return names.get(offset) or "file_%04d%s" % (count, sniff.extension(content))
@@ -462,6 +478,7 @@ def members(stream: BinaryIO, policy,
                     break
                 size = struct.unpack("<I", raw)[0] & 0x7FFFFFFF
                 count += 1
+                visited.add(offset)
                 # without a name, the kind of file is only known from its first bytes
                 data = source.read(min(size, 64))
                 name = name_of(offset, data)
@@ -483,6 +500,8 @@ def members(stream: BinaryIO, policy,
                     tick(min(1.0, stream.tell() / max(end, 1)))
             if count >= _MAX_BLOCKS:
                 limits.hit("nsis", "more than %d data blocks: the rest was not read" % _MAX_BLOCKS)
+            else:
+                _unreached(names, visited)
             return
         pos, offset = 28, 0
         while pos + 4 <= end and count <= _MAX_BLOCKS:
@@ -501,6 +520,7 @@ def members(stream: BinaryIO, policy,
                 if want(SCRIPT_NAME, len(header)):
                     yield SCRIPT_NAME, _script(header)
             else:
+                visited.add(offset)
                 named = names.get(offset)
                 head = stream.read(size if named else min(size, 4096))
                 probe = b""
@@ -529,5 +549,7 @@ def members(stream: BinaryIO, policy,
                 tick(min(1.0, pos / max(end, 1)))
         if count > _MAX_BLOCKS:
             limits.hit("nsis", "more than %d data blocks: the rest was not read" % _MAX_BLOCKS)
+        else:
+            _unreached(names, visited)
     except _ERRORS as exc:
         raise NsisError("installer data is damaged (%s)" % exc)

@@ -19,6 +19,7 @@ from __future__ import annotations
 import base64
 import binascii
 import bz2
+import contextlib
 import io
 import lzma
 import struct
@@ -185,6 +186,18 @@ def end() -> None:
 def keeping() -> bool:
     """Is a scan keeping files now (and is there room left)?"""
     return getattr(_kept, "files", None) is not None and _kept.size < MAX_KEPT
+
+
+@contextlib.contextmanager
+def paused():
+    """Nothing is kept, offered or wanted while this is open, and what was kept before is there again afterwards
+    (``Scanner._holds_members``, S03: a look at a file that is not opened must leave nothing behind)."""
+    files = getattr(_kept, "files", None)
+    _kept.files = None
+    try:
+        yield
+    finally:
+        _kept.files = files
 
 
 # members of these endings are not read out of an archive for a proof: pictures, sound, video, fonts

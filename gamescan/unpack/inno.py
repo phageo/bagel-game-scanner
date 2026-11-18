@@ -56,6 +56,17 @@ class NeedTool(InnoError):
     """Valid installer, but it cannot be unpacked with the standard library."""
 
 
+class SliceMissing(InnoError):
+    """The installed files lie in a separate ``setup-N.bin`` file that is not at hand (phase D, R2 - B2)."""
+
+
+# (phase D, session R2b-1, S05 - phageo 2026-11-17; a silent escape) the files of a data chunk that stops early - its
+# mark is not where the installer says, a short read, a decode error - were not counted as unread: nothing said that
+# an installer had not been unpacked to its end. Now they are counted and said (``Installer.members``' ``problems``
+# -> ARC-002). Off: not counted, as before.
+MISSING_FILES_COUNTED = True
+
+
 def find(data: bytes, start: int = 0) -> int:
     """Offset of the setup script's signature at or after ``start`` (-1 = none).
     (The installer's own program contains the same text as a constant, which
@@ -852,7 +863,7 @@ class Installer:
             self.entries[i].slice, self.entries[i].start, self.entries[i].offset))
         wanted = [i for i in order if want(self.names.get(i, "unnamed_%d" % i),
                                            self.entries[i].size)]
-        failed, at = 0, 0
+        failed, at, missing = 0, 0, 0
         streams: Dict[int, BinaryIO] = {}
         try:
             while at < len(wanted) and not (cancel is not None and cancel.is_set()):
@@ -864,10 +875,12 @@ class Installer:
                 if stream is None:
                     stream = self.slices(head.slice + 1) if self.external else self.open_file()
                     if stream is None:
-                        raise InnoError("setup-%d.bin is missing" % (head.slice + 1))
+                        raise SliceMissing("setup-%d.bin is missing" % (head.slice + 1))
                     streams[head.slice] = stream
                 entries = [self.entries[i] for i in group]
+                produced = set()                    # (S05) the files of this chunk that were handed out
                 for index, raw in self._cut(stream, head, entries, group):
+                    produced.add(index)
                     entry = self.entries[index]
                     data = _restore_any(raw, entry.checksum) \
                         if spool.size_of(raw) == entry.size else None
@@ -880,6 +893,8 @@ class Installer:
                         failed += 1
                         continue
                     yield self.names.get(index, "unnamed_%d" % index), data
+                # (an empty file is never handed out by a chunk that gives no bytes: nothing of it is lost)
+                missing += sum(1 for i in group if i not in produced and self.entries[i].size > 0)
                 if tick is not None:
                     tick(at / max(len(wanted), 1))
         finally:
@@ -888,6 +903,9 @@ class Installer:
         if failed and problems is not None:
             problems.append("%d file(s) could not be rebuilt to the installer's own checksum "
                             "(encrypted, or damaged)" % failed)
+        if MISSING_FILES_COUNTED and missing and problems is not None:
+            problems.append(limits.said("%d file(s) could not be unpacked (their data chunk ends early, is not where "
+                                        "the installer says, or could not be decoded)" % missing))
 
     def _cut(self, stream: BinaryIO, head: Entry, entries: List[Entry], indexes: List[int],
              stored: bool = False):

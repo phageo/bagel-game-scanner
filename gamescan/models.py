@@ -12,10 +12,14 @@ from . import advice
 
 TOOL_NAME = "Bagel"
 # the one place of the version: window, reports, the CLI and tools/build_package.py read it
-TOOL_VERSION = "0.9.0-beta"
+TOOL_VERSION = "1.0.0"
 # the "Protection" window and real-time protection (protection.py, monitor.py): never tested -
 # hidden in 0.9-beta and left out of its package (phageo, 2026-10-24); the code stays, off
 EXPERIMENTAL_PROTECTION = False
+# static reading only (phase D, session R1; phageo, 2026-11-10): set by every measurement runner through
+# gamescan.staticonly.enable() - no network call, no AMSI, no Windows Defender pass, no VirusTotal, no hash
+# blocklist database; never set for users (window, CLI, launcher)
+STATIC_ONLY = False
 
 
 class Severity(enum.IntEnum):
@@ -65,6 +69,29 @@ class Finding:
     chainable: bool = True
     tags: tuple = ()
     context: Dict[str, Any] = field(default_factory=dict, repr=False)
+    # where the finding stands (gamescan/origin.py; information only, it changes no level - 2026-11-02):
+    # GAME_CODE / BUNDLED_LIBRARY / ENGINE_OFFICIAL / INSTALLER / UNKNOWN ("": not stamped)
+    origin: str = ""
+    origin_detail: str = ""          # library name and version, official file, or signer
+    origin_verified: bool = False    # a table proves it
+    # the tier of the rule (gamescan/tiers.py; phase B, 2026-11-02): CAPABILITY / CHAIN / EVASION / MALICE /
+    # IDENTITY ("": not capped yet); capped_from = the level the rule gave, when the tier cap lowered it
+    tier: str = ""
+    capped_from: str = ""
+    # information only (phageo, 2026-11-08): shown and kept like any finding, but it sets no verdict and no
+    # launch decision - today only C2's note on a string table no decoder it reads uses (jsstrings.Resolution)
+    information: bool = False
+
+    @property
+    def rule_severity(self) -> "Severity":
+        """The level the rule itself gave, before the tier cap (gamescan/tiers.py) lowered it."""
+        return Severity[self.capped_from] if self.capped_from in Severity.__members__ else self.severity
+
+    @property
+    def is_information(self) -> bool:
+        """``information``, but never for a note that content could not be read (``UNREAD_CONTENT``,
+        rule 15; phageo, 2026-11-09): such a note keeps its full effect whatever sets the mark."""
+        return self.information and not gives_review(self.rule_id)
 
     def suppress(self, reason: str) -> bool:
         self.suppressed = True
@@ -88,7 +115,12 @@ class Finding:
             suppression_reason=str(d.get("suppression_reason", "")),
             quarantined=bool(d.get("quarantined")), is_new=bool(d.get("new")),
             base_confidence=d.get("base_confidence"), learned=str(d.get("learned", "")),
-            chainable=False)
+            chainable=False,
+            origin=str((d.get("origin") or {}).get("kind", "")) if isinstance(d.get("origin"), dict) else "",
+            origin_detail=str((d.get("origin") or {}).get("detail", "")) if isinstance(d.get("origin"), dict) else "",
+            origin_verified=bool((d.get("origin") or {}).get("verified")) if isinstance(d.get("origin"), dict) else False,
+            tier=str(d.get("tier") or ""), capped_from=str(d.get("capped_from") or ""),
+            information=bool(d.get("information")))
 
     def to_dict(self) -> Dict[str, Any]:
         return {
@@ -113,6 +145,14 @@ class Finding:
             "base_confidence": (None if self.base_confidence is None
                                 else round(self.base_confidence, 2)),
             "learned": self.learned,
+            # (new field 2026-11-02, rule 6; None: not stamped)
+            "origin": ({"kind": self.origin, "detail": self.origin_detail, "verified": self.origin_verified}
+                       if self.origin else None),
+            # (new fields 2026-11-02, phase B, rule 6): the rule's tier, and the level before the tier cap
+            "tier": self.tier or None,
+            "capped_from": self.capped_from or None,
+            # (new field 2026-11-09, rule 6): true for a finding that is information only (no verdict)
+            "information": True if self.is_information else None,
         }
 
 
@@ -223,6 +263,22 @@ _VERDICTS = {
 # least REVIEW (phageo, 2026-10-12). The notes themselves stay LOW; it is the verdict that says
 # "this was not all seen".
 UNREAD_CONTENT = frozenset({"ARC-001", "ARC-002", "JSC-FMT-001", "EXEC-FMT-001"})
+# (phase D, session R2b-1, item 4 - phageo 2026-11-17) twelve more "could not be read" notes give at least REVIEW too:
+# a member or file the scanner failed on, a compiled script or table a reader cannot open, a folder mostly unread.
+# Only the verdict (and the "information" guard) reads them; UNREAD_CONTENT itself - which also tells the Electron
+# message reading that an app was not read whole (Scanner._ipc) - is unchanged, so no other level moves. The notes stay
+# LOW. Off: they keep the verdict as it is, as before.
+UNREAD_NOTES_REVIEW = True
+UNREAD_NOTES = frozenset({"SCAN-ERR-001", "RPY-FMT-001", "RGSS-FMT-001", "RGSS-FMT-002", "PYO-FMT-001", "UNITY-FMT-001",
+                          "DN-META-001", "IL2CPP-META-001", "ENC-SCRIPT-001", "SCAN-COVERAGE-001", "RPY-CONTENT-001",
+                          "PE-FMT-001"})
+
+
+def gives_review(rule_id: str) -> bool:
+    """Does this note of content that could not be read make the verdict at least REVIEW (rule 15)?"""
+    return rule_id in UNREAD_CONTENT or (UNREAD_NOTES_REVIEW and rule_id in UNREAD_NOTES)
+
+
 UNREAD_DETAIL = "Part of the content could not be read"
 # packed code (rules.py cuts it into statements, chains.py asks for the same statement)
 PACKED = "packed_lines"            # FileContext.cache: the numbers of the lines that are packed code
@@ -294,7 +350,8 @@ class ScanReport:
 
     @property
     def max_severity(self) -> Optional[Severity]:
-        return max((f.severity for f in self.active), default=None)
+        # (a finding that is information only sets no level: Finding.information, 2026-11-09)
+        return max((f.severity for f in self.active if not f.is_information), default=None)
 
     @property
     def coverage(self) -> float:
@@ -310,7 +367,7 @@ class ScanReport:
         the verdict is REVIEW for that reason alone."""
         worst = self.max_severity
         return (worst is None or worst is Severity.LOW) and any(
-            f.rule_id in UNREAD_CONTENT for f in self.active)
+            gives_review(f.rule_id) for f in self.active)
 
     @property
     def verdict(self) -> str:
@@ -326,7 +383,7 @@ class ScanReport:
         files have findings at that level or above."""
         worst = self.max_severity
         if self.unread_only:
-            return "unread", len({f.file for f in self.active if f.rule_id in UNREAD_CONTENT})
+            return "unread", len({f.file for f in self.active if gives_review(f.rule_id)})
         if worst is None or worst is Severity.LOW:
             return "safe", 0
         files = len({f.file for f in self.active if f.severity >= worst})
@@ -359,7 +416,8 @@ class ScanReport:
 
     @property
     def risk_score(self) -> int:
-        return min(100, round(sum(_WEIGHT[f.severity] * f.confidence for f in self.active)))
+        return min(100, round(sum(_WEIGHT[f.severity] * f.confidence for f in self.active
+                                  if not f.is_information)))   # (information only: no score either, 2026-11-09)
 
     @property
     def duration(self) -> float:
@@ -392,6 +450,8 @@ class ScanReport:
             "verdict": self.verdict,
             "verdict_detail": self.verdict_detail,
             "verdict_plain": self.plain_verdict,
+            # why SUSPICIOUS / DANGEROUS: the documented cause classes (gamescan/causes.py; 2026-10-29)
+            "verdict_causes": self._causes(),
             "max_severity": mx.name if mx else None,
             "risk_score": self.risk_score,
             "engines": self.engines,
@@ -413,6 +473,10 @@ class ScanReport:
             "notes": self.notes,
             "quarantined": self.quarantined,
         }
+
+    def _causes(self) -> List[Dict[str, Any]]:
+        from .causes import as_dicts            # (here: causes.py imports this module)
+        return as_dicts(self)
 
     def to_json(self, indent: int = 2) -> str:
         return json.dumps(self.to_dict(), indent=indent, ensure_ascii=False)

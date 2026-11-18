@@ -92,6 +92,11 @@ class SettingsDialog(_Dialog):
                           "scripts; the scanner unpacks it and shows it to Defender. Defender "
                           "is never allowed to remove anything, and a detection may appear in "
                           "Windows Security's history."))
+        # (privacy: Windows' own sample submission - phageo, 2026-11-15, session R1b)
+        self.hint(body, t("Bagel never uploads your files anywhere. During a scan, Windows' own malware check "
+                          "(Microsoft Defender) is also used. If automatic sample submission is on in Windows "
+                          "Security, Windows may send suspicious files to Microsoft. You can turn this off in "
+                          "Windows Security → Virus & threat protection settings."))
 
         self.heading(body, t("VirusTotal"))
         make_check(body, t("Check executables on VirusTotal after each scan"), self.vt_on).pack(anchor="w")
@@ -101,9 +106,16 @@ class SettingsDialog(_Dialog):
         make_entry(row, self.vt_key, show="•", width=46).pack(side="left", padx=px(10), ipady=px(5))
         tk.Label(row, text=t("Max. lookups"), font=(FONT, 10), fg=MUTED, bg=BG).pack(side="left")
         make_entry(row, self.vt_max, width=5).pack(side="left", padx=(px(10), 0), ipady=px(5))
-        self.hint(body, t("Only the SHA-256 hash of each program is sent, never the file. "
-                          "The free API allows 4 lookups per minute, so each new file adds "
-                          "about 15 seconds. The key is stored unencrypted in your user profile."))
+        # (privacy wording, phageo 2026-11-10; plan-reputation.md section 3; phageo's Turkish of 2026-11-15)
+        self.hint(body, t("The VirusTotal check is off unless you turn it on. When on, Bagel sends VirusTotal "
+                          "only each program's fingerprint (SHA-256); it never sends the file itself, its "
+                          "name or its location. VirusTotal can see which fingerprints were looked up with "
+                          "your API key. If you downloaded the known-malware list, the comparison happens "
+                          "entirely on your PC; nothing is sent."))
+        self.hint(body, t("A clean result from VirusTotal never hides a finding; VirusTotal can only add "
+                          "new findings."))
+        self.hint(body, t("The free API allows 4 lookups per minute, so each new file adds about 15 "
+                          "seconds. The key is stored unencrypted in your user profile."))
         row = tk.Frame(body, bg=BG)
         row.pack(fill="x", pady=(px(6), 0))
         tk.Label(row, text=t("Trust a clean result only after (days)"), font=(FONT, 10),

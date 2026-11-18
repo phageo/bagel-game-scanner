@@ -17,6 +17,12 @@
    could not be inspected    the same: a part nobody looked at is not "clean"
    SUSPICIOUS                the main reasons are shown; the word ``launch``
                              has to be typed
+   a CRITICAL rule capped    the same, whatever the verdict: a finding whose
+   by its tier               rule gave CRITICAL and the tier cap lowered
+                             (``capped_from``; phageo, 2026-11-03)
+   an engine-named library   the same: packed or unreadable, so it could not
+   that cannot be compared   be compared, but nothing contradicts the
+                             official file (phageo, 2026-11-03)
    blocked without asking    any CRITICAL finding (so every DANGEROUS game),
                              an attack chain seen in a script, a known-malware
                              hash, a detection by Windows' own engine, a
@@ -55,7 +61,7 @@ from typing import Callable, List, NamedTuple, Optional, Sequence
 
 from . import cache, i18n
 from .i18n import t
-from .models import Category, Finding, ScanReport, Severity
+from .models import Category, Finding, ScanReport, Severity, gives_review
 from .unpack import spool
 
 POPEN = subprocess.Popen                         # how the game is started
@@ -71,6 +77,8 @@ NOT_INSPECTED = frozenset({"ARC-001", "ARC-002", "UNITY-FMT-001", "RPY-FMT-001",
 # own engine detects it
 ALWAYS_BLOCKED = frozenset({"SIG-001", "SIG-EICAR", "AMSI-001", "DEFENDER-001"})
 FAKE_ENGINE_FILE = "ENGINE-001"                  # blocks when it is about a program (see _blocks)
+UNPROVEN_ENGINE = "engine_unproven"              # (handlers.engine_files.UNPROVEN_MARK) packed / unreadable library
+UNPROVEN_ENGINE_ASKS = True                      # switch: such a library asks for the typed word (2026-11-03)
 UNVERIFIED_ENGINE = "engine_unverified"          # mark on a chain in an engine file of an unlisted version
 WORDS = ("launch", "başlat", "baslat")           # what has to be typed for a SUSPICIOUS game
 YES = ("y", "yes", "e", "evet")
@@ -91,13 +99,22 @@ def _sha256(path: str) -> str:
     return digest.hexdigest()
 
 
+def unproven_library(f: Finding) -> bool:
+    """``ENGINE-001`` on a library that could only not be *compared* with the engine component it is named
+    after - it is packed, or its headers cannot be read - and contradicts it nowhere. It asks for the typed
+    word instead of refusing (phageo, 2026-11-03, phase C0; switch ``UNPROVEN_ENGINE_ASKS``)."""
+    return (UNPROVEN_ENGINE_ASKS and f.rule_id == FAKE_ENGINE_FILE and f.severity >= Severity.MEDIUM
+            and bool(f.context.get(UNPROVEN_ENGINE)))
+
+
 def _blocks(f: Finding) -> bool:
     if f.severity is Severity.CRITICAL or f.rule_id in ALWAYS_BLOCKED:
         return True
-    # a program that poses as an engine component (MEDIUM). On a script the same rule is a
+    # a program that poses as an engine component (MEDIUM): a real imitation - its self-name,
+    # exports, imports or signature contradict the official file. On a script the same rule is a
     # LOW note - a game that rewrote one of the engine's default scripts, which many do -
     # and the script is scanned like any other file: that goes by the verdict
-    if f.rule_id == FAKE_ENGINE_FILE and f.severity >= Severity.MEDIUM:
+    if f.rule_id == FAKE_ENGINE_FILE and f.severity >= Severity.MEDIUM and not unproven_library(f):
         return True
     # a chain in a script: the calls were seen. In a program it is what the import table
     # allows - some games install a keyboard hook to switch off the Windows key.
@@ -117,17 +134,29 @@ def blocking(report: ScanReport) -> List[Finding]:
     return _worst_first(f for f in report.active if _blocks(f))
 
 
+def was_critical(f: Finding) -> bool:
+    """A finding whose rule gave CRITICAL and whose level the tier cap lowered (``capped_from``).
+    It needs the typed word whatever its capped level (phageo, 2026-11-03, phase C0): the cap
+    says what the rule proves, not that a CRITICAL rule's hit is harmless."""
+    return f.severity is not Severity.CRITICAL and f.rule_severity is Severity.CRITICAL
+
+
 def decide(report: ScanReport) -> Decision:
     """What the launcher does with a scanned game (see the module text)."""
     active = report.active
-    unseen = ["%s: %s" % (f.file, f.evidence) for f in active if f.rule_id in NOT_INSPECTED]
+    # (a note that is information only - scanner's Electron script-cap note, R2b-1 item 8 - asks nothing; every note
+    # that gives REVIEW asks - R2b-1 item 4: PE-FMT-001 was the one of the twelve not in NOT_INSPECTED)
+    unseen = ["%s: %s" % (f.file, f.evidence) for f in active
+              if (f.rule_id in NOT_INSPECTED or gives_review(f.rule_id)) and not f.is_information]
     unseen += ["%s: %s" % (e.get("file", "?"), e.get("error", "?")) for e in report.errors]
     stoppers = blocking(report)
     if stoppers or report.cancelled:
         return Decision(BLOCK, stoppers, unseen, report.cancelled)
     worst = report.max_severity
-    if worst is not None and worst >= Severity.HIGH:           # SUSPICIOUS
-        return Decision(TYPE_WORD, _worst_first(f for f in active if f.severity >= Severity.HIGH),
+    word = [f for f in active if was_critical(f) or unproven_library(f)]
+    if (worst is not None and worst >= Severity.HIGH) or word:      # SUSPICIOUS, a capped CRITICAL, an
+        return Decision(TYPE_WORD, _worst_first(f for f in active    # unproven engine-named library
+                                                if f.severity >= Severity.HIGH or f in word),
                         unseen)
     if worst is Severity.MEDIUM or unseen:                     # REVIEW, or not all of it was seen
         return Decision(CONFIRM, _worst_first(f for f in active if f.severity >= Severity.MEDIUM),

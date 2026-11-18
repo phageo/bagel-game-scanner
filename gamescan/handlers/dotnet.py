@@ -4,15 +4,16 @@ from __future__ import annotations
 import hashlib
 import io
 import re
-from typing import Iterable, List
+from typing import Iterable, List, Tuple
 
 from ..models import Category, FileContext, Finding, Severity
 from ..pe import extract_strings
 from ..rules import RuleEngine
 from .. import cache, engine_hashes
-from ..dataflow import remote_cs
+from ..dataflow import decode_cs, remote_cs
 from ..unpack import dotnet_meta, il2cpp, media, unity
-from .base import FLOW_CUT, FLOW_READ, REMOTE_CODE_REASON, BaseHandler
+from .base import (FLOW_CUT, FLOW_READ, REMOTE_ARGUMENT, REMOTE_ARGUMENT_REASON, REMOTE_ARGUMENT_TITLE,
+                   REMOTE_CODE_REASON, BaseHandler)
 
 _ASSETS = frozenset({".assets", ".bundle", ".unity3d", ".assetbundle"})
 _MAX_FINDINGS = 2000                  # distinct raw findings kept from one streamed file
@@ -24,6 +25,13 @@ _FRAMEWORK = re.compile(              # assemblies that are the engine / .NET, n
 _COMPILED_CS = "  [compiled C#]"
 _COMPILED_CS_REASON = (" Here it was read from the compiled C# code of this library: the method named "
                        "below hands what it downloaded to a call that loads it as code or starts it.")
+_COMPILED_CS_ARGUMENT = (" Here it was read from the compiled C# code of this library: the method named below hands "
+                         "what it downloaded to a program written in its code, as that program's arguments.")
+_DECODED_REASON = (
+    "Data that this .NET library decodes (Base64), decrypts or decompresses while it runs was followed, "
+    "instruction by instruction, into a call that loads it as code - or into a file that is then started "
+    "or loaded. Malware hides its real program this way, so that scanners see only the encoded form. Some "
+    "protection tools decrypt their own code in the same way, so this is a chain to look at, not proof.")
 _ACROSS_LIBRARIES = "  [across two libraries]"
 _ACROSS_LIBRARIES_REASON = (" Here the two halves are in two libraries of the game: one downloads, the other "
                             "loads or starts what it is given; they were matched by the name of the method "
@@ -103,7 +111,7 @@ class DotNetHandler(BaseHandler):
             official = bool(engine_hashes.verified(ctx.sha256))
             found = cache.kept("dotnet-il", ctx.sha256, "gamescan.dataflow.remote_cs",
                                lambda: remote_cs.analyse(ctx.data, ctx.pe, official=official),
-                               extra="%d|%d" % (len(ctx.data), official),
+                               extra="%d|%d" % (len(ctx.data), official) + ("|arg" if remote_cs.ARGUMENT_SPLIT else ""),
                                encode=remote_cs.as_plain, decode=remote_cs.from_plain)
         if found.shares or found.shares.assembly:
             # what this library gives to, and relies on in, the other libraries of the game
@@ -121,12 +129,23 @@ class DotNetHandler(BaseHandler):
             if hit.address:
                 flow += "; address: " + hit.address
             flow += _COMPILED_CS
-            f = self.make(ctx, "CHAIN-REMOTE-CODE", "Attack chain: Remote code execution", Category.CHAIN,
-                          Severity.CRITICAL, REMOTE_CODE_REASON + _COMPILED_CS_REASON, flow, 0.8, snippet=flow)
+            if hit.how == "argument":
+                # (B3) the download is only an argument of a program written in the code, no runtime: HIGH, as in
+                # the other languages, never part of a chain
+                f = self.make(ctx, REMOTE_ARGUMENT, REMOTE_ARGUMENT_TITLE, Category.CHAIN, Severity.HIGH,
+                              REMOTE_ARGUMENT_REASON + _COMPILED_CS_ARGUMENT, flow, 0.5, snippet=flow)
+            else:
+                f = self.make(ctx, "CHAIN-REMOTE-CODE", "Attack chain: Remote code execution", Category.CHAIN,
+                              Severity.CRITICAL, REMOTE_CODE_REASON + _COMPILED_CS_REASON, flow, 0.8, snippet=flow)
             f.chainable = False
             if official:
                 f.suppress("%s: %s" % (engine_hashes.VERIFIED, official))
             out.append(f)
+        decoded, cut = self._decoded_code(ctx, found)
+        out += decoded
+        if found.state == remote_cs.READ and cut:
+            # the download reading came to its end, the decoded-data reading did not (C5): said the same way
+            found = found._replace(state=remote_cs.UNREAD, problem=cut)
         if found.state != remote_cs.READ and not ctx.cache.get("managed_note"):
             ctx.cache["managed_note"] = True
             note = self.make(
@@ -139,6 +158,35 @@ class DotNetHandler(BaseHandler):
             note.chainable = False
             out.append(note)
         return out
+
+    def _decoded_code(self, ctx: FileContext, downloads: "remote_cs.Found") -> Tuple[List[Finding], str]:
+        """C5: ``CHAIN-DECODE-RUN`` (HIGH, CHAIN) - what a method decodes or decrypts and then loads as code,
+        or writes to a file that is started or loaded (:mod:`gamescan.dataflow.decode_cs`). Not where the
+        download reading (``downloads``) already found a chain at that place and load / start. A file that is,
+        byte for byte, a file of an official engine package keeps it hidden, as the download chain.
+        Also gives why this reading did not come to its end ("" = it did; the caller's DN-IL-001 says it)."""
+        if not decode_cs.ON or ctx.truncated:
+            return [], ""
+        official = bool(engine_hashes.verified(ctx.sha256))
+        # (not through the developer's cache, gamescan/cache.py: its tests pin the readings it keeps; read anew)
+        found = decode_cs.analyse(ctx.data, ctx.pe, official=official)
+        proven = {(hit.where, hit.sink) for hit in downloads.hits}
+        verified = engine_hashes.verified(ctx.sha256) if found.hits else None
+        out: List[Finding] = []
+        for hit in found.hits:
+            if (hit.where, hit.sink.replace(decode_cs.BYTES, "")) in proven:
+                continue
+            flow = "%s -> %s in %s" % (hit.source, hit.sink, hit.where)
+            if hit.how == "dropper":
+                flow += "; written to a file that is then started or loaded"
+            flow += _COMPILED_CS
+            f = self.make(ctx, decode_cs.RULE, decode_cs.TITLE, Category.OBFUSCATION,
+                          Severity.HIGH, _DECODED_REASON, flow, 0.7, snippet=flow)
+            f.chainable = False
+            if verified:
+                f.suppress("%s: %s" % (engine_hashes.VERIFIED, verified))
+            out.append(f)
+        return out, ("decoded-data reading: " + found.problem if found.state != remote_cs.READ else "")
 
     def joined_managed(self, ctx: FileContext, link, other_file: str, officials) -> Finding:
         """CHAIN-REMOTE-CODE across two libraries of one game (``remote_cs.Link``; ``ctx``

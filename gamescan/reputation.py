@@ -20,6 +20,14 @@ from .models import Category, Finding, Severity
 API_URL = "https://www.virustotal.com/api/v3/files/%s"
 GUI_URL = "https://www.virustotal.com/gui/file/%s"
 Fetch = Callable[[str, Dict[str, str]], Tuple[int, bytes]]
+# (phageo, 2026-11-10, proof principle) a clean VirusTotal result no longer hides a file's MEDIUM / LOW findings
+# and is no longer fed back to the memory center as "a false alarm": it is evidence, not proof. VirusTotal only
+# adds findings (VT-001 .. VT-004). True = the old behaviour (context.apply_reputation, before 2026-11-10).
+CLEAN_HIDES_WEAK = False
+# (phageo, 2026-11-15, session R1b: "VirusTotal can only add findings") a clean VirusTotal result no longer keeps a
+# file with a HIGH finding out of auto-quarantine. True = the old behaviour (Scanner._isolate_threats, before
+# 2026-11-15: "Not quarantined (VirusTotal knows it as clean)" for a HIGH, never for a CRITICAL file).
+CLEAN_SPARES_QUARANTINE = False
 
 
 class ReputationError(Exception):

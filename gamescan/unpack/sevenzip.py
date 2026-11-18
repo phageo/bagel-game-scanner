@@ -552,6 +552,23 @@ class Archive:
                     self.names = [n.replace("\\", "/") for n in text.split("\0")[:count]]
             self.names += [""] * (count - len(self.names))
 
+    def encrypted_names(self) -> List[str]:
+        """Names of the files that lie in an encrypted (AES) folder, read from a header that is not
+        encrypted itself (C4, phase C native group; ``ARC-ENC-EXEC-001``). Nothing is decrypted or
+        decoded: only each folder's list of coders is looked at. An entry without data (a folder, an
+        empty file) belongs to no folder and is never counted. At most ``_MAX_FILES`` names (the
+        header's own bound). An archive whose header is encrypted never gets here: opening it raises
+        :class:`NeedTool` (said as before)."""
+        names = [n for n, empty in zip(self.names, self.empty) if not empty]
+        out: List[str] = []
+        at = 0
+        for folder in self.folders:
+            count = len(folder.files)
+            if any(coder[0] == _AES for coder in folder.coders):
+                out.extend(names[at:at + count])
+            at += count
+        return out
+
     def _decode(self, folder: _Folder) -> Iterator[bytes]:
         """The folder's output, piece by piece."""
         if any(inputs != 1 or outputs != 1 for _i, _p, inputs, outputs in folder.coders):

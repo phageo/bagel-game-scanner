@@ -45,8 +45,9 @@ class ShellHandler(BaseHandler):
         # a .vbe / .jse file, or an encoded block inside a .wsf / .hta: decoded, then read as if plain
         text, notes = self.decode_script(ctx, ctx.text())
         if _STYLE[ctx.ext] == "jse":              # encoded JScript: the JavaScript rules and chains
-            return (notes + rules.scan(text, "js", ctx, self.name, comment_style="c", quoted=True)
-                    + self.entropy_literals(ctx, text, "js") + self.resolve_payloads(ctx, rules, text, "js"))
+            out = (notes + rules.scan(text, "js", ctx, self.name, comment_style="c", quoted=True)
+                   + self.entropy_literals(ctx, text, "js") + self.resolve_payloads(ctx, rules, text, "js"))
+            return out + self.string_table(ctx, rules, text, out)      # (an obfuscator's string table: C2)
         out = notes + (rules.scan(text, "shell", ctx, self.name, comment_style=_STYLE[ctx.ext])
                        + self.entropy_literals(ctx, text, "shell"))
         if _STYLE[ctx.ext] in _FLOW:              # variables / encoded commands resolved

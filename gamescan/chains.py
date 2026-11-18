@@ -22,6 +22,14 @@ KEYS_ONLY = (" Only the state of the keyboard is read here - no hook, no clipboa
              "capture - so it is reported as HIGH, not CRITICAL.")
 
 
+# -- what is packed (CHAIN-PACKED) --------------------------------------------------------------
+# Random-looking data behind or inside a program (an overlay, a data section, a game's data pack)
+# stays a visible finding, but it says nothing about the program's code: a game's compressed data
+# is no packer (2026-11-02, round-4 bug 4: five clean findings, none a packer). A switch by phageo's
+# gate rule: off if it drops a malicious verdict without an official-hash reason.
+PACKED_NEEDS_CODE = True
+_DATA_ONLY = frozenset({"PE-ENT-001", "PE-ENT-002", "PE-ENT-003"})
+
 FILE_NAME_ONLY = "file_name"       # mark of ContextEngine._installed_name (context.FILE_NAME_ONLY)
 FILE_NAME_CHAIN = (" Here one of the parts is only a word in the name of a file this installer installs - "
                    "file name, not an instruction - and without it there is no chain, so it is shown as a "
@@ -177,6 +185,9 @@ class ChainEngine:
             severity, note = rule.severity, ""
             if rule.id == "CHAIN-SPYWARE":
                 picks, severity, note = self._spyware(rule, by_cat, ctx)
+            elif rule.id == "CHAIN-PACKED" and PACKED_NEEDS_CODE:
+                code = [f for f in by_cat.get(C.PACKING, ()) if f.rule_id not in _DATA_ONLY]
+                picks = self._pick(rule, {**by_cat, C.PACKING: code})
             else:
                 picks = self._pick(rule, by_cat)
             if picks is None:

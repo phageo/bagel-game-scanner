@@ -23,6 +23,7 @@ from .engine_hashes import VERIFIED as VERIFIED_BUILD
 from .library_hashes import VERIFIED as VERIFIED_LIBRARY
 from .memory import fingerprint
 from .models import Category, FileContext, Finding, Severity
+from .pe import only_in_code
 
 RESOLVED_FP = "Resolved as a false positive earlier (memory center)"
 TEXT_LITERAL = "Text, not code: the whole line is one string literal"
@@ -82,6 +83,43 @@ STANDARD_MESSAGE = (" Here the word stands in a standard installer message: a te
                     "which every installer made with it carries, not an instruction of this installer. "
                     "It is shown as a LOW note.")
 OWN_LOCK = "The script's own lock file in the temporary folder (one copy of the game at a time)"
+# Texts pulled out of a program's bytes or out of compressed data (languages "strings",
+# "dotnet"): there the four letters of PowerShell 7's short program name turn up by chance in
+# machine code and packed data. They count only as a command token (phageo, 2026-10-29):
+# followed by ".exe" or by a switch, or written in small letters and followed by what ends a word
+# of command or script text (a space, a quote, a list or shell separator, a closing bracket) or by
+# the end of the text; always after the start of the text, a space, a quote, a folder separator,
+# a list separator or a shell operator.
+# OFF from 2026-10-29 (on, the malicious MSI sample 7df05f3a... lost its one HIGH, such a match);
+# ON since 2026-10-31 by phageo's word, together with mechanism A (gamescan/msichain.py), which is
+# what is to keep that sample SUSPICIOUS - decisions.md.
+SHORT_TOOL_TOKEN_ONLY = True
+_BINARY_TEXT = frozenset({"strings", "dotnet"})
+_SHORT_TOOL = "pwsh"
+_SHORT_TOOL_COMMAND = re.compile(
+    r"""(?:^|(?<=[\s"'\\/=&|(,;]))(?:(?i:pwsh(?:\.exe\b|\s+[-/][A-Za-z]))|pwsh(?=[\s"',;|&)]|$))""")
+NOT_A_COMMAND = ("Not a command: the four letters of the program name stand inside other bytes "
+                 "of a program or of compressed data, with nothing of a command around them")
+# The same idea for the other short tool names (2026-11-02, round-4 bug 5): a native program's code
+# sections hold them as class names ("CScript" of Delphi-built runners) and by chance ("wMIc"). Such
+# a word, in code sections only, counts only as a command token: with ".exe", with a switch, as a
+# script object ("WScript.Shell"), or in one case between delimiters. A switch by phageo's gate rule:
+# off if it drops a malicious verdict without an official-hash reason.
+TOOL_TOKEN_IN_CODE = True
+_SHORT_TOOLS = frozenset({"wmic", _IND[9], "cscript", "wscript"})
+_WORD_START = r"""(?:^|(?<=[\s"'\\/=&|(,;]))"""
+_TOOL_COMMAND = re.compile(
+    _WORD_START + _IND[10])
+NOT_A_COMMAND_IN_CODE = ("Not a command: the word stands only inside the code sections of a program, as a "
+                         "name or by chance, with nothing of a command around it")
+# A public-suffix table (pe.in_suffix_table): the name of a service stands in it because nobody may
+# set a cookie for it, not because the program talks to it (2026-11-02, round-4 bug 3). Its premise
+# is disproven (rule 13), so a chain cannot be made of it. A switch by phageo's gate rule: off if it
+# drops a malicious verdict without an official-hash reason.
+DOMAIN_TABLE_CHECK = True
+IN_DOMAIN_TABLE = "in_domain_table"
+NOT_AN_ADDRESS = ("Not an address: the name is an entry of a built-in public-suffix table, among "
+                  "thousands of domain endings, with no address around it")
 _DELETES_NAME = re.compile(r"\bos\.(?:unlink|remove)\s*\(\s*([A-Za-z_][\w.]*)\s*\)")
 _STRING_LITERAL = re.compile(r"""\"[^"\\\n]*(?:\\.[^"\\\n]*)*\"|'[^'\\\n]*(?:\\.[^'\\\n]*)*'""")   # (unrolled: rules._DQ)
 SIGNED_BY_TRUSTED = "valid digital signature from trusted publisher"
@@ -123,7 +161,10 @@ _SHOWN_IN_NAMED_BASELINES = frozenset({"CHAIN-REMOTE-LOAD", "CHAIN-REMOTE-CODE",
                                        "ENGINE-008",
                                        # (2026-10-20: a program beside a verified app runtime that
                                        # nothing verifies - the runtime is what it does not live up to)
-                                       "ENGINE-009"})
+                                       "ENGINE-009",
+                                       # (2026-10-31: compiled code run by a script, and an installer's
+                                       # chain - the file's folder and name prove neither harmless)
+                                       "PY-OBF-003", "CHAIN-MSI-LOAD"})
 # a file of a published npm package (gamescan/npm_hashes.py): the mark in its baseline, and
 # the findings that say what a file can do, whoever published it
 NPM_VERIFIED = ": npm package "
@@ -189,7 +230,9 @@ _DANGER_DELETE = re.compile(
     r"%(?:userprofile|systemroot|windir|appdata|localappdata|homepath|systemdrive|programfiles)%"
     r"|\$(?:env:)?(?:HOME|USERPROFILE|APPDATA)\b|expanduser|os\.environ|process\.env|homedir"
     r"|[a-z]:[\\/]{1,2}(?:\*|users|windows|program)|[\\/]\*(?:\s|$|[\"'])|(?<![\w.\-])~(?:[/\\]|\s|$|[\"'])"
-    r"|\s/(?:\*|\s|$)|system32|Documents|Desktop|--no-preserve-root|SpecialFolder",
+    # (the Desktop folder - not the ending of a Linux start-menu file, "<name>.desktop":
+    # round-3b diagnosis, 2026-10-29)
+    r"|\s/(?:\*|\s|$)|system32|Documents|(?<!\.)Desktop|--no-preserve-root|SpecialFolder",
     re.I)
 _SAVE_CONTEXT = re.compile(
     r"save|persistent|StorageManager|DataManager|LZString|PlayerPrefs|localStorage"
@@ -272,7 +315,7 @@ class ContextEngine:
         self._checks = (
             self._hash_allowlist, self._comment, self._same_declaration, self._text_literal,
             self._process_list, self._installed_name, self._standard_message,
-            self._import_table,
+            self._chance_letters, self._chance_word, self._domain_table, self._import_table,
             self._benign_domain, self._embedded_asset, self._natural_text, self._written_text,
             self._own_lock_file,
             self._data_write,
@@ -582,6 +625,48 @@ class ContextEngine:
         f.reason += STANDARD_MESSAGE
         f.evidence += "  [standard installer message]"
         return False
+
+    @staticmethod
+    def _chance_letters(f: Finding, ctx: FileContext) -> bool:
+        """PowerShell 7's program name has four letters only. Among the texts pulled out of a
+        program's bytes or out of compressed data they turn up by chance - in machine code, in
+        packed installer data - framed by any two bytes that are no letters. There the name
+        counts only as a command token (``_SHORT_TOOL_COMMAND``): with ``.exe``, with a switch,
+        or as the last word of the text. Otherwise the match is no command; it stays in the
+        report, suppressed with that reason. Scripts and command lines (every other language)
+        are not touched: there the word is a token of the text as written. Only while
+        ``SHORT_TOOL_TOKEN_ONLY`` is on (on since 2026-10-31: see there)."""
+        if not SHORT_TOOL_TOKEN_ONLY or f.rule_id != "LOL-001" or f.context.get("language") not in _BINARY_TEXT \
+                or f.context.get("match", "").lower() != _SHORT_TOOL:
+            return False
+        if _SHORT_TOOL_COMMAND.search(f.context.get("line_text", "")):
+            return False
+        return f.suppress(NOT_A_COMMAND)
+
+    @staticmethod
+    def _chance_word(f: Finding, ctx: FileContext) -> bool:
+        """A short tool name among a native program's texts that stands only in its code sections
+        (``TOOL_TOKEN_IN_CODE``): no command token (``_TOOL_COMMAND``), no command. It stays in the
+        report, suppressed with that reason. Data sections, scripts and .NET programs (their texts
+        stand in the code section too) are not touched, and neither is a program of which only a part
+        was read: every place of the text must have been looked at."""
+        if not TOOL_TOKEN_IN_CODE or f.rule_id != "LOL-001" or f.context.get("language") != "strings" \
+                or f.context.get("match", "").lower() not in _SHORT_TOOLS:
+            return False
+        pe, line = ctx.pe, f.context.get("line_text", "")
+        if pe is None or pe.is_dotnet or ctx.truncated or _TOOL_COMMAND.search(line):
+            return False
+        return f.suppress(NOT_A_COMMAND_IN_CODE) if only_in_code(ctx.data, pe, line) else False
+
+    @staticmethod
+    def _domain_table(f: Finding, ctx: FileContext) -> bool:
+        """The name of a service that is an entry of a program's public-suffix table, the whole text and
+        nothing else (``NativePEHandler`` marks it): no address. It stays in the report, suppressed
+        with that reason. The name inside an address (``x.ngrok.io``, ``https://...``) is no entry."""
+        if not DOMAIN_TABLE_CHECK or f.rule_id != "NET-EXFIL-001" or not f.context.get(IN_DOMAIN_TABLE) \
+                or f.context.get("line_text", "") != f.context.get("match", ""):
+            return False
+        return f.suppress(NOT_AN_ADDRESS)
 
     @staticmethod
     def _code(f: Finding, key: str) -> str:

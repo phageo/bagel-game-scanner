@@ -32,6 +32,7 @@ from .base import BaseHandler
 from .text import is_text
 
 COMPILED = "JSC-FMT-001"
+ASAR_HEADER = "asar_header"            # ctx.cache: SHA-256 of the archive's list of files
 _SCRIPTS = frozenset({".js", ".mjs", ".cjs", ".json", ".html", ".htm"})
 _MAX_NOTES = 5
 
@@ -82,6 +83,13 @@ class ElectronHandler(BaseHandler):
         listed = self._entries(ctx)
         if isinstance(listed, str):
             return [self._note(ctx, "app.asar: %s - its files were not read" % listed)]
+        try:
+            # what an Electron program's integrity record of this archive holds - compared after the
+            # scan when the program lies in the same installer or archive (phageo, 2026-10-27, answer c)
+            with self._stream(ctx) as stream:
+                ctx.cache[ASAR_HEADER] = asar.header_sha256(stream)
+        except (asar.AsarError, OSError):
+            pass
         return []                                       # the members are scanned through expand()
 
     def expand(self, ctx: FileContext) -> Iterable[FileContext]:

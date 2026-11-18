@@ -40,6 +40,7 @@ What it takes and refuses:
 from __future__ import annotations
 
 import argparse
+import contextlib
 import fnmatch
 import hashlib
 import html.parser
@@ -60,8 +61,14 @@ import source_form                                        # noqa: E402
 from gamescan import known_findings, models               # noqa: E402
 
 MANIFEST = os.path.join(HERE, "manifest_package.json")
+SPIKE_MANIFEST = os.path.join(HERE, "manifest_spike.json")   # the pinned tree-sitter wheels (phase C)
 EMBED = "python-3.13.16-embeddable-amd64.zip"
 FULL = "python-3.13.16-amd64.zip"
+# the JavaScript syntax-tree parser of the JS group (phase C; phageo, 2026-11-03): pinned, SHA-256
+# checked wheels, unpacked into python/ so the embeddable Python imports them; from manifest_spike.json
+# (Capstone is not adopted - it is not shipped). gamescan/jsparse.py loads them behind a switch.
+TS_WHEELS = ("tree_sitter-0.25.2-cp313-cp313-win_amd64.whl",
+             "tree_sitter_javascript-0.25.0-cp310-abi3-win_amd64.whl")
 ENGINE_ARCHIVES = os.path.join(os.path.dirname(ROOT), "engine_archives")
 START = "Bagel.exe"                                      # tools/launcher/Bagel.exe (build_launcher.py)
 STAMP = (2026, 10, 24, 0, 0, 0)                          # every member's time: the same zip each build
@@ -146,6 +153,40 @@ def python_members(embed: zipfile.ZipFile, full: zipfile.ZipFile) -> List[Tuple[
     return out
 
 
+def tree_sitter_members(wheels: Dict[str, zipfile.ZipFile]) -> List[Tuple[str, zipfile.ZipFile, str]]:
+    """``(name in the zip, source wheel, member)`` for the tree-sitter parser: every member of each
+    wheel except its ``*.dist-info`` folder, placed under ``python/`` so the embeddable Python
+    imports it (``python/tree_sitter/...``, ``python/tree_sitter_javascript/...``). The licence of
+    each wheel is read into the notices by :func:`tree_sitter_licences`, not shipped twice."""
+    out = []
+    for name, wheel in wheels.items():
+        for info in wheel.infolist():
+            member = info.filename
+            if info.is_dir() or ".dist-info/" in member or "/" not in member:
+                continue
+            top = member.split("/", 1)[0]
+            if not re.fullmatch(r"tree_sitter(_javascript)?", top):
+                raise PackageError("%s holds an unexpected top folder: %s" % (name, top))
+            out.append(("python/" + member, wheel, member))
+    names = [n for n, _w, _m in out]
+    if not names or len(set(names)) != len(names):
+        raise PackageError("the tree-sitter wheels have no members or a repeated one")
+    return out
+
+
+def tree_sitter_licences(wheels: Dict[str, zipfile.ZipFile]) -> str:
+    """The MIT licence text of each tree-sitter wheel (its ``*.dist-info/licenses/LICENSE``), for
+    the package notices. Refuses a wheel without one (a licence must ship with the files)."""
+    parts = []
+    for name, wheel in sorted(wheels.items()):
+        found = [m for m in wheel.namelist() if m.endswith("/LICENSE") and ".dist-info/" in m]
+        if not found:
+            raise PackageError("%s carries no LICENSE in its dist-info" % name)
+        text = wheel.read(found[0]).decode("utf-8", "replace").strip("\n")
+        parts.append("-- %s\n\n%s\n" % (name, text))
+    return "\n".join(parts)
+
+
 # -- the checks ----------------------------------------------------------------------------------
 def refusal(name: str) -> str:
     """Why ``name`` (below the top folder) may not be in the package ("": it may)."""
@@ -175,9 +216,13 @@ def _sha256(data: bytes) -> str:
 
 def same_content(files: Dict[str, bytes], folders: Iterable[str]) -> Dict[str, List[str]]:
     """``{folder: [names]}``: the package files whose bytes equal a file in one of ``folders``
-    (sizes first; only a file of a matching size is hashed)."""
+    (sizes first; only a file of a matching size is hashed). An empty package file is never counted:
+    it carries no bytes of any file (release 1.0, 2026-11-18: the tree-sitter wheels' empty
+    ``py.typed`` markers "matched" every empty file under ``tests/``)."""
     by_size: Dict[int, Dict[str, List[str]]] = {}
     for name, data in files.items():
+        if not data:
+            continue
         by_size.setdefault(len(data), {}).setdefault(_sha256(data), []).append(name)
     found: Dict[str, List[str]] = {}
     for folder in folders:
@@ -232,14 +277,58 @@ def real_names(mapping: str) -> Dict[str, List[str]]:
     return out
 
 
-def name_hits(files: Dict[str, bytes], names: Dict[str, List[str]]) -> List[Tuple[str, str]]:
+MANUAL_LINE = "Privacy check, manual review"        # the same line tools/privacy_check.py reads
+
+
+def manual_titles(mapping: str) -> List[str]:
+    """The **one-word** titles quoted on the mapping file's ``MANUAL_LINE`` (phageo, 2026-11-18):
+    ordinary words that would refuse every package. Titles of more words on that line stay ordinary
+    names (they refuse). Never printed."""
+    with open(mapping, encoding="utf-8-sig", errors="replace") as fh:
+        lines = fh.read().splitlines()
+    out: List[str] = []
+    for line in lines:
+        if line.startswith(MANUAL_LINE):
+            for title in re.findall(r'"([^"]+)"', line):
+                title = title.strip()
+                if len([w for w in re.split(r"[\s_-]+", title) if w]) == 1 and title not in out:
+                    out.append(title)
+    return out
+
+
+def manual_places(files: Dict[str, bytes], names: Dict[str, List[str]],
+                  manual: Iterable[str]) -> List[Tuple[str, str, int]]:
+    """``(sample code, package file, line)`` where a one-word manual-review title stands, as the exact,
+    case-sensitive word - the way ``tools/privacy_check.py`` searches it: places to look at by hand,
+    never a refusal. The title itself is never returned."""
+    codes = {t: sorted(c for c, found in names.items() if t in found) for t in manual}
+    patterns = [(t, re.compile(r"(?<![A-Za-z0-9])%s(?![A-Za-z0-9])" % re.escape(t))) for t in manual]
+    places: List[Tuple[str, str, int]] = []
+    for file_name, data in sorted(files.items()):
+        text = data.decode("latin-1")
+        for title, pattern in patterns:
+            for m in pattern.finditer(text):
+                line = text.count("\n", 0, m.start()) + 1
+                for code in codes[title] or ["?"]:
+                    if (code, file_name, line) not in places:
+                        places.append((code, file_name, line))
+    return places
+
+
+def name_hits(files: Dict[str, bytes], names: Dict[str, List[str]],
+              manual: Iterable[str] = ()) -> List[Tuple[str, str]]:
     """``(sample code, package file)`` for every real name found as whole words: as written
     (``_`` / ``-`` / spaces between its words count as the same), and in any case when its words
     are joined without a space (``quiet_field``, ``QuietField``) - so that a name made of plain
-    words ("Quiet Field") does not refuse the English of a comment ("a quiet field")."""
+    words ("Quiet Field") does not refuse the English of a comment ("a quiet field").
+    A name equal to one of ``manual`` (the one-word manual-review titles, ``manual_titles``) is left
+    to :func:`manual_places`; every other name still refuses (phageo, 2026-11-18)."""
+    manual = set(manual)
     patterns = []
     for code, found in names.items():
         for name in found:
+            if name in manual:
+                continue
             words = [re.escape(w) for w in re.split(r"[\s_-]+", name) if w]
             edge = r"(?<![A-Za-z0-9])%s(?![A-Za-z0-9])"
             patterns.append((code, re.compile(edge % r"[\s_-]*".join(words))))
@@ -324,9 +413,11 @@ NOTICES_HEAD = """Bagel %(version)s - notices of the parts shipped in this packa
 Bagel itself (app/ and the start file) is under the MIT licence:
 see LICENSE ("Copyright (c) 2026 phageo").
 
-The python/ folder is not ours. It is python.org's Python 3.13.16 for 64-bit Windows,
-unchanged: the embeddable package, plus tkinter and Tcl/Tk copied from python.org's
-full package of the same version. Each part keeps its own licence:
+The python/ folder is not ours. Most of it is python.org's Python 3.13.16 for 64-bit
+Windows, unchanged: the embeddable package, plus tkinter and Tcl/Tk copied from
+python.org's full package of the same version. Beside it stand two tree-sitter wheels
+(the JavaScript parser Bagel reads scripts with; it only builds a syntax tree, it never
+runs them). Each part keeps its own licence:
 
   Part (file in python/)                         Licence                          Full text
   Python 3.13.16 (python.exe, python313.dll,     PSF License Version 2;           python/LICENSE.txt
@@ -340,6 +431,9 @@ full package of the same version. Each part keeps its own licence:
   Tk 8.6 (tk86t.dll, tcl/tk8.6)                  Tcl/Tk licence (BSD-style)       python/LICENSE.txt,
                                                                                   python/tcl/tk8.6/license.terms
   tkinter (tkinter/, _tkinter.pyd)               PSF License Version 2            python/LICENSE.txt
+  tree-sitter 0.25.2 (tree_sitter/)              MIT                              below
+  tree-sitter-javascript 0.25.0                  MIT                              below
+    (tree_sitter_javascript/)
   zlib (zlib1.dll; also inside python313.dll)    zlib licence                     below
   Expat 2.8 (in pyexpat.pyd)                     MIT                              below
   libmpdec 4.0 (in _decimal.pyd)                 BSD 2-clause                     below
@@ -364,8 +458,20 @@ Software" (Doc/html/license.html of python-3.13.16-amd64.zip), as plain text.
 """
 
 
-def notices(full: zipfile.ZipFile) -> bytes:
-    return ((NOTICES_HEAD % {"version": models.TOOL_VERSION}) + incorporated(full)).encode("utf-8")
+TS_NOTICES_HEAD = """
+
+=============================================================================
+
+The tree-sitter parser (python/tree_sitter, python/tree_sitter_javascript), word for word:
+
+"""
+
+
+def notices(full: zipfile.ZipFile, tree_sitter_text: str = "") -> bytes:
+    text = (NOTICES_HEAD % {"version": models.TOOL_VERSION}) + incorporated(full)
+    if tree_sitter_text:
+        text += TS_NOTICES_HEAD + tree_sitter_text.rstrip("\n") + "\n"
+    return text.encode("utf-8")
 
 
 def hash_list(files: Dict[str, bytes]) -> bytes:
@@ -459,10 +565,21 @@ def build(inputs: str, mapping: str, out_dir: str, say=print) -> str:
         files[RELEASE_NOTES] = fh.read()
     if ("Bagel " + models.TOOL_VERSION).encode() not in files[RELEASE_NOTES]:
         raise PackageError("docs/RELEASE_NOTES.md is not the notes of " + models.TOOL_VERSION)
-    with zipfile.ZipFile(embed_path) as embed, zipfile.ZipFile(full_path) as full:
+    spike_rows = fetch.load(SPIKE_MANIFEST)
+    wheel_paths = {name: _checked_input(inputs, name, spike_rows) for name in TS_WHEELS}
+    say("tree-sitter wheels as listed (SHA-256 of manifest_spike.json): %s" % ", ".join(TS_WHEELS))
+    with zipfile.ZipFile(embed_path) as embed, zipfile.ZipFile(full_path) as full, \
+            contextlib.ExitStack() as stack:
+        wheels = {name: stack.enter_context(zipfile.ZipFile(path)) for name, path in wheel_paths.items()}
         for name, source, member in python_members(embed, full):
             files[name] = source.read(member)
-        files[NOTICES] = notices(full)
+        for name, source, member in tree_sitter_members(wheels):
+            if name in files:
+                raise PackageError("a tree-sitter member clashes with a Python file: " + name)
+            files[name] = source.read(member)
+        say("tree-sitter files added under python/: %d" % sum(
+            1 for n in files if n.startswith("python/tree_sitter")))
+        files[NOTICES] = notices(full, tree_sitter_licences(wheels))
     for needed in ("python/LICENSE.txt", "python/tcl/tk8.6/license.terms"):
         if needed not in files:
             raise PackageError("a licence text of the Python parts is missing: " + needed)
@@ -485,12 +602,18 @@ def build(inputs: str, mapping: str, out_dir: str, say=print) -> str:
         raise PackageError("files from tests / engine_archives: " + ", ".join(sorted(
             n for names in same.values() for n in names)))
     names = real_names(mapping)
-    hits = name_hits({n: d for n, d in files.items() if not n.startswith("python/")}, names)
+    manual = manual_titles(mapping)
+    own = {n: d for n, d in files.items() if not n.startswith("python/")}
+    hits = name_hits(own, names, manual)
     say("real game names searched: %d names of %d samples; found: %d" % (
-        sum(len(v) for v in names.values()), len(names), len(hits)))
+        sum(len(v) for v in names.values()) - sum(n in manual for v in names.values() for n in v), len(names),
+        len(hits)))
     if hits:
         raise PackageError("a real game name stands in the package: " + ", ".join(
             "%s in %s" % hit for hit in hits))
+    places = manual_places(own, names, manual)
+    say("one-word manual-review titles (look by hand, not refused): %d title(s), %d place(s)%s" % (
+        len(manual), len(places), "".join("\n  %s %s:%d" % place for place in places)))
     private = private_hits({n: d for n, d in files.items() if not n.startswith("python/")})
     say("Windows user name of this PC (and its profile path) searched: found in %d file(s)" % len(private))
     if private:

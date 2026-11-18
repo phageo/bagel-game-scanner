@@ -36,9 +36,12 @@ from __future__ import annotations
 from ..indicators import strings as _indicator_strings   # strings as data: indicators.py
 _IND = _indicator_strings("gamescan/dataflow/remote_vbs.py")
 
+import bisect
+import itertools
 import re
 from typing import Dict, List, NamedTuple, Optional, Tuple
 
+from ..fixlog import note as _fix_note
 from ..rules import mask_comments
 from . import values as V
 from .remote import REMOTE, UNRESOLVED, Hit
@@ -418,11 +421,182 @@ class _Flow:
                 self.statement(part, at)
 
 
-def blocks(text: str, language: str = "vbs", default: str = "") -> Tuple[List[Tuple[int, str]], List[Tuple[int, str]]]:
+# False-DANGEROUS audit B1 (phageo, 2026-11-17, session R2b-2): in an HTML page (``.html`` / ``.htm``) a
+# ``<script src=...>`` tag inside an HTML comment (``<!-- ... -->``, also the old ``<!--[if lt IE 9]> ...
+# <![endif]-->`` blocks) is loaded by no browser, NW.js or Electron - it is no loader. Only a comment whose
+# ``<!--`` provably stands in the page's normal text counts (see ``_comments``); where the walk cannot be sure it
+# stops, and every tag from there on counts as before. ``.hta`` / ``.wsf`` files are read as before (an ``.hta``
+# runs in Internet Explorer's engine, which does load a conditional comment's tags). Off = every tag counts.
+SKIP_COMMENTED_TAGS = True
+# A conditional comment (``<!--[if ...]>``) in an ``.html`` page: an HTML5 engine never loads what it holds, but a page
+# shown by ``mshta`` or by an old program's browser control (Internet Explorer modes) does - so its premise is not
+# disproven for every page. Off (the session's choice, phageo decides): the walk stops at the first one and every tag
+# from there on counts, as before.
+SKIP_CONDITIONAL_COMMENTS = False
+
+_WS = " \t\n\f\r"
+_TAG_NAME = re.compile(r"[A-Za-z][^ \t\n\f\r/>]*")
+_COMMENT_END = re.compile(r"--!?>")
+_DOUBLE_ESCAPE = re.compile(r"(?i)<script[ \t\n\f\r/>]")
+# elements whose content is text up to their own end tag (no comment, no tag inside); <noscript> too (scripts run)
+_RAW_TEXT = frozenset({"style", "textarea", "title", "xmp", "iframe", "noembed", "noframes", "noscript"})
+# where the walk stops: content it does not follow as a browser would (foreign content, plain text to the end)
+# (<select> / <frameset>: their tree-building modes drop raw-text elements but still run scripts - not followed)
+_STOP = frozenset({"plaintext", "svg", "math", "select", "frameset"})
+
+
+def _tag_end(text: str, pos: int) -> Optional[int]:
+    """Where a tag ends (the index after its ``>``), from ``pos`` just after its name - read by the HTML
+    tokenizer's attribute states, so that a quoted ``>`` or ``<!--`` inside a value is no end and no comment.
+    None: never closed."""
+    n = len(text)
+    state = "before"                     # before / name / after / value / dq / sq / unquoted / quoted
+    while pos < n:
+        c = text[pos]
+        if state in ("before", "quoted"):
+            if c == ">":
+                return pos + 1
+            if c not in _WS and c != "/":
+                state = "name"           # (a "=" here begins a name too, as in the tokenizer)
+        elif state == "name":
+            if c == ">":
+                return pos + 1
+            if c in _WS:
+                state = "after"
+            elif c == "/":                   # (self-closing: anything but ">" begins a new name, "=" too)
+                state = "before"
+            elif c == "=":
+                state = "value"
+        elif state == "after":
+            if c == ">":
+                return pos + 1
+            if c == "=":
+                state = "value"
+            elif c == "/":
+                state = "before"
+            elif c not in _WS:
+                state = "name"
+        elif state == "value":
+            if c == ">":
+                return pos + 1
+            if c == '"':
+                state = "dq"
+            elif c == "'":
+                state = "sq"
+            elif c not in _WS:
+                state = "unquoted"
+        elif state in ("dq", "sq"):
+            close = text.find('"' if state == "dq" else "'", pos)
+            if close < 0:
+                return None
+            pos, state = close + 1, "quoted"
+            continue
+        else:                                # unquoted
+            if c == ">":
+                return pos + 1
+            if c in _WS:
+                state = "before"
+        pos += 1
+    return None
+
+
+def _end_tag(text: str, name: str, pos: int) -> Optional[Tuple[int, int]]:
+    """``(start, end)`` of the first ``</name`` (followed by a blank, ``/`` or ``>``) from ``pos``, or None."""
+    found = re.compile(r"(?i)</" + re.escape(name) + r"[ \t\n\f\r/>]").search(text, pos)
+    if found is None:
+        return None
+    end = _tag_end(text, found.start() + 2 + len(name))
+    return None if end is None else (found.start(), end)
+
+
+def _comments(text: str) -> List[Tuple[int, int]]:
+    """``(start, end)`` of the HTML comments of a page that stand in its normal text, read once from left to
+    right by the HTML tokenizer's states: tags are stepped over by their attribute states (a ``<!--`` in a
+    quoted value is no comment), the content of a script element and of the raw-text elements (``style``,
+    ``textarea``, ``title``, ...) is stepped over to its end tag, ``<!x ...>`` / ``<?x ...>`` / ``<!DOCTYPE ...>``
+    to their ``>``. A comment runs from ``<!--`` to the first ``-->`` or ``--!>`` (``<!-->`` and ``<!--->`` are
+    empty). The walk STOPS - the rest is read as before, its tags count - at anything it does not follow as a
+    browser would: a comment, tag or element never closed, a script element holding ``<!--`` and then
+    ``<script`` (the browser's "double-escaped" state), ``<![CDATA[``, ``<svg>`` / ``<math>`` / ``<plaintext>``.
+    Each step moves on, so the walk is bounded by the text's length."""
+    spans: List[Tuple[int, int]] = []
+    at, n = 0, len(text)
+    while True:
+        lt = text.find("<", at)
+        if lt < 0 or lt + 1 >= n:
+            return spans
+        nxt = text[lt + 1]
+        if text.startswith("<!--", lt):
+            if not SKIP_CONDITIONAL_COMMENTS and text[lt + 4:lt + 7].lower() == "[if":
+                return spans                    # (a conditional comment: not followed, see the switch)
+            rest = lt + 4
+            if text.startswith(">", rest):
+                end = rest + 1
+            elif text.startswith("->", rest):
+                end = rest + 2
+            else:
+                close = _COMMENT_END.search(text, rest)
+                if close is None:               # never closed: today's reading from here on
+                    return spans
+                end = close.end()
+            spans.append((lt, end))
+            at = end
+        elif nxt in "!?":                       # <!DOCTYPE ...>, <!x ...>, <?x ...>: to the first ">"
+            if text.startswith("<![CDATA[", lt):
+                return spans
+            close = text.find(">", lt + 2)
+            if close < 0:
+                return spans
+            at = close + 1
+        elif nxt == "/":
+            name = _TAG_NAME.match(text, lt + 2)
+            if name is None:                    # "</>" and "</ x>": to the first ">"
+                close = text.find(">", lt + 2)
+                if close < 0:
+                    return spans
+                at = close + 1
+            else:
+                end = _tag_end(text, name.end())
+                if end is None:
+                    return spans
+                at = end
+        elif ("a" <= nxt <= "z") or ("A" <= nxt <= "Z"):
+            name = _TAG_NAME.match(text, lt + 1)
+            element = name.group(0).lower()
+            end = _tag_end(text, name.end())
+            if end is None or element in _STOP:
+                return spans
+            at = end
+            if element == "script":
+                close = _end_tag(text, "script", end)
+                if close is None:
+                    return spans
+                opened = text.find("<!--", end, close[0])
+                if opened >= 0 and _DOUBLE_ESCAPE.search(text, opened, close[0]):
+                    return spans                # (the browser's double-escaped state: not followed)
+                at = close[1]
+            elif element in _RAW_TEXT:
+                close = _end_tag(text, element, end)
+                if close is None:
+                    return spans
+                at = close[1]
+        else:
+            at = lt + 1
+
+
+def _inside(spans: List[Tuple[int, int]], pos: int) -> bool:
+    i = bisect.bisect_right(spans, (pos, float("inf"))) - 1      # last span that starts at or before pos
+    return i >= 0 and spans[i][0] <= pos < spans[i][1]
+
+
+def blocks(text: str, language: str = "vbs", default: str = "",
+           page: bool = False) -> Tuple[List[Tuple[int, str]], List[Tuple[int, str]]]:
     """``(script blocks of one language, remote script addresses)`` of a ``.wsf`` / ``.hta``
     / ``.html`` file, each with the line it begins at. ``language``: ``"vbs"`` or
     ``"js"`` - a block belongs to it when its ``language`` (or ``type``) says so; one
-    that names no language belongs to ``default`` (an ``.hta`` / ``.html``: JScript)."""
+    that names no language belongs to ``default`` (an ``.hta`` / ``.html``: JScript).
+    ``page``: an ``.html`` / ``.htm`` page - a remote tag inside one of its HTML comments is not collected
+    (``SKIP_COMMENTED_TAGS``)."""
     wanted = language
     code: List[Tuple[int, str]] = []
     remote: List[Tuple[int, str]] = []
@@ -430,7 +604,19 @@ def blocks(text: str, language: str = "vbs", default: str = "") -> Tuple[List[Tu
     def attributes_of(tag: str) -> Dict[str, str]:
         return {m.group(1).lower(): (m.group(2) or m.group(3) or m.group(4) or "") for m in _ATTRIBUTE.finditer(tag)}
 
-    for match in list(_TAG.finditer(text))[:2000]:          # every opening tag, also one closed in itself
+    tags = _TAG.finditer(text)
+    if page and SKIP_COMMENTED_TAGS and "<!--" in text:
+        spans = _comments(text)
+        if spans:
+            kept, skipped = [], 0
+            for m in tags:
+                if not _inside(spans, m.start()):
+                    kept.append(m)
+                elif _REMOTE_URL.match(attributes_of(m.group(1)).get("src", "").strip()):
+                    skipped += 1                    # (a remote tag no longer counted: for the gate, gamescan/fixlog.py)
+            tags = iter(kept)
+            _fix_note("B1", skipped)
+    for match in list(itertools.islice(tags, 2000)):          # every opening tag, also one closed in itself
         address = attributes_of(match.group(1)).get("src", "").strip().rstrip("/")
         if _REMOTE_URL.match(address) and not _LOCAL_URL.match(address):
             remote.append((text.count("\n", 0, match.start()) + 1, address[:300]))
@@ -445,17 +631,17 @@ def blocks(text: str, language: str = "vbs", default: str = "") -> Tuple[List[Tu
     return code, remote
 
 
-def analyse(text: str, wrapped: bool = False) -> Result:
+def analyse(text: str, wrapped: bool = False, page: bool = False) -> Result:
     """What the VBScript in ``text`` runs that came from the network, and the command
     lines it starts. ``wrapped``: ``text`` is a ``.wsf`` / ``.hta`` file - its VBScript
-    blocks are read. Never raises."""
+    blocks are read; ``page``: it is an ``.html`` / ``.htm`` page (``blocks``). Never raises."""
     cut = "larger than %d MB" % (MAX_SOURCE >> 20) if len(text or "") > MAX_SOURCE else ""
     text = (text or "")[:MAX_SOURCE]
     flow = _Flow()
     try:
         parts = [(1, text)]
         if wrapped:
-            parts, remote = blocks(text)
+            parts, remote = blocks(text, page=page)
             flow.final = True
             for line, address in remote:
                 flow.hit("loader", line, "script src", Download("", line, REMOTE, address))

@@ -14,7 +14,7 @@ import time
 import zlib
 from typing import Dict, List, Optional, Sequence, Tuple
 
-from . import i18n
+from . import causes, i18n
 from .i18n import t
 from .models import TOOL_NAME, TOOL_VERSION, Finding, ScanReport, Severity
 
@@ -32,6 +32,17 @@ def _summary(report: ScanReport) -> List[Tuple[str, str, str]]:
     tiles.append((t("Suppressed"), str(len(report.suppressed)), _GRAY))
     tiles.append((t("Files scanned"), "{:,}".format(report.files_scanned), _INK))
     return tiles
+
+
+def _why(report: ScanReport) -> List[Tuple[str, str, str, str]]:
+    """(title, reason, rule ids, where they stand) of every cause class behind a SUSPICIOUS /
+    DANGEROUS verdict, in plain words (``gamescan.causes``; phageo, 2026-10-29; where: ``gamescan.origin``,
+    2026-11-02); empty for a milder verdict."""
+    out = []
+    for cause, found in causes.explain(report):
+        title, reason = i18n.cause(cause)
+        out.append((title, reason, ", ".join(sorted({f.rule_id for f in found})), i18n.origins(found)))
+    return out
 
 
 def _where(f: Finding) -> str:
@@ -87,7 +98,14 @@ def render_html(report: ScanReport, findings: Sequence[Finding], filter_note: st
     for label, value, tint in _summary(report):
         out.append("<div class='tile'><b style='color:%s'>%s</b><span>%s</span></div>"
                    % (tint, e(value), e(label)))
-    out.append("</div><h2>%s</h2>" % e(t("Findings")))
+    out.append("</div>")
+    why = _why(report)
+    if why:
+        out.append("<h2>%s</h2><ul>%s</ul>" % (e(t("Why this result")), "".join(
+            "<li><b>%s</b> - %s <span class='note'>(%s)</span><br><span class='note'>%s: %s</span></li>"
+            % (e(title), e(reason), e(rules), e(t("Where")), e(where))
+            for title, reason, rules, where in why)))
+    out.append("<h2>%s</h2>" % e(t("Findings")))
     out.append("<div class='note'>%s%s</div>" % (
         e(t("Showing %d of %d findings", len(findings), len(report.findings))),
         e("  \u00b7  " + filter_note) if filter_note else ""))
@@ -405,6 +423,13 @@ def render_pdf(report: ScanReport, findings: Sequence[Finding], filter_note: str
         x += pdf.width / 6
     pdf.y -= 42
     pdf.rule()
+    why = _why(report)
+    if why:
+        pdf.para(t("Why this result"), "B", 12.5, gap=3)
+        for title, reason, rules, where in why:
+            pdf.para("%s - %s (%s)" % (title, reason, rules), "R", 9.5, indent=4, gap=1)
+            pdf.para("%s: %s" % (t("Where"), where), "R", 8.5, _GRAY, indent=8, gap=2)
+        pdf.y -= 8
     pdf.para(t("Findings"), "B", 12.5, gap=1)
     note = t("Showing %d of %d findings", len(findings), len(report.findings))
     pdf.para(note + ("  \u00b7  " + filter_note if filter_note else ""), "R", 8.5, _GRAY, gap=8)

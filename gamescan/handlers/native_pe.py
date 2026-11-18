@@ -6,15 +6,18 @@ _IND = _indicator_strings("gamescan/handlers/native_pe.py")
 import mmap
 import os
 import re
-from typing import Iterable, List
+from typing import Iterable, List, Tuple
 
 from ..models import NOT_INSPECTED, Category, FileContext, Finding, Severity
 from ..entropy import shannon
-from ..pe import (extract_strings, profile_il2cpp_imports, program_inside, resource_frame_key,
-                  only_asar_integrity, resource_kinds, resources_of, signature_is_all_appended)
-from ..unpack import media
+from ..pe import (ELEVATION, LATER, STRINGS_LIMIT, extract_strings, in_suffix_table, profile_il2cpp_imports,
+                  program_inside,
+                  resource_differences, resource_frame_key, only_asar_integrity, resource_kinds, resources_but_icons,
+                  resources_of, signature_is_all_appended, strings_cut)
+from ..unpack import asar, media
 from ..rules import RuleEngine
-from .. import cache, directx_official, electron_official, engine_hashes, inno_official, nsis_official, runtimes
+from .. import (cache, directx_official, electron_official, engine_hashes, inno_official, nsis_official,
+                program_resources, runtimes, unity_players)
 from . import containers, engine_files
 from .base import BaseHandler
 
@@ -22,6 +25,48 @@ from .base import BaseHandler
 _WINDOWS_DIRS = frozenset(os.path.normcase(d) for d in (
     "System32", "SysWOW64", "WinSxS", "SystemApps", "Microsoft.NET", "servicing",
     "ImmersiveControlPanel", "explorer.exe"))
+
+
+# An official engine program - Electron's runtime, NW.js's launcher, Ren'Py's start program, Unity's
+# player - whose resources differ in what the one resource rule does not allow (phageo, 2026-10-27,
+# answer a; for every renamed engine, one rule, since the sixth fix session): the code match stands, each
+# such difference is a visible MEDIUM finding of its own - never hidden by the match (context:
+# "unverified_part"; the engine in context "runtime").
+RUNTIME_CHANGES, INTEGRITY_LATER = "runtime_changes", "integrity_later"     # (ctx.cache keys)
+RUNTIME_NAME = "runtime_name"                                               # (ctx.cache key: the engine)
+RUNTIME_PROGRAMS = {"Electron": "Electron runtime", "NW.js": "NW.js launcher", "Ren'Py": "Ren'Py start program",
+                    "Unity": "Unity player"}
+RUNTIME_ELEVATION = "ENGINE-010"
+RUNTIME_ELEVATION_TITLE = "Official runtime, manifest asks for elevation"
+RUNTIME_ELEVATION_REASON = (
+    "This program is the official %s in its code, byte for byte - but its manifest, which "
+    "the game's maker changed, asks Windows to start it with administrator rights (or as high as the user "
+    "may). An ordinary game does not need that. The code is not changed, so this is a visible note, not "
+    "a sign of an attack by itself.")
+RUNTIME_CHANGED = "ENGINE-011"
+RUNTIME_CHANGED_TITLE = "Official runtime, resource changed"
+RUNTIME_CHANGED_REASON = (
+    "This program is the official %s in its code, byte for byte - but a part of its "
+    "resources differs from the official program's in a way the scanner cannot prove harmless (it is not "
+    "the icon, the version text, a manifest without elevation, Windows' resource-update filler, or an "
+    "integrity record that matches the app's archive). The changed part was scanned on its own; this is a "
+    "visible note that the match of the code does not hide.")
+
+def runtime_change(file: str, reason: str, handler: str = "native_pe", runtime: str = "Electron") -> Finding:
+    """The ENGINE-010 (an elevation, by ``pe.ELEVATION``) or ENGINE-011 finding for one resource
+    difference of a matched official engine program (``runtime``: a key of ``RUNTIME_PROGRAMS``);
+    ``reason`` is the one resource rule's."""
+    elevation = reason.startswith(ELEVATION)
+    program = RUNTIME_PROGRAMS[runtime]
+    f = Finding(rule_id=RUNTIME_ELEVATION if elevation else RUNTIME_CHANGED,
+                title=RUNTIME_ELEVATION_TITLE if elevation else RUNTIME_CHANGED_TITLE,
+                category=Category.EVASION, severity=Severity.MEDIUM, file=file, line=None,
+                snippet=reason[:200], evidence="official %s by its code; %s" % (program, reason), confidence=0.5,
+                reason=(RUNTIME_ELEVATION_REASON if elevation else RUNTIME_CHANGED_REASON) % program,
+                handler=handler, chainable=False)
+    f.context["unverified_part"] = True        # (what the match of the code does not cover)
+    f.context["runtime"] = runtime
+    return f
 
 
 _WINDOW, _SEAM = 8 * 1024 * 1024, 16 * 1024
@@ -106,9 +151,11 @@ class NativePEHandler(BaseHandler):
             # (and the libraries of Microsoft's DirectX June 2010 package - gamescan/directx_official.py,
             # each checked once to carry Microsoft's signature: recognised also inside an archive read
             # in memory, where a signature cannot be checked; phageo, 2026-10-17)
+            # (and the players of Unity's own Windows editor installers - gamescan/unity_players.py;
+            # round-3 item C, phageo 2026-10-26)
             official = (engine_hashes.verified(ctx.sha256) or inno_official.verified(ctx.sha256)
                         or nsis_official.verified(ctx.sha256) or electron_official.verified(ctx.sha256)
-                        or directx_official.verified(ctx.sha256))
+                        or directx_official.verified(ctx.sha256) or unity_players.verified(ctx.sha256))
             if official:
                 return "%s: %s" % (engine_hashes.VERIFIED, official)
             launcher = self._launcher(ctx)
@@ -154,13 +201,20 @@ class NativePEHandler(BaseHandler):
             pe, official = ctx.pe, None
             if (pe is not None and not ctx.truncated and not pe.is_dotnet and not pe.has_signature
                     and pe.entry_point in engine_hashes.LAUNCHER_ENTRY_POINTS):
-                official = engine_hashes.verified_launcher(resource_frame_key(ctx.data, pe))
+                key = resource_frame_key(ctx.data, pe)
+                official = engine_hashes.verified_launcher(key)
                 if official and program_inside(resources_of(ctx.data, pe)):
                     official = None
+                # (the one resource rule, phageo 2026-10-27: only differences proven harmless - each
+                # other one a visible finding, the match of the code standing: sixth fix session, answer b)
+                if official:
+                    NativePEHandler._changes(ctx, ctx.data, program_resources.record("NWJS", key), "NW.js")
             if official:
                 official = "%s: %s" % (engine_hashes.LAUNCHER_VERIFIED, official)
             elif pe is not None and not pe.is_dotnet and pe.entry_point in electron_official.ENTRY_POINTS:
                 official = NativePEHandler._electron(ctx)
+            if not official and pe is not None and not pe.is_dotnet and pe.entry_point in unity_players.ENTRY_POINTS:
+                official = NativePEHandler._unity(ctx)
             ctx.cache["launcher_frame"] = official or ""
         return ctx.cache["launcher_frame"]
 
@@ -206,13 +260,31 @@ class NativePEHandler(BaseHandler):
         try:
             if not signature_is_all_appended(data, pe):
                 return ""
-            official = electron_official.verified_program(resource_frame_key(data, pe, signature=True))
+            key = resource_frame_key(data, pe, signature=True)
+            official = electron_official.verified_program(key)
             if official is None:
                 return ""
             name, allowed = official
             kinds = resource_kinds(data, pe)
             if kinds is None or program_inside(resources_of(data, pe)):
                 return ""
+            record = program_resources.record("ELECTRON", key)
+            if record is not None:
+                # the decision in two (phageo, 2026-10-27, answer a): the code is the official
+                # runtime's - the match stands; every resource difference the one resource rule does
+                # not allow is a visible finding of its own (ENGINE-010 / ENGINE-011: _runtime_changes),
+                # and an integrity record inside an installer or archive is compared with the app
+                # archive of the same one after the scan (Scanner._runtime_integrity_notes)
+                later: List[Tuple[str, str]] = []
+                reasons = resource_differences(data, pe, record, updater=True, later=later,
+                                               integrity=lambda file: NativePEHandler._asar_header(ctx, file))
+                if reasons:
+                    ctx.cache[RUNTIME_CHANGES], ctx.cache[RUNTIME_NAME] = reasons, "Electron"
+                if later:
+                    ctx.cache[INTEGRITY_LATER] = later
+                return "%s: %s" % (electron_official.PROGRAM_VERIFIED, name)
+            # (no record: a release whose official zip is no longer on disk keeps the rule of
+            # 2026-10-13 - phageo, 2026-10-27: "change nothing for them")
             # a kind with a name of its own is refused - except Electron's own integrity record
             # of the app archive, exactly as the packaging tool writes it (pe.only_asar_integrity)
             if -1 in kinds and only_asar_integrity(data, pe):
@@ -220,6 +292,79 @@ class NativePEHandler(BaseHandler):
             if not set(kinds) <= allowed:
                 return ""
             return "%s: %s" % (electron_official.PROGRAM_VERIFIED, name)
+        finally:
+            close()
+
+    @staticmethod
+    def _changes(ctx: FileContext, data, record, runtime: str, **checks) -> None:
+        """The decision in two for a renamed engine program whose code is the official one
+        (phageo, 2026-10-27, answer a; for NW.js, Ren'Py and Unity too since the sixth fix session,
+        answer b - one rule): the match stands, and every resource difference the one resource rule
+        (:func:`gamescan.pe.resource_differences`) does not allow is kept in
+        ``ctx.cache[RUNTIME_CHANGES]`` - each one a visible ENGINE-010 / ENGINE-011 finding.
+        ``record``: the official program's (``gamescan.program_resources``); None - no record -
+        keeps nothing here."""
+        if record is None:
+            return
+        reasons = resource_differences(data, ctx.pe, record, **checks)
+        if reasons:
+            ctx.cache[RUNTIME_CHANGES], ctx.cache[RUNTIME_NAME] = reasons, runtime
+
+    @staticmethod
+    def _asar_header(ctx: FileContext, file: str):
+        """SHA-256 of the list of files of the app archive that an Electron program's integrity
+        record names (``resources\\app.asar``), beside the program on disk - None where it is not
+        at hand: the name leaves the program's folder, or the archive cannot be read. ``pe.LATER``:
+        the program is inside an installer or archive (or only in memory) - its app archive is
+        another member, compared after the scan (phageo, 2026-10-27, answer c)."""
+        parts = file.replace("\\", "/").split("/")
+        if any(part in ("", ".", "..") or ":" in part for part in parts):
+            return None
+        if "!" in ctx.relpath or not ctx.on_disk:
+            return LATER
+        try:
+            with open(os.path.join(os.path.dirname(os.path.abspath(ctx.path)), *parts), "rb") as fh:
+                return asar.header_sha256(fh)
+        except (OSError, asar.AsarError):
+            return None
+
+    @staticmethod
+    def _unity(ctx: FileContext) -> str:
+        """The official Unity Windows player this program is apart from its resources ("" = it
+        is not one; round-3 item C, phageo 2026-10-26). A Unity 4.x / 5.x game ships the player
+        of Unity's editor (``player_win.exe``) under the game's name, with the game's icon - and
+        keeps Unity's signature, which then no longer fits. Accepted only under phageo's four
+        conditions (2026-10-26): (1) the icons are all that differs - everything but the
+        resources and the place of the signature is the official file, byte for byte
+        (:func:`gamescan.pe.resource_frame_key`, which also holds every section's flags: (2)
+        they equal the official file's), every other resource - manifest, version, dialogs -
+        is the official one and no kind is added (:func:`gamescan.pe.resources_but_icons`),
+        nothing is appended but the signature the headers name, no program in the resources;
+        (3) the resources are scanned again outside the acceptance (``_unverified_parts``);
+        (4) the broken signature never counts: Windows alone says whether a signature is
+        valid (``engine_files.signer``), and an accepted player is not asked for one."""
+        pe = ctx.pe
+        data, close = NativePEHandler._whole(ctx)
+        if data is None:
+            return ""
+        try:
+            if not signature_is_all_appended(data, pe):
+                return ""
+            key = resource_frame_key(data, pe, signature=True)
+            record = program_resources.record("UNITY", key)
+            if record is not None and key in unity_players.PROGRAMS:
+                # the one resource rule (phageo, 2026-10-27) replaces condition (1): icons, icon
+                # groups and the version may differ, the manifest without elevation; any other
+                # difference is a visible finding, the match of the code standing (sixth fix session)
+                if program_inside(resources_of(data, pe)):
+                    return ""
+                NativePEHandler._changes(ctx, data, record, "Unity")
+                name = unity_players.verified_program(key, unity_players.PROGRAMS[key][3])
+            else:
+                name = unity_players.verified_program(key, resources_but_icons(data, pe))
+            if name is None or program_inside(resources_of(data, pe)):
+                return ""
+            return "%s: %s" % (unity_players.PROGRAM_VERIFIED, name)
         finally:
             close()
 
@@ -244,6 +389,14 @@ class NativePEHandler(BaseHandler):
                 f.evidence += "  [in %s, which the comparison with the official launcher does not cover]" % what
                 out.append(f)
         return out
+
+    def _runtime_changes(self, ctx: FileContext) -> List[Finding]:
+        """ENGINE-010 / ENGINE-011 (MEDIUM, visible; phageo, 2026-10-27, answer a): one finding for
+        each resource difference of a matched official engine program that the one resource rule
+        does not allow (``ctx.cache[RUNTIME_CHANGES]``, set by ``_electron`` / ``_launcher`` /
+        ``_unity``)."""
+        runtime = ctx.cache.get(RUNTIME_NAME, "Electron")
+        return [runtime_change(ctx.relpath, reason, self.name, runtime) for reason in ctx.cache.get(RUNTIME_CHANGES, ())]
 
     def can_handle(self, ctx: FileContext) -> bool:
         return ctx.is_pe and not (ctx.pe is not None and ctx.pe.is_dotnet)
@@ -279,6 +432,8 @@ class NativePEHandler(BaseHandler):
         # (kept by the file's SHA-256: the same bytes hold the same texts - gamescan/cache.py)
         strings = cache.kept("pe-strings", ctx.sha256, "gamescan.pe", lambda: extract_strings(ctx.data),
                              extra=str(len(ctx.data)))
+        if len(strings) >= STRINGS_LIMIT:
+            strings_cut(len(ctx.data))          # (a kept reading did not call extract_strings: said here too)
         if ctx.truncated and ctx.on_disk:
             # a program larger than what is loaded: its strings are carved from disk,
             # to the end, and its sections are measured there too
@@ -287,11 +442,16 @@ class NativePEHandler(BaseHandler):
         elif il2cpp and pe is not None:
             out += self._encrypted_blocks(ctx, ctx.data)
         found = rules.scan("\n".join(strings), "strings", ctx, self.name, numbered=False)
+        for f in found:
+            if f.rule_id == "NET-EXFIL-001" and in_suffix_table(strings, f.context.get("line_text", "")):
+                # (ContextEngine._domain_table decides; only here are the texts at hand in their order)
+                f.context["in_domain_table"] = True
         if pe is not None and ctx.cache.get("launcher_frame"):
             for f in out:
                 if f.rule_id == "PE-ENT-001":           # appended data: not part of what was compared
                     f.context["unverified_part"] = True
             found += self._unverified_parts(ctx, rules)
+            out += self._runtime_changes(ctx)
         out += self._key_names(ctx, strings)
         out += self._addon_decrypt(ctx)
         if il2cpp:
@@ -463,8 +623,7 @@ class NativePEHandler(BaseHandler):
                                  "sections: " + names, 0.8))
         out += self.pe_entropy(ctx)
         if pe.entry_point and pe.sections:
-            home = next((s for s in pe.sections
-                         if s.vaddr <= pe.entry_point < s.vaddr + max(s.vsize, s.raw_size)), None)
+            home = pe.section_at(pe.entry_point)
             if home is None or not home.executable:
                 where = "outside every section" if home is None else \
                     "in non-executable section " + (home.name or "(unnamed)")
